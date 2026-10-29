@@ -49,7 +49,7 @@
     aErr: '', aErrCount: 0, aOut: 0, aLastTs: 0, aResyncs: 0, audioSetupBusy: false, micErr: '',
   };
   const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
-  const VERSION = '0.3.6';
+  const VERSION = '0.3.7';
   const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
@@ -774,8 +774,11 @@
   document.addEventListener('pointerdown', () => {
     if (!S.running) return; // sem câmera ligada não mexe no áudio (não atrapalha a reprodução dos clipes)
     const retry = () => { if (S.running && !S.worklet) trySetupAudio().then(() => { if (S.worklet) setStatus(''); }); };
-    if (S.audioCtx && S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {}).then(retry);
-    else retry();
+    if (S.audioCtx && S.audioCtx.state !== 'running') {
+      S.audioCtx.resume().catch(() => {}).then(() => {
+        if (S.needTap && S.audioCtx.state === 'running') { S.needTap = false; setStatus(S.note, S.note ? 'warn' : ''); }
+      }).then(retry);
+    } else retry();
   });
 
   try { S.soundOn = localStorage.getItem('clip.sound') !== '0'; } catch (_) {}
@@ -827,4 +830,15 @@
   restoreClips();
   updateStorage();
   updateUI();
+
+  // Ao abrir, já pede câmera e microfone e começa a encher o buffer, sem precisar tocar em "Iniciar câmera".
+  // O iOS só libera o áudio depois de um toque na tela, então avisamos para tocar uma vez.
+  if (document.visibilityState === 'visible') {
+    start().then(() => {
+      if (S.running && S.audioCtx && S.audioCtx.state !== 'running') {
+        S.needTap = true;
+        setStatus('Toque na tela uma vez para ativar o áudio.', 'warn');
+      }
+    });
+  }
 })();

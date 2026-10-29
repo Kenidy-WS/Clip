@@ -12,7 +12,7 @@ Câmera/mic → `VideoEncoder` (H.264) + `AudioEncoder` (AAC) → buffer circula
 4. Compartilhar → *Adicionar à Tela de Início*.
 
 ## Uso
-Iniciar câmera → esperar o buffer encher → *Gravar* → *Parar e salvar* → *Salvar / Compartilhar* → *Salvar vídeo*.
+O app já abre pedindo câmera e microfone (toque uma vez na tela para liberar o áudio). Se a câmera estiver parada: Iniciar câmera → esperar o buffer encher → *Gravar* → *Parar e salvar* → *Salvar / Compartilhar* → *Salvar vídeo*.
 O botão **i** mostra o diagnóstico (suporte a WebCodecs, resolução real, fps de saída).
 
 ## Limites conhecidos
