@@ -1,0 +1,15 @@
+{
+  "name": "Clip",
+  "short_name": "Clip",
+  "description": "Câmera com gravação retroativa (últimos 15/30 s antes do toque)",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116",
+  "icons": [
+    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
