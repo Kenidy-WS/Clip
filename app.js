@@ -45,7 +45,7 @@
     dropBeforeTs: 0, muteUntil: 0, soundOn: true, aInfo: '', reorders: 0, lastOutTs: 0,
   };
   const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
-  const VERSION = '0.3.0';
+  const VERSION = '0.3.1';
   const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
@@ -600,6 +600,8 @@
       if (live + S.rec.preSec > MAX_REC_SEC && !S.finalizing) stopRec();
     } else {
       els.bufTxt.textContent = S.running ? `Buffer ${shown.toFixed(0)}/${cfg.bufferSec} s` : 'Câmera parada';
+      // O botão mostra o pre-roll realmente disponível agora (a gravação funciona mesmo com o buffer incompleto).
+      if (S.running && !S.finalizing) els.btnRec.textContent = `● Gravar (+${Math.floor(shown)}s antes)`;
     }
 
     els.micFill.style.height = (S.running ? Math.min(100, S.audioPeak * 160) : 0) + '%';
