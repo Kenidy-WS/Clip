@@ -22,6 +22,7 @@
     info: $('info'),
     clips: $('clips'),
     clipsTitle: $('clipsTitle'),
+    micFill: $('micFill'),
   };
 
   const cfg = { bufferSec: 15, quality: '1080', facing: 'environment' };
@@ -37,7 +38,10 @@
     lastKeyMs: 0, lastInTs: 0, lastPump: 0, aT0: 0, aSamples: 0,
     framesIn: 0, framesOut: 0, dropped: 0, outFps: 0, _fpsMark: 0, _fpsCount: 0,
     wake: null, clips: [], note: '',
+    canvas: null, ctx2d: null, srcInfo: '',
+    micSrc: null, workletReady: false, audioBlocks: 0, audioPeak: 0, startedAt: 0, audioWarned: false,
   };
+  const VERSION = '0.2.0';
 
   /* ---------- suporte ---------- */
   function support() {
@@ -58,6 +62,7 @@
 
   /* ---------- câmera ---------- */
   async function start() {
+    ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
     await stopAll();
     const sup = support();
     if (!sup.VideoEncoder) {
@@ -85,7 +90,8 @@
     S.running = true;
     S.framesIn = S.framesOut = S.dropped = 0;
     S.lastKeyMs = 0; S.lastInTs = 0; S.lastPump = 0;
-    S.audioDisabled = false;
+    S.audioDisabled = false; S.audioBlocks = 0; S.audioPeak = 0; S.audioWarned = false;
+    S.startedAt = performance.now();
 
     if (S.stream.getAudioTracks().length && sup.AudioEncoder && sup.AudioWorklet) {
       setupAudio().catch((e) => { S.audioDisabled = true; S.note = 'Áudio indisponível: ' + e.message; });
@@ -108,10 +114,9 @@
     try { if (S.vEnc && S.vEnc.state !== 'closed') S.vEnc.close(); } catch (_) {}
     try { if (S.aEnc && S.aEnc.state !== 'closed') S.aEnc.close(); } catch (_) {}
     S.vEnc = S.aEnc = null;
-    try { if (S.worklet) S.worklet.disconnect(); } catch (_) {}
-    S.worklet = null;
-    try { if (S.audioCtx) await S.audioCtx.close(); } catch (_) {}
-    S.audioCtx = null;
+    try { if (S.micSrc) S.micSrc.disconnect(); } catch (_) {}
+    try { if (S.worklet) { S.worklet.port.onmessage = null; S.worklet.disconnect(); } } catch (_) {}
+    S.micSrc = S.worklet = null; // o AudioContext é mantido entre reinícios (criado no gesto do usuário)
     S.vRing.length = 0; S.aRing.length = 0; S.vMeta = S.aMeta = null;
     S.W = S.H = 0; S.nCh = 0; S.aT0 = 0; S.aSamples = 0;
     try { if (S.wake) { await S.wake.release(); } } catch (_) {}
@@ -154,9 +159,12 @@
     if (ts <= S.lastInTs) ts = S.lastInTs + 1;
     S.lastInTs = ts;
 
+    // Passa pelo canvas: drawImage respeita a rotação do iOS; VideoFrame(<video>) pode sair deitado.
     let frame;
-    try { frame = new VideoFrame(v, { timestamp: ts, duration: Math.round(1e6 / FPS) }); }
-    catch (_) { S.dropped++; return; }
+    try {
+      S.ctx2d.drawImage(v, 0, 0, S.W, S.H);
+      frame = new VideoFrame(S.canvas, { timestamp: ts, duration: Math.round(1e6 / FPS) });
+    } catch (_) { S.dropped++; return; }
     const key = now - S.lastKeyMs >= 1000; // keyframe a cada ~1 s = corte preciso do clipe
     try {
       S.vEnc.encode(frame, key ? { keyFrame: true } : undefined);
@@ -169,7 +177,7 @@
   async function configureVideo(w, h) {
     S.configuring = true;
     try {
-      const bitrate = cfg.quality === '720' ? 6e6 : 12e6;
+      const bitrate = cfg.quality === '720' ? 8e6 : 16e6;
       const codecs = ['avc1.64002a', 'avc1.4d002a', 'avc1.42002a', 'avc1.42001f'];
       let chosen = null;
       for (const codec of codecs) {
@@ -186,6 +194,11 @@
         error: (e) => { setStatus('Erro no encoder de vídeo: ' + e.message, 'err'); },
       });
       S.vEnc.configure(chosen);
+      if (!S.canvas) { S.canvas = document.createElement('canvas'); S.ctx2d = S.canvas.getContext('2d', { alpha: false }); }
+      S.canvas.width = w; S.canvas.height = h;
+      const tr = S.stream && S.stream.getVideoTracks()[0];
+      const st = tr && tr.getSettings ? tr.getSettings() : {};
+      S.srcInfo = `elemento ${els.video.videoWidth}x${els.video.videoHeight} · track ${st.width}x${st.height}@${Math.round(st.frameRate || 0)}`;
       S.W = w; S.H = h; S.codec = chosen.codec; S.bitrate = bitrate;
       S.vRing.length = 0; S.aRing.length = 0; S.vMeta = null; S.lastKeyMs = 0;
     } finally { S.configuring = false; }
@@ -233,16 +246,29 @@
     }
     registerProcessor('cap', Cap);`;
 
-  async function setupAudio() {
+  function ensureAudioCtx() {
     const Ctx = window.AudioContext || window.webkitAudioContext;
-    const ctx = new Ctx({ latencyHint: 'interactive' });
-    S.audioCtx = ctx;
-    await ctx.resume();
+    if (!Ctx) return;
+    if (!S.audioCtx || S.audioCtx.state === 'closed') {
+      S.audioCtx = new Ctx({ latencyHint: 'interactive' });
+      S.workletReady = false;
+    }
+    if (S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {});
+  }
+
+  async function setupAudio() {
+    const ctx = S.audioCtx;
+    if (!ctx) throw new Error('sem AudioContext');
+    if (ctx.state !== 'running') await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 1500))]);
     S.sampleRate = ctx.sampleRate;
-    const url = URL.createObjectURL(new Blob([WORKLET_SRC], { type: 'application/javascript' }));
-    await ctx.audioWorklet.addModule(url);
-    URL.revokeObjectURL(url);
+    if (!S.workletReady) {
+      const url = URL.createObjectURL(new Blob([WORKLET_SRC], { type: 'application/javascript' }));
+      await ctx.audioWorklet.addModule(url);
+      URL.revokeObjectURL(url);
+      S.workletReady = true;
+    }
     const src = ctx.createMediaStreamSource(new MediaStream(S.stream.getAudioTracks()));
+    S.micSrc = src;
     const node = new AudioWorkletNode(ctx, 'cap', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
     const mute = ctx.createGain();
     mute.gain.value = 0; // sem retorno de áudio no alto-falante
@@ -255,7 +281,7 @@
     S.audioConfiguring = true;
     try {
       nCh = Math.min(2, Math.max(1, nCh));
-      const c = { codec: 'mp4a.40.2', sampleRate: S.sampleRate, numberOfChannels: nCh, bitrate: 192000 };
+      const c = { codec: 'mp4a.40.2', sampleRate: S.sampleRate, numberOfChannels: nCh, bitrate: 192000, aac: { format: 'aac' } };
       const r = await AudioEncoder.isConfigSupported(c);
       if (!r || !r.supported) { S.audioDisabled = true; S.note = 'AAC não suportado neste navegador: clipes só com vídeo.'; setStatus(S.note, 'warn'); return; }
       S.aEnc = new AudioEncoder({
@@ -270,8 +296,13 @@
   }
 
   async function onAudioBlock(ev) {
-    if (S.audioDisabled || !S.running) return;
     const { ch, frames } = ev.data;
+    let pk = 0;
+    const c0 = ch[0];
+    for (let i = 0; i < frames; i++) { const a = Math.abs(c0[i]); if (a > pk) pk = a; }
+    S.audioPeak = Math.max(pk, S.audioPeak * 0.9); // medidor de nível do microfone
+    S.audioBlocks++;
+    if (S.audioDisabled || !S.running) return;
     if (!S.aEnc) {
       if (S.audioConfiguring) return;
       await configureAudio(ch.length);
@@ -326,12 +357,13 @@
     S.finalizing = true;
     setStatus('Finalizando clipe…');
     updateUI();
-    try {
-      await S.vEnc.flush();
-      if (S.aEnc && S.aEnc.state === 'configured') await S.aEnc.flush();
-    } catch (_) { /* segue com o que já saiu */ }
+    // Sem flush(): ele reinicia o estado do encoder (principalmente o AAC) e gera
+    // timestamps fora de ordem nos clipes seguintes. Esperamos os chunks já enviados saírem.
+    const stopTs = S.lastInTs;
+    await drainEncoders();
     const r = S.rec; S.rec = null;
-    S.lastKeyMs = 0; // após flush, o próximo frame deve ser keyframe
+    r.v = r.v.filter((c) => c.ts <= stopTs);
+    r.a = r.a.filter((c) => c.ts <= stopTs);
     try {
       addClip(buildMp4(r));
       setStatus('Clipe salvo na lista abaixo.', 'ok');
@@ -341,6 +373,22 @@
     }
     S.finalizing = false;
     updateUI();
+  }
+
+  async function drainEncoders() {
+    const t0 = performance.now();
+    while (performance.now() - t0 < 800) {
+      const pending = (S.vEnc ? S.vEnc.encodeQueueSize : 0) + (S.aEnc ? S.aEnc.encodeQueueSize : 0);
+      if (pending === 0) break;
+      await new Promise((res) => setTimeout(res, 40));
+    }
+    await new Promise((res) => setTimeout(res, 250)); // latência de saída do encoder
+  }
+
+  // Garante timestamps estritamente crescentes (exigência do mp4-muxer) e relativos ao início do clipe.
+  function rebase(chunks, t0) {
+    let prev = -1;
+    return chunks.map((c) => { const t = Math.max(c.ts - t0, prev + 1); prev = t; return { data: c.data, key: c.key, dur: c.dur, t }; });
   }
 
   function buildMp4(r) {
@@ -353,16 +401,17 @@
       fastStart: 'in-memory',
       firstTimestampBehavior: 'cross-track-offset',
     });
-    r.v.forEach((c, i) => muxer.addVideoChunkRaw(c.data, c.key ? 'key' : 'delta', c.ts - r.t0, c.dur, i === 0 ? S.vMeta : undefined));
-    if (withAudio) r.a.forEach((c, i) => muxer.addAudioChunkRaw(c.data, c.key ? 'key' : 'delta', c.ts - r.t0, c.dur, i === 0 ? S.aMeta : undefined));
+    const vs = rebase(r.v, r.t0);
+    vs.forEach((c, i) => muxer.addVideoChunkRaw(c.data, c.key ? 'key' : 'delta', c.t, c.dur, i === 0 ? S.vMeta : undefined));
+    if (withAudio) rebase(r.a, r.t0).forEach((c, i) => muxer.addAudioChunkRaw(c.data, c.key ? 'key' : 'delta', c.t, c.dur, i === 0 ? S.aMeta : undefined));
     muxer.finalize();
     const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
-    const last = r.v[r.v.length - 1];
-    const durSec = (last.ts + last.dur - r.t0) / 1e6;
+    const last = vs[vs.length - 1];
+    const durSec = (last.t + last.dur) / 1e6;
     const d = new Date();
     const p = (n) => String(n).padStart(2, '0');
     const name = `clip-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.mp4`;
-    return { name, blob, file: new File([blob], name, { type: 'video/mp4' }), url: URL.createObjectURL(blob), durSec, preSec: r.preSec, withAudio, dims: `${S.W}x${S.H}` };
+    return { name, blob, file: new File([blob], name, { type: 'video/mp4' }), url: URL.createObjectURL(blob), durSec, preSec: r.preSec, withAudio, dims: `${S.W}x${S.H}`, mbps: (blob.size * 8) / durSec / 1e6 };
   }
 
   /* ---------- lista de clipes ---------- */
@@ -382,7 +431,7 @@
       vid.src = c.url; vid.controls = true; vid.playsInline = true; vid.preload = 'metadata';
       const meta = document.createElement('div');
       meta.className = 'meta';
-      meta.textContent = `${c.durSec.toFixed(0)} s (${c.preSec.toFixed(0)} s antes do toque) · ${(c.blob.size / 1048576).toFixed(1)} MB · ${c.dims} · ${c.withAudio ? 'com áudio' : 'SEM áudio'}`;
+      meta.textContent = `${c.durSec.toFixed(0)} s (${c.preSec.toFixed(0)} s antes do toque) · ${(c.blob.size / 1048576).toFixed(1)} MB · ${c.dims} · ${c.mbps.toFixed(1)} Mbps · ${c.withAudio ? 'com áudio' : 'SEM áudio'}`;
       const row = document.createElement('div');
       row.className = 'row';
       const share = document.createElement('button');
@@ -428,10 +477,21 @@
       els.bufTxt.textContent = S.running ? `Buffer ${shown.toFixed(0)}/${cfg.bufferSec} s` : 'Câmera parada';
     }
 
+    els.micFill.style.height = (S.running ? Math.min(100, S.audioPeak * 160) : 0) + '%';
+    const hasMic = !!(S.stream && S.stream.getAudioTracks().length);
+    if (S.running && hasMic && !S.audioDisabled && !S.audioWarned && now - S.startedAt > 3500 && S.audioBlocks === 0) {
+      S.audioWarned = true;
+      setStatus(`Microfone sem sinal (AudioContext: ${S.audioCtx ? S.audioCtx.state : 'ausente'}). Toque na tela ou reinicie a câmera.`, 'warn');
+    }
+
     if (els.info.classList.contains('open')) {
       const sp = support();
       const ok = (x) => (x ? '✓' : '✗');
+      const at = S.stream && S.stream.getAudioTracks()[0];
       els.info.textContent = [
+        `Clip v${VERSION}`,
+        `Fonte: ${S.srcInfo || '-'}`,
+        `Mic: ctx ${S.audioCtx ? S.audioCtx.state : '-'}, blocos ${S.audioBlocks}, pico ${S.audioPeak.toFixed(3)}, track ${at ? (at.muted ? 'MUTED' : at.readyState) : 'nenhum'}`,
         `VideoEncoder ${ok(sp.VideoEncoder)}  AudioEncoder ${ok(sp.AudioEncoder)}  AudioWorklet ${ok(sp.AudioWorklet)}`,
         `rVFC ${ok(sp.rVFC)}  WakeLock ${ok(sp.WakeLock)}  Share(arquivos) ${ok(sp.Share)}`,
         `Vídeo: ${S.W}x${S.H} ${S.codec} ${(S.bitrate / 1e6).toFixed(0)} Mbps`,
@@ -461,6 +521,11 @@
       if (!live && !S.rec) { setStatus('A câmera foi pausada pelo iOS; reiniciando…', 'warn'); start(); }
       else acquireWake();
     }
+  });
+
+  // Qualquer toque tenta destravar o áudio (o Safari pode deixar o AudioContext suspenso).
+  document.addEventListener('pointerdown', () => {
+    if (S.audioCtx && S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {});
   });
 
   setInterval(tick, 250);

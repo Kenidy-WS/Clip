@@ -22,6 +22,8 @@
   .pill { flex:1; background:rgba(14,17,22,.72); border:1px solid var(--line); border-radius:999px; padding:6px 12px; font-size:13px; position:relative; overflow:hidden; }
   .pill .fill { position:absolute; inset:0 auto 0 0; width:0; background:rgba(229,57,53,.35); transition:width .25s; }
   .pill span { position:relative; }
+  .mic { position:relative; width:10px; height:36px; border-radius:5px; background:rgba(14,17,22,.72); border:1px solid var(--line); overflow:hidden; }
+  .mic #micFill { position:absolute; left:0; right:0; bottom:0; height:0; background:var(--ok); transition:height .1s; }
   .icon { width:36px; height:36px; border-radius:50%; border:1px solid var(--line); background:rgba(14,17,22,.72); color:var(--fg); font-size:16px; padding:0; }
   .status { position:absolute; left:12px; right:12px; top:56px; padding:8px 12px; border-radius:10px; font-size:14px; background:rgba(14,17,22,.88); border:1px solid var(--line); display:none; }
   .status.show { display:block; }
@@ -55,6 +57,7 @@
     <video id="preview" playsinline muted autoplay></video>
     <div class="topbar">
       <div class="pill"><div class="fill" id="fill"></div><span id="bufTxt">Câmera parada</span></div>
+      <div class="mic" title="Nível do microfone"><div id="micFill"></div></div>
       <button class="icon" id="btnInfo" aria-label="Diagnóstico">i</button>
     </div>
     <div id="status" class="status"></div>
@@ -67,8 +70,8 @@
         <option value="30">Buffer 30 s</option>
       </select>
       <select id="selQuality" aria-label="Qualidade">
-        <option value="1080" selected>1080p · 12 Mbps</option>
-        <option value="720">720p · 6 Mbps</option>
+        <option value="1080" selected>1080p · 16 Mbps</option>
+        <option value="720">720p · 8 Mbps</option>
       </select>
       <button class="flip" id="btnFlip" aria-label="Trocar câmera">⇄</button>
     </div>
