@@ -23,11 +23,13 @@
     clips: $('clips'),
     clipsTitle: $('clipsTitle'),
     micFill: $('micFill'),
+    btnSound: $('btnSound'),
+    storage: $('storage'),
   };
 
   const cfg = { bufferSec: 15, quality: '1080', facing: 'environment' };
   const FPS = 30;
-  const MAX_REC_SEC = 180; // trava de segurança (memória)
+  const MAX_REC_SEC = 90; // trava de segurança: a ~16 Mbps cada minuto ocupa ~120 MB na memória do Safari
 
   const S = {
     stream: null, running: false, loopId: 0,
@@ -40,8 +42,11 @@
     wake: null, clips: [], note: '',
     canvas: null, ctx2d: null, srcInfo: '',
     micSrc: null, workletReady: false, audioBlocks: 0, audioPeak: 0, startedAt: 0, audioWarned: false,
+    dropBeforeTs: 0, muteUntil: 0, soundOn: true, aInfo: '', reorders: 0, lastOutTs: 0,
   };
-  const VERSION = '0.2.0';
+  const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
+  const VERSION = '0.3.0';
+  const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
   function support() {
@@ -91,6 +96,7 @@
     S.framesIn = S.framesOut = S.dropped = 0;
     S.lastKeyMs = 0; S.lastInTs = 0; S.lastPump = 0;
     S.audioDisabled = false; S.audioBlocks = 0; S.audioPeak = 0; S.audioWarned = false;
+    S.reorders = 0; S.lastOutTs = 0; S.dropBeforeTs = 0; S.muteUntil = 0; S.aInfo = '';
     S.startedAt = performance.now();
 
     if (S.stream.getAudioTracks().length && sup.AudioEncoder && sup.AudioWorklet) {
@@ -148,7 +154,8 @@
   function pump(now) {
     const v = els.video;
     if (v.readyState < 2 || !v.videoWidth || S.configuring) return;
-    if (now - S.lastPump < (1000 / FPS) * 0.8) return;
+    // Com rVFC cada callback já é um quadro novo: filtrar por intervalo derrubava o fps (jitter do 'now').
+    if (!HAS_RVFC && now - S.lastPump < (1000 / FPS) * 0.8) return;
     const w = v.videoWidth & ~1, h = v.videoHeight & ~1;
     if (!S.vEnc || ((w !== S.W || h !== S.H) && !S.rec)) { configureVideo(w, h); return; }
     if (S.vEnc.state !== 'configured') return;
@@ -209,10 +216,16 @@
     chunk.copyTo(data);
     if (meta && meta.decoderConfig) S.vMeta = { decoderConfig: meta.decoderConfig };
     const item = { data, key: chunk.type === 'key', ts: chunk.timestamp, dur: chunk.duration || Math.round(1e6 / FPS) };
-    S.vRing.push(item);
+    if (item.ts < S.lastOutTs) S.reorders++; // saída fora de ordem = encoder usando B-frames
+    S.lastOutTs = Math.max(S.lastOutTs, item.ts);
     if (S.rec) S.rec.v.push(item);
+    if (item.ts > S.dropBeforeTs) {
+      const last = S.vRing[S.vRing.length - 1];
+      if (last && item.ts - last.ts > GAP_US) { S.vRing.length = 0; S.aRing.length = 0; } // câmera pausou: descarta o buffer velho
+      S.vRing.push(item);
+      trimRing();
+    }
     S.framesOut++; S._fpsCount++;
-    trimRing();
   }
 
   function trimRing() {
@@ -310,8 +323,10 @@
     }
     if (S.aEnc.state !== 'configured') return;
     const nCh = S.nCh;
-    const planar = new Float32Array(frames * nCh);
-    for (let c = 0; c < nCh; c++) planar.set(ch[Math.min(c, ch.length - 1)].subarray(0, frames), c * frames);
+    const planar = new Float32Array(frames * nCh); // começa zerado = silêncio
+    if (performance.now() >= S.muteUntil) { // janela de silêncio durante os bipes, para o som do app não entrar no clipe
+      for (let c = 0; c < nCh; c++) planar.set(ch[Math.min(c, ch.length - 1)].subarray(0, frames), c * frames);
+    }
     if (!S.aT0) S.aT0 = performance.now() * 1000 - (frames / S.sampleRate) * 1e6;
     const ts = Math.round(S.aT0 + (S.aSamples / S.sampleRate) * 1e6);
     S.aSamples += frames;
@@ -322,13 +337,36 @@
     } catch (_) { /* descarta bloco */ }
   }
 
+  // AudioSpecificConfig do AAC-LC, usada quando o Safari não entrega a descrição do codec.
+  function makeAsc(objectType, sampleRate, channels) {
+    const rates = [96000, 88200, 64000, 48000, 44100, 32000, 24000, 22050, 16000, 12000, 11025, 8000, 7350];
+    const idx = Math.max(0, rates.indexOf(sampleRate));
+    const bits = objectType.toString(2).padStart(5, '0') + idx.toString(2).padStart(4, '0') + channels.toString(2).padStart(4, '0') + '000';
+    return new Uint8Array([parseInt(bits.slice(0, 8), 2), parseInt(bits.slice(8, 16), 2)]);
+  }
+
+  function aacMeta() {
+    return S.aMeta || { decoderConfig: { codec: 'mp4a.40.2', sampleRate: S.sampleRate, numberOfChannels: S.nCh, description: makeAsc(2, S.sampleRate, S.nCh) } };
+  }
+
   function onAudioChunk(chunk, meta) {
-    const data = new Uint8Array(chunk.byteLength);
+    let data = new Uint8Array(chunk.byteLength);
     chunk.copyTo(data);
-    if (meta && meta.decoderConfig) S.aMeta = { decoderConfig: meta.decoderConfig };
+    // Se vier AAC com cabeçalho ADTS, remove: dentro do MP4 o AAC precisa ser cru.
+    let adts = false;
+    if (data.length > 9 && data[0] === 0xff && (data[1] & 0xf6) === 0xf0) {
+      adts = true;
+      data = data.subarray(data[1] & 1 ? 7 : 9);
+    }
+    if (!S.aMeta && meta && meta.decoderConfig) {
+      const d = meta.decoderConfig.description;
+      const len = d ? (d.byteLength || d.length || 0) : 0;
+      S.aMeta = { decoderConfig: { codec: 'mp4a.40.2', sampleRate: S.sampleRate, numberOfChannels: S.nCh, description: len >= 2 ? d : makeAsc(2, S.sampleRate, S.nCh) } };
+      S.aInfo = `descrição ${len}B${len >= 2 ? '' : ' (gerada)'} · ${adts ? 'ADTS' : 'AAC cru'} · 1º chunk ${chunk.byteLength}B`;
+    }
     const item = { data, key: chunk.type === 'key', ts: chunk.timestamp, dur: chunk.duration || Math.round((1024 / S.sampleRate) * 1e6) };
-    S.aRing.push(item);
     if (S.rec) S.rec.a.push(item);
+    if (item.ts > S.dropBeforeTs) S.aRing.push(item);
   }
 
   /* ---------- gravação retroativa ---------- */
@@ -348,6 +386,7 @@
       startMs: performance.now(),
       preSec: (last - t0) / 1e6,
     };
+    beep('start');
     setStatus('');
     updateUI();
   }
@@ -360,10 +399,14 @@
     // Sem flush(): ele reinicia o estado do encoder (principalmente o AAC) e gera
     // timestamps fora de ordem nos clipes seguintes. Esperamos os chunks já enviados saírem.
     const stopTs = S.lastInTs;
+    beep('stop'); // toca já no toque; o que vier depois de stopTs fica fora do clipe
     await drainEncoders();
     const r = S.rec; S.rec = null;
     r.v = r.v.filter((c) => c.ts <= stopTs);
     r.a = r.a.filter((c) => c.ts <= stopTs);
+    // Zera o buffer: o próximo clipe só pode ter pre-roll de imagens POSTERIORES a este clipe,
+    // senão o final deste clipe reaparece no começo do próximo.
+    S.dropBeforeTs = stopTs; S.vRing.length = 0; S.aRing.length = 0; S.lastKeyMs = 0;
     try {
       addClip(buildMp4(r));
       setStatus('Clipe salvo na lista abaixo.', 'ok');
@@ -393,7 +436,7 @@
 
   function buildMp4(r) {
     if (!r.v.length || !S.vMeta) throw new Error('sem dados de vídeo');
-    const withAudio = r.a.length > 0 && !!S.aMeta && S.nCh > 0;
+    const withAudio = r.a.length > 0 && S.nCh > 0;
     const muxer = new Mp4Muxer.Muxer({
       target: new Mp4Muxer.ArrayBufferTarget(),
       video: { codec: 'avc', width: S.W, height: S.H },
@@ -403,7 +446,9 @@
     });
     const vs = rebase(r.v, r.t0);
     vs.forEach((c, i) => muxer.addVideoChunkRaw(c.data, c.key ? 'key' : 'delta', c.t, c.dur, i === 0 ? S.vMeta : undefined));
-    if (withAudio) rebase(r.a, r.t0).forEach((c, i) => muxer.addAudioChunkRaw(c.data, c.key ? 'key' : 'delta', c.t, c.dur, i === 0 ? S.aMeta : undefined));
+    const as = withAudio ? rebase(r.a, r.t0) : [];
+    as.forEach((c, i) => muxer.addAudioChunkRaw(c.data, c.key ? 'key' : 'delta', c.t, c.dur, i === 0 ? aacMeta() : undefined));
+    const aSec = as.length ? (as[as.length - 1].t + as[as.length - 1].dur - as[0].t) / 1e6 : 0;
     muxer.finalize();
     const blob = new Blob([muxer.target.buffer], { type: 'video/mp4' });
     const last = vs[vs.length - 1];
@@ -411,13 +456,85 @@
     const d = new Date();
     const p = (n) => String(n).padStart(2, '0');
     const name = `clip-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.mp4`;
-    return { name, blob, file: new File([blob], name, { type: 'video/mp4' }), url: URL.createObjectURL(blob), durSec, preSec: r.preSec, withAudio, dims: `${S.W}x${S.H}`, mbps: (blob.size * 8) / durSec / 1e6 };
+    return { name, blob, file: new File([blob], name, { type: 'video/mp4' }), url: URL.createObjectURL(blob), durSec, preSec: r.preSec, withAudio, dims: `${S.W}x${S.H}`, mbps: (blob.size * 8) / durSec / 1e6, aCount: as.length, aSec, aInfo: S.aInfo, at: Date.now() };
+  }
+
+  /* ---------- sons de início/fim ---------- */
+  function beep(kind) {
+    if (!S.soundOn) return;
+    const ctx = S.audioCtx;
+    if (!ctx || ctx.state !== 'running') return;
+    const tones = kind === 'start' ? [[880, 0, 0.12]] : [[660, 0, 0.09], [660, 0.16, 0.09]];
+    const t0 = ctx.currentTime + 0.01;
+    for (const [f, off, d] of tones) {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + off);
+      g.gain.exponentialRampToValueAtTime(0.3, t0 + off + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + off + d);
+      o.connect(g); g.connect(ctx.destination);
+      o.start(t0 + off); o.stop(t0 + off + d + 0.02);
+    }
+    const dur = kind === 'start' ? 0.14 : 0.28;
+    S.muteUntil = performance.now() + dur * 1000 + 250; // microfone em silêncio enquanto o bipe toca
   }
 
   /* ---------- lista de clipes ---------- */
+  /* Armazenamento persistente (IndexedDB): os clipes sobrevivem a fechar o app/aba até você excluir. */
+  const DB_NAME = 'clip', STORE = 'clips';
+  function openDb() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(STORE, { keyPath: 'name' });
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function dbRun(mode, fn) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, mode);
+      const req = fn(tx.objectStore(STORE));
+      tx.oncomplete = () => { db.close(); resolve(req && req.result); };
+      tx.onerror = tx.onabort = () => { db.close(); reject(tx.error); };
+    });
+  }
+  const dbSave = (c) => dbRun('readwrite', (s) => s.put({
+    name: c.name, blob: c.blob, durSec: c.durSec, preSec: c.preSec, withAudio: c.withAudio, dims: c.dims,
+    mbps: c.mbps, aCount: c.aCount, aSec: c.aSec, aInfo: c.aInfo, at: c.at,
+  }));
+  const dbDelete = (name) => dbRun('readwrite', (s) => s.delete(name));
+  const dbAll = () => dbRun('readonly', (s) => s.getAll());
+
+  function hydrate(r) {
+    return { ...r, file: new File([r.blob], r.name, { type: 'video/mp4' }), url: URL.createObjectURL(r.blob) };
+  }
+
+  async function restoreClips() {
+    try {
+      const rows = (await dbAll()) || [];
+      rows.sort((a, b) => b.at - a.at);
+      S.clips = rows.map(hydrate);
+      renderClips();
+    } catch (_) { /* sem IndexedDB: segue só com a memória */ }
+  }
+
+  async function updateStorage() {
+    try {
+      const e = await navigator.storage.estimate();
+      const persisted = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+      els.storage.textContent = `Armazenamento: ${(e.usage / 1048576).toFixed(0)} MB usados de ~${(e.quota / 1048576).toFixed(0)} MB${persisted ? ' · protegido' : ''}`;
+    } catch (_) { els.storage.textContent = ''; }
+  }
+
   function addClip(c) {
     S.clips.unshift(c);
     renderClips();
+    dbSave(c).then(() => {
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      updateStorage();
+    }).catch(() => setStatus('Clipe pronto, mas o navegador não deixou guardá-lo: salve-o agora em “Salvar / Compartilhar”.', 'warn'));
   }
 
   function renderClips() {
@@ -431,7 +548,9 @@
       vid.src = c.url; vid.controls = true; vid.playsInline = true; vid.preload = 'metadata';
       const meta = document.createElement('div');
       meta.className = 'meta';
-      meta.textContent = `${c.durSec.toFixed(0)} s (${c.preSec.toFixed(0)} s antes do toque) · ${(c.blob.size / 1048576).toFixed(1)} MB · ${c.dims} · ${c.mbps.toFixed(1)} Mbps · ${c.withAudio ? 'com áudio' : 'SEM áudio'}`;
+      meta.textContent = `${c.durSec.toFixed(0)} s (${c.preSec.toFixed(0)} s antes do toque) · ${(c.blob.size / 1048576).toFixed(1)} MB · ${c.dims} · ${c.mbps.toFixed(1)} Mbps · ` +
+        (c.withAudio ? `áudio ${c.aSec.toFixed(1)} s (${c.aCount} blocos)` : 'SEM áudio') + (c.aInfo ? `\n${c.aInfo}` : '');
+      meta.style.whiteSpace = 'pre-line';
       const row = document.createElement('div');
       row.className = 'row';
       const share = document.createElement('button');
@@ -444,7 +563,13 @@
       };
       const del = document.createElement('button');
       del.className = 'ghost'; del.textContent = 'Excluir';
-      del.onclick = () => { URL.revokeObjectURL(c.url); S.clips = S.clips.filter((x) => x !== c); renderClips(); };
+      del.onclick = () => {
+        if (!confirm('Excluir este clipe? Se ainda não salvou no Rolo da Câmera, ele será perdido.')) return;
+        URL.revokeObjectURL(c.url);
+        S.clips = S.clips.filter((x) => x !== c);
+        dbDelete(c.name).catch(() => {}).then(updateStorage);
+        renderClips();
+      };
       row.append(share, del);
       card.append(vid, meta, row);
       els.clips.append(card);
@@ -496,7 +621,8 @@
         `rVFC ${ok(sp.rVFC)}  WakeLock ${ok(sp.WakeLock)}  Share(arquivos) ${ok(sp.Share)}`,
         `Vídeo: ${S.W}x${S.H} ${S.codec} ${(S.bitrate / 1e6).toFixed(0)} Mbps`,
         `Áudio: ${S.nCh ? S.sampleRate + ' Hz, ' + S.nCh + ' canal(is), AAC' : (S.audioDisabled ? 'desativado' : 'aguardando')}`,
-        `Frames: entrada ${S.framesIn}, saída ${S.framesOut} (${S.outFps.toFixed(1)}/s), descartados ${S.dropped}`,
+        S.aInfo ? `AAC: ${S.aInfo}` : '',
+        `Frames: entrada ${S.framesIn}, saída ${S.framesOut} (${S.outFps.toFixed(1)}/s), descartados ${S.dropped}, fora de ordem ${S.reorders}`,
         `Buffer: ${S.vRing.length} frames de vídeo, ${S.aRing.length} blocos de áudio`,
         S.note ? 'Nota: ' + S.note : '',
         navigator.userAgent,
@@ -516,6 +642,10 @@
   els.btnClips.addEventListener('click', () => $('clipsSection').scrollIntoView({ behavior: 'smooth' }));
 
   document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden' && S.running && !S.rec) {
+      // Saiu do app (ex.: compartilhar): o iOS pausa a câmera. Descarta o buffer para não misturar imagens antigas.
+      S.dropBeforeTs = S.lastInTs; S.vRing.length = 0; S.aRing.length = 0; S.lastKeyMs = 0;
+    }
     if (document.visibilityState === 'visible' && S.running) {
       const live = S.stream && S.stream.getTracks().every((t) => t.readyState === 'live');
       if (!live && !S.rec) { setStatus('A câmera foi pausada pelo iOS; reiniciando…', 'warn'); start(); }
@@ -528,7 +658,24 @@
     if (S.audioCtx && S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {});
   });
 
+  try { S.soundOn = localStorage.getItem('clip.sound') !== '0'; } catch (_) {}
+  const paintSound = () => { els.btnSound.textContent = S.soundOn ? '🔊' : '🔇'; };
+  els.btnSound.addEventListener('click', () => {
+    S.soundOn = !S.soundOn;
+    try { localStorage.setItem('clip.sound', S.soundOn ? '1' : '0'); } catch (_) {}
+    paintSound();
+    if (S.soundOn) beep('start');
+  });
+  paintSound();
+
+  // Offline: o service worker guarda o app no aparelho (câmera e codificação já são locais).
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+
   setInterval(tick, 250);
   renderClips();
+  restoreClips();
+  updateStorage();
   updateUI();
 })();

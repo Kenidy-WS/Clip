@@ -73,6 +73,7 @@
         <option value="1080" selected>1080p · 16 Mbps</option>
         <option value="720">720p · 8 Mbps</option>
       </select>
+      <button class="flip" id="btnSound" aria-label="Sons de início e fim">🔊</button>
       <button class="flip" id="btnFlip" aria-label="Trocar câmera">⇄</button>
     </div>
     <button class="rec idle" id="btnRec">Iniciar câmera</button>
@@ -81,7 +82,8 @@
 </div>
 <section id="clipsSection">
   <h2 id="clipsTitle">Clipes (0)</h2>
-  <p class="hint">Os clipes ficam só na memória desta aba. Toque em “Salvar / Compartilhar” → “Salvar vídeo” para mandar ao Rolo da Câmera antes de fechar o app.</p>
+  <p class="hint">Os clipes ficam guardados neste app até você excluir. Toque em “Salvar / Compartilhar” → “Salvar vídeo” para mandar ao Rolo da Câmera.</p>
+  <p class="hint" id="storage"></p>
   <div id="clips"></div>
 </section>
 <script src="vendor/mp4-muxer.js"></script>

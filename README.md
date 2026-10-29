@@ -17,5 +17,8 @@ O botão **i** mostra o diagnóstico (suporte a WebCodecs, resolução real, fps
 
 ## Limites conhecidos
 - O app precisa ficar aberto com a tela ligada (limitação do iOS).
-- Clipes ficam só na memória da aba; salve antes de fechar. Trava em 3 min por gravação.
+- Clipes ficam guardados no IndexedDB do navegador (sobrevivem a fechar o app) até você excluir; salve no Rolo da Câmera para não depender disso. Trava em 90 s por gravação (memória).
+- Após cada gravação o buffer é zerado: o pre-roll do próximo clipe só tem imagens posteriores ao anterior.
+- Funciona offline depois do primeiro carregamento (service worker, rede primeiro).
+- O iOS pede permissão de câmera/microfone a cada abertura (limitação do WebKit, bug 280394).
 - Comando de voz: próxima etapa.
