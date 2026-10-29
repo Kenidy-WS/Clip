@@ -27,6 +27,7 @@
     storage: $('storage'),
     update: $('update'),
     btnUpdate: $('btnUpdate'),
+    btnMic: $('btnMic'),
   };
 
   const cfg = { bufferSec: 15, quality: '1080', facing: 'environment' };
@@ -45,10 +46,10 @@
     canvas: null, ctx2d: null, srcInfo: '',
     micSrc: null, workletReady: false, audioBlocks: 0, audioPeak: 0, startedAt: 0, audioWarned: false,
     dropBeforeTs: 0, muteUntil: 0, soundOn: true, aInfo: '', reorders: 0, lastOutTs: 0,
-    aErr: '', aErrCount: 0, aOut: 0, aLastTs: 0, aResyncs: 0, audioSetupBusy: false,
+    aErr: '', aErrCount: 0, aOut: 0, aLastTs: 0, aResyncs: 0, audioSetupBusy: false, micErr: '',
   };
   const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
-  const VERSION = '0.3.4';
+  const VERSION = '0.3.5';
   const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
@@ -69,6 +70,41 @@
   }
 
   /* ---------- câmera ---------- */
+  const AUDIO_C = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 } };
+
+  // Mensagem com a causa real do erro do microfone (antes tudo virava "permissão negada").
+  function micHint(e) {
+    const n = (e && e.name) || 'erro';
+    if (n === 'NotAllowedError' || n === 'SecurityError') {
+      return `Microfone sem permissão (${n}). Toque em “Ativar microfone” e permita. Se o pedido não aparecer: aA → Ajustes do Site → Microfone → Permitir, e recarregue.`;
+    }
+    if (n === 'NotReadableError' || n === 'AbortError') {
+      return `Microfone ocupado por outro app ou ligação (${n}). Feche o outro app e toque em “Ativar microfone”.`;
+    }
+    return `Microfone indisponível (${n}${e && e.message ? ': ' + e.message : ''}). Toque em “Ativar microfone” para tentar de novo.`;
+  }
+
+  // Liga o microfone sem reiniciar a câmera (precisa de um toque do usuário para o iOS pedir a permissão).
+  async function enableMic() {
+    if (!S.running || !S.stream) { await start(); return; }
+    els.btnMic.disabled = true;
+    try {
+      ensureAudioCtx();
+      const ms = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_C });
+      const tr = ms.getAudioTracks()[0];
+      if (!tr) throw new Error('sem faixa de áudio');
+      S.stream.addTrack(tr);
+      S.micErr = ''; S.note = ''; S.audioDisabled = false; S.audioWarned = false;
+      S.audioBlocks = 0; S.startedAt = performance.now();
+      await trySetupAudio();
+      if (S.worklet) { setStatus('Microfone ativado.', 'ok'); setTimeout(() => setStatus(''), 2500); }
+      else setStatus(S.note, 'warn');
+    } catch (e) {
+      S.micErr = `${e.name}: ${e.message}`;
+      setStatus(micHint(e), 'warn');
+    } finally { els.btnMic.disabled = false; }
+  }
+
   async function start() {
     ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
     await stopAll();
@@ -79,14 +115,14 @@
     }
     const q = cfg.quality === '720' ? { w: 1280, h: 720 } : { w: 1920, h: 1080 };
     const videoC = { facingMode: { ideal: cfg.facing }, width: { ideal: q.w }, height: { ideal: q.h }, frameRate: { ideal: FPS } };
-    const audioC = { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: { ideal: 2 } };
-    S.note = '';
+    S.note = ''; S.micErr = '';
     try {
-      S.stream = await navigator.mediaDevices.getUserMedia({ video: videoC, audio: audioC });
+      S.stream = await navigator.mediaDevices.getUserMedia({ video: videoC, audio: AUDIO_C });
     } catch (e1) {
+      S.micErr = `${e1.name}: ${e1.message}`;
       try {
         S.stream = await navigator.mediaDevices.getUserMedia({ video: videoC });
-        S.note = 'Sem microfone (permissão negada): gravando só vídeo.';
+        S.note = micHint(e1);
       } catch (e2) {
         setStatus('Não consegui abrir a câmera: ' + (e2.name || e2.message) + '. Permita câmera e microfone nas configurações do Safari.', 'err');
         return;
@@ -658,6 +694,7 @@
       els.btnUpdate.textContent = busy ? 'Grave até o fim' : 'Atualizar';
     }
     const hasMic = !!(S.stream && S.stream.getAudioTracks().length);
+    els.btnMic.hidden = !(S.running && !hasMic && !S.rec && !S.finalizing); // botão só aparece sem microfone
     if (S.running && hasMic && !S.audioDisabled && !S.audioWarned && now - S.startedAt > 3500 && S.audioBlocks === 0) {
       S.audioWarned = true;
       setStatus(`Microfone sem sinal (AudioContext: ${S.audioCtx ? S.audioCtx.state : 'ausente'}). Toque na tela ou reinicie a câmera.`, 'warn');
@@ -671,6 +708,7 @@
         `Clip v${VERSION}`,
         `Fonte: ${S.srcInfo || '-'}`,
         `Mic: ctx ${S.audioCtx ? S.audioCtx.state : '-'}, blocos ${S.audioBlocks}, pico ${S.audioPeak.toFixed(3)}, track ${at ? (at.muted ? 'MUTED' : at.readyState) : 'nenhum'}`,
+        S.micErr ? `Erro do microfone: ${S.micErr}` : '',
         `VideoEncoder ${ok(sp.VideoEncoder)}  AudioEncoder ${ok(sp.AudioEncoder)}  AudioWorklet ${ok(sp.AudioWorklet)}`,
         `rVFC ${ok(sp.rVFC)}  WakeLock ${ok(sp.WakeLock)}  Share(arquivos) ${ok(sp.Share)}`,
         `Vídeo: ${S.W}x${S.H} ${S.codec} ${(S.bitrate / 1e6).toFixed(0)} Mbps`,
@@ -695,6 +733,7 @@
   els.selQuality.addEventListener('change', async () => { cfg.quality = els.selQuality.value; if (S.running) await start(); });
   els.btnFlip.addEventListener('click', async () => { cfg.facing = cfg.facing === 'environment' ? 'user' : 'environment'; if (S.running) await start(); });
   els.btnInfo.addEventListener('click', () => els.info.classList.toggle('open'));
+  els.btnMic.addEventListener('click', () => enableMic());
   els.btnClips.addEventListener('click', () => $('clipsSection').scrollIntoView({ behavior: 'smooth' }));
 
   let hiddenAt = 0;

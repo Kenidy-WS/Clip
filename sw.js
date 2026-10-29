@@ -2,7 +2,7 @@
 /* Service worker do Clip: deixa o app funcionar offline.
  * Estratégia: rede primeiro (sempre revalidando, ignorando o cache HTTP de 10 min do GitHub Pages)
  * e cache do service worker como reserva quando está sem internet. */
-const CACHE = 'clip-0.3.4';
+const CACHE = 'clip-0.3.5';
 const ASSETS = ['./', 'index.html', 'app.js', 'vendor/mp4-muxer.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', (event) => {
