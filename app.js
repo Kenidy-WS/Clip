@@ -49,7 +49,7 @@
     aErr: '', aErrCount: 0, aOut: 0, aLastTs: 0, aResyncs: 0, audioSetupBusy: false, micErr: '',
   };
   const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
-  const VERSION = '0.3.5';
+  const VERSION = '0.3.6';
   const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
@@ -620,6 +620,22 @@
     }).catch(() => setStatus('Clipe pronto, mas o navegador não deixou guardá-lo: salve-o agora em “Salvar / Compartilhar”.', 'warn'));
   }
 
+  // Com câmera e microfone ligados, o iOS mantém a sessão de áudio em modo de captura e o som de qualquer
+  // <video> da página sai mudo/baixo. Por isso a captura é pausada enquanto você assiste um clipe.
+  async function onClipPlay(vid) {
+    if (S.rec || S.finalizing) {
+      vid.pause();
+      setStatus('Termine a gravação antes de assistir um clipe.', 'warn');
+      return;
+    }
+    if (!S.running) return; // captura já parada: o som sai normalmente
+    vid.pause();
+    await stopAll();
+    try { if (S.audioCtx && S.audioCtx.state === 'running') await S.audioCtx.suspend(); } catch (_) { /* segue */ }
+    setStatus('Câmera pausada para você assistir. Toque em “Iniciar câmera” para voltar.', 'warn');
+    try { await vid.play(); } catch (_) { /* se o iOS exigir, é só tocar em play de novo */ }
+  }
+
   function renderClips() {
     els.clipsTitle.textContent = `Clipes (${S.clips.length})`;
     els.btnClips.textContent = `Clipes (${S.clips.length}) ↓`;
@@ -629,6 +645,8 @@
       card.className = 'clip';
       const vid = document.createElement('video');
       vid.src = c.url; vid.controls = true; vid.playsInline = true; vid.preload = 'metadata';
+      vid.muted = false; vid.volume = 1;
+      vid.addEventListener('play', () => onClipPlay(vid));
       const meta = document.createElement('div');
       meta.className = 'meta';
       meta.textContent = `${c.durSec.toFixed(0)} s (${c.preSec.toFixed(0)} s antes do toque) · ${(c.blob.size / 1048576).toFixed(1)} MB · ${c.dims} · ${c.mbps.toFixed(1)} Mbps · ` +
@@ -754,6 +772,7 @@
 
   // Qualquer toque tenta destravar o áudio (o Safari pode deixar o AudioContext suspenso).
   document.addEventListener('pointerdown', () => {
+    if (!S.running) return; // sem câmera ligada não mexe no áudio (não atrapalha a reprodução dos clipes)
     const retry = () => { if (S.running && !S.worklet) trySetupAudio().then(() => { if (S.worklet) setStatus(''); }); };
     if (S.audioCtx && S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {}).then(retry);
     else retry();
