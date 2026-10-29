@@ -1,7 +1,7 @@
 'use strict';
 /* Service worker do Clip: deixa o app funcionar offline.
  * Estratégia: rede primeiro (sempre pega a versão nova quando há internet) e cache como reserva. */
-const CACHE = 'clip-0.3.1';
+const CACHE = 'clip-0.3.2';
 const ASSETS = ['./', 'index.html', 'app.js', 'vendor/mp4-muxer.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
 self.addEventListener('install', (event) => {

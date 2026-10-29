@@ -43,9 +43,10 @@
     canvas: null, ctx2d: null, srcInfo: '',
     micSrc: null, workletReady: false, audioBlocks: 0, audioPeak: 0, startedAt: 0, audioWarned: false,
     dropBeforeTs: 0, muteUntil: 0, soundOn: true, aInfo: '', reorders: 0, lastOutTs: 0,
+    aErr: '', aErrCount: 0, aOut: 0, aLastTs: 0, aResyncs: 0, audioSetupBusy: false,
   };
   const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
-  const VERSION = '0.3.1';
+  const VERSION = '0.3.2';
   const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
@@ -99,8 +100,9 @@
     S.reorders = 0; S.lastOutTs = 0; S.dropBeforeTs = 0; S.muteUntil = 0; S.aInfo = '';
     S.startedAt = performance.now();
 
+    S.aErr = ''; S.aErrCount = 0; S.aOut = 0; S.aLastTs = 0; S.aResyncs = 0;
     if (S.stream.getAudioTracks().length && sup.AudioEncoder && sup.AudioWorklet) {
-      setupAudio().catch((e) => { S.audioDisabled = true; S.note = 'Áudio indisponível: ' + e.message; });
+      trySetupAudio();
     } else if (S.stream.getAudioTracks().length) {
       S.audioDisabled = true;
       S.note = 'Este navegador não suporta AudioEncoder: clipes só com vídeo.';
@@ -269,10 +271,19 @@
     if (S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {});
   }
 
+  async function trySetupAudio() {
+    if (S.audioSetupBusy || S.worklet || !S.stream || !S.stream.getAudioTracks().length) return;
+    S.audioSetupBusy = true;
+    try { await setupAudio(); S.audioDisabled = false; }
+    catch (e) { S.note = 'Áudio: ' + e.message; setStatus(S.note, 'warn'); }
+    finally { S.audioSetupBusy = false; }
+  }
+
   async function setupAudio() {
     const ctx = S.audioCtx;
     if (!ctx) throw new Error('sem AudioContext');
-    if (ctx.state !== 'running') await Promise.race([ctx.resume(), new Promise((r) => setTimeout(r, 1500))]);
+    if (ctx.state !== 'running') await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 1500))]);
+    if (ctx.state !== 'running') throw new Error('toque na tela para ativar o áudio');
     S.sampleRate = ctx.sampleRate;
     if (!S.workletReady) {
       const url = URL.createObjectURL(new Blob([WORKLET_SRC], { type: 'application/javascript' }));
@@ -297,11 +308,18 @@
       const c = { codec: 'mp4a.40.2', sampleRate: S.sampleRate, numberOfChannels: nCh, bitrate: 192000, aac: { format: 'aac' } };
       const r = await AudioEncoder.isConfigSupported(c);
       if (!r || !r.supported) { S.audioDisabled = true; S.note = 'AAC não suportado neste navegador: clipes só com vídeo.'; setStatus(S.note, 'warn'); return; }
-      S.aEnc = new AudioEncoder({
+      let enc = null;
+      enc = new AudioEncoder({
         output: onAudioChunk,
-        error: (e) => { S.audioDisabled = true; setStatus('Erro no áudio: ' + e.message, 'warn'); },
+        error: (e) => {
+          // Encoder fechado por erro: guarda a mensagem, solta o encoder e recria no próximo bloco.
+          S.aErr = e.message; S.aErrCount++;
+          if (S.aEnc === enc) S.aEnc = null;
+          if (S.aErrCount > 5) { S.audioDisabled = true; setStatus('Erro no áudio: ' + e.message, 'warn'); }
+        },
       });
-      S.aEnc.configure(c);
+      S.aEnc = enc;
+      enc.configure(c);
       S.nCh = nCh;
     } catch (e) {
       S.audioDisabled = true; S.note = 'Áudio indisponível: ' + e.message; setStatus(S.note, 'warn');
@@ -327,8 +345,13 @@
     if (performance.now() >= S.muteUntil) { // janela de silêncio durante os bipes, para o som do app não entrar no clipe
       for (let c = 0; c < nCh; c++) planar.set(ch[Math.min(c, ch.length - 1)].subarray(0, frames), c * frames);
     }
-    if (!S.aT0) S.aT0 = performance.now() * 1000 - (frames / S.sampleRate) * 1e6;
-    const ts = Math.round(S.aT0 + (S.aSamples / S.sampleRate) * 1e6);
+    // Relógio do áudio = contador de amostras ancorado no relógio do vídeo. Se o iOS suspender o áudio
+    // (ex.: compartilhar/salvar), o contador atrasa; sem reancorar, o buffer descartaria o áudio para sempre.
+    const arrival = performance.now() * 1000 - (frames / S.sampleRate) * 1e6;
+    if (!S.aT0) S.aT0 = arrival;
+    let ts = S.aT0 + (S.aSamples / S.sampleRate) * 1e6;
+    if (arrival - ts > 250000) { S.aT0 = arrival - (S.aSamples / S.sampleRate) * 1e6; ts = arrival; S.aResyncs++; }
+    ts = Math.round(ts);
     S.aSamples += frames;
     try {
       const ad = new AudioData({ format: 'f32-planar', sampleRate: S.sampleRate, numberOfFrames: frames, numberOfChannels: nCh, timestamp: ts, data: planar });
@@ -343,6 +366,25 @@
     const idx = Math.max(0, rates.indexOf(sampleRate));
     const bits = objectType.toString(2).padStart(5, '0') + idx.toString(2).padStart(4, '0') + channels.toString(2).padStart(4, '0') + '000';
     return new Uint8Array([parseInt(bits.slice(0, 8), 2), parseInt(bits.slice(8, 16), 2)]);
+  }
+
+  // O Safari entrega como "description" o descritor ES completo (esds, ~39 bytes). O MP4 precisa só do
+  // AudioSpecificConfig (2 bytes) que está dentro dele (tag 0x05); caso contrário o áudio fica inválido.
+  function extractAsc(desc, sampleRate, channels) {
+    try {
+      if (desc) {
+        const u = desc instanceof ArrayBuffer ? new Uint8Array(desc) : new Uint8Array(desc.buffer, desc.byteOffset, desc.byteLength);
+        if (u.length >= 2 && u.length <= 5 && (u[0] >> 3) === 2) return u.slice();
+        for (let i = 0; i < u.length - 3; i++) {
+          if (u[i] !== 0x05) continue;
+          let j = i + 1, len = 0;
+          while (j < u.length && (u[j] & 0x80)) { len = (len << 7) | (u[j] & 0x7f); j++; }
+          len = (len << 7) | (u[j] & 0x7f); j++;
+          if (len >= 2 && len <= 5 && j + len <= u.length && (u[j] >> 3) === 2) return u.slice(j, j + len);
+        }
+      }
+    } catch (_) { /* cai no valor gerado */ }
+    return makeAsc(2, sampleRate, channels);
   }
 
   function aacMeta() {
@@ -361,10 +403,13 @@
     if (!S.aMeta && meta && meta.decoderConfig) {
       const d = meta.decoderConfig.description;
       const len = d ? (d.byteLength || d.length || 0) : 0;
-      S.aMeta = { decoderConfig: { codec: 'mp4a.40.2', sampleRate: S.sampleRate, numberOfChannels: S.nCh, description: len >= 2 ? d : makeAsc(2, S.sampleRate, S.nCh) } };
-      S.aInfo = `descrição ${len}B${len >= 2 ? '' : ' (gerada)'} · ${adts ? 'ADTS' : 'AAC cru'} · 1º chunk ${chunk.byteLength}B`;
+      const asc = extractAsc(d, S.sampleRate, S.nCh);
+      S.aMeta = { decoderConfig: { codec: 'mp4a.40.2', sampleRate: S.sampleRate, numberOfChannels: S.nCh, description: asc } };
+      const hex = Array.from(asc, (b) => b.toString(16).padStart(2, '0')).join(' ');
+      S.aInfo = `Safari deu ${len}B → ASC ${hex} · ${adts ? 'ADTS' : 'AAC cru'} · 1º chunk ${chunk.byteLength}B`;
     }
     const item = { data, key: chunk.type === 'key', ts: chunk.timestamp, dur: chunk.duration || Math.round((1024 / S.sampleRate) * 1e6) };
+    S.aOut++; S.aLastTs = item.ts;
     if (S.rec) S.rec.a.push(item);
     if (item.ts > S.dropBeforeTs) S.aRing.push(item);
   }
@@ -624,6 +669,8 @@
         `Vídeo: ${S.W}x${S.H} ${S.codec} ${(S.bitrate / 1e6).toFixed(0)} Mbps`,
         `Áudio: ${S.nCh ? S.sampleRate + ' Hz, ' + S.nCh + ' canal(is), AAC' : (S.audioDisabled ? 'desativado' : 'aguardando')}`,
         S.aInfo ? `AAC: ${S.aInfo}` : '',
+        `Áudio fluxo: chunks ${S.aOut}, fila ${S.aEnc ? S.aEnc.encodeQueueSize : '-'}, encoder ${S.aEnc ? S.aEnc.state : 'nenhum'}, ressincs ${S.aResyncs}, erros ${S.aErrCount}${S.aErr ? ' (' + S.aErr + ')' : ''}`,
+        `Relógio áudio−vídeo: ${S.aLastTs && S.lastInTs ? Math.round((S.aLastTs - S.lastInTs) / 1000) + ' ms' : '-'}`,
         `Frames: entrada ${S.framesIn}, saída ${S.framesOut} (${S.outFps.toFixed(1)}/s), descartados ${S.dropped}, fora de ordem ${S.reorders}`,
         `Buffer: ${S.vRing.length} frames de vídeo, ${S.aRing.length} blocos de áudio`,
         S.note ? 'Nota: ' + S.note : '',
@@ -643,21 +690,27 @@
   els.btnInfo.addEventListener('click', () => els.info.classList.toggle('open'));
   els.btnClips.addEventListener('click', () => $('clipsSection').scrollIntoView({ behavior: 'smooth' }));
 
+  let hiddenAt = 0;
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden' && S.running && !S.rec) {
-      // Saiu do app (ex.: compartilhar): o iOS pausa a câmera. Descarta o buffer para não misturar imagens antigas.
-      S.dropBeforeTs = S.lastInTs; S.vRing.length = 0; S.aRing.length = 0; S.lastKeyMs = 0;
-    }
-    if (document.visibilityState === 'visible' && S.running) {
+    if (document.visibilityState === 'hidden') {
+      hiddenAt = performance.now();
+      if (S.running && !S.rec) {
+        // Saiu do app (ex.: compartilhar): o iOS pausa a câmera. Descarta o buffer para não misturar imagens antigas.
+        S.dropBeforeTs = S.lastInTs; S.vRing.length = 0; S.aRing.length = 0; S.lastKeyMs = 0;
+      }
+    } else if (S.running && !S.rec) {
+      // Voltou ao app: depois de uma ausência, câmera, microfone e relógios ficaram velhos. Reinicia tudo do zero.
       const live = S.stream && S.stream.getTracks().every((t) => t.readyState === 'live');
-      if (!live && !S.rec) { setStatus('A câmera foi pausada pelo iOS; reiniciando…', 'warn'); start(); }
+      if (!live || performance.now() - hiddenAt > 1500) { setStatus('Voltando ao app: reiniciando a câmera…', 'warn'); start(); }
       else acquireWake();
-    }
+    } else if (S.running) acquireWake();
   });
 
   // Qualquer toque tenta destravar o áudio (o Safari pode deixar o AudioContext suspenso).
   document.addEventListener('pointerdown', () => {
-    if (S.audioCtx && S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {});
+    const retry = () => { if (S.running && !S.worklet) trySetupAudio().then(() => { if (S.worklet) setStatus(''); }); };
+    if (S.audioCtx && S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {}).then(retry);
+    else retry();
   });
 
   try { S.soundOn = localStorage.getItem('clip.sound') !== '0'; } catch (_) {}
