@@ -46,7 +46,7 @@
     aErr: '', aErrCount: 0, aOut: 0, aLastTs: 0, aResyncs: 0, audioSetupBusy: false,
   };
   const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
-  const VERSION = '0.3.2';
+  const VERSION = '0.3.3';
   const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
@@ -725,8 +725,29 @@
 
   // Offline: o service worker guarda o app no aparelho (câmera e codificação já são locais).
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    const hadController = !!navigator.serviceWorker.controller;
+    let reloadPending = false;
+    const reloadIfIdle = () => {
+      if (!reloadPending) return;
+      if (S.rec || S.finalizing) return; // nunca recarrega no meio de uma gravação
+      location.reload();
+    };
+    // Nova versão assumiu o controle: recarrega para usar o código novo (não na primeira instalação).
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!hadController) return;
+      reloadPending = true;
+      reloadIfIdle();
+    });
+    setInterval(reloadIfIdle, 2000);
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
+    });
   }
+  const ver = $('ver');
+  if (ver) ver.textContent = 'v' + VERSION;
 
   setInterval(tick, 250);
   renderClips();

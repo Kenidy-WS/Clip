@@ -38,7 +38,8 @@
   button:disabled, select:disabled { opacity:.45; }
   button.rec { width:100%; border:0; border-radius:14px; padding:16px; font-size:18px; font-weight:600; }
   button.rec.idle { background:#2f6feb; } button.rec.ready { background:var(--red); } button.rec.on { background:#fff; color:#111; } button.rec.busy { background:var(--line); }
-  .below { display:flex; justify-content:center; padding:8px 0 0; }
+  .below { display:flex; justify-content:center; align-items:center; gap:14px; padding:8px 0 0; }
+  .ver { color:var(--mut); font-size:12px; opacity:.7; }
   button.link { background:none; border:0; color:var(--mut); font-size:14px; }
   section#clipsSection { padding:16px 12px calc(24px + env(safe-area-inset-bottom)); }
   section h2 { font-size:17px; margin:0 0 10px; }
@@ -77,7 +78,7 @@
       <button class="flip" id="btnFlip" aria-label="Trocar câmera">⇄</button>
     </div>
     <button class="rec idle" id="btnRec">Iniciar câmera</button>
-    <div class="below"><button class="link" id="btnClips">Clipes (0) ↓</button></div>
+    <div class="below"><button class="link" id="btnClips">Clipes (0) ↓</button><span class="ver" id="ver"></span></div>
   </div>
 </div>
 <section id="clipsSection">
