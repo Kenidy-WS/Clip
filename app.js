@@ -25,6 +25,8 @@
     micFill: $('micFill'),
     btnSound: $('btnSound'),
     storage: $('storage'),
+    update: $('update'),
+    btnUpdate: $('btnUpdate'),
   };
 
   const cfg = { bufferSec: 15, quality: '1080', facing: 'environment' };
@@ -46,7 +48,7 @@
     aErr: '', aErrCount: 0, aOut: 0, aLastTs: 0, aResyncs: 0, audioSetupBusy: false,
   };
   const GAP_US = 1.5e6; // lacuna entre chunks acima disso = câmera foi pausada
-  const VERSION = '0.3.3';
+  const VERSION = '0.3.4';
   const HAS_RVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
 
   /* ---------- suporte ---------- */
@@ -650,6 +652,11 @@
     }
 
     els.micFill.style.height = (S.running ? Math.min(100, S.audioPeak * 160) : 0) + '%';
+    if (els.update.classList.contains('show') && !els.btnUpdate.textContent.startsWith('Atualizando')) {
+      const busy = !!(S.rec || S.finalizing);
+      els.btnUpdate.disabled = busy; // não atualiza no meio de uma gravação
+      els.btnUpdate.textContent = busy ? 'Grave até o fim' : 'Atualizar';
+    }
     const hasMic = !!(S.stream && S.stream.getAudioTracks().length);
     if (S.running && hasMic && !S.audioDisabled && !S.audioWarned && now - S.startedAt > 3500 && S.audioBlocks === 0) {
       S.audioWarned = true;
@@ -725,25 +732,33 @@
 
   // Offline: o service worker guarda o app no aparelho (câmera e codificação já são locais).
   if ('serviceWorker' in navigator) {
-    const hadController = !!navigator.serviceWorker.controller;
-    let reloadPending = false;
-    const reloadIfIdle = () => {
-      if (!reloadPending) return;
-      if (S.rec || S.finalizing) return; // nunca recarrega no meio de uma gravação
-      location.reload();
+    // Nova versão: o service worker novo fica "esperando"; mostramos o aviso e só trocamos quando você tocar em Atualizar.
+    let updating = false;
+    const showUpdate = (worker) => {
+      els.update.classList.add('show');
+      els.btnUpdate.onclick = () => {
+        if (S.rec || S.finalizing) return;
+        updating = true;
+        els.btnUpdate.textContent = 'Atualizando…';
+        els.btnUpdate.disabled = true;
+        worker.postMessage('SKIP_WAITING');
+      };
     };
-    // Nova versão assumiu o controle: recarrega para usar o código novo (não na primeira instalação).
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!hadController) return;
-      reloadPending = true;
-      reloadIfIdle();
-    });
-    setInterval(reloadIfIdle, 2000);
+    navigator.serviceWorker.addEventListener('controllerchange', () => { if (updating) location.reload(); });
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(() => {});
-    });
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then((reg) => {
+        if (reg.waiting && navigator.serviceWorker.controller) showUpdate(reg.waiting);
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) showUpdate(nw);
+          });
+        });
+        const check = () => reg.update().catch(() => {});
+        setInterval(check, 5 * 60 * 1000);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+      }).catch(() => {});
     });
   }
   const ver = $('ver');

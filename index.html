@@ -28,6 +28,10 @@
   .status { position:absolute; left:12px; right:12px; top:56px; padding:8px 12px; border-radius:10px; font-size:14px; background:rgba(14,17,22,.88); border:1px solid var(--line); display:none; }
   .status.show { display:block; }
   .status.err { border-color:var(--red); } .status.warn { border-color:var(--warn); } .status.ok { border-color:var(--ok); }
+  .update { display:none; position:absolute; left:12px; right:12px; bottom:12px; z-index:5; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; border-radius:12px; background:#1f6feb; box-shadow:0 4px 18px rgba(0,0,0,.45); font-size:15px; font-weight:600; }
+  .update.show { display:flex; }
+  .update button { background:#fff; color:#0b3d91; border:0; border-radius:9px; padding:8px 14px; font-weight:700; }
+  .update button:disabled { opacity:.6; }
   pre.info { display:none; position:absolute; left:12px; right:12px; bottom:8px; margin:0; padding:8px 10px; border-radius:10px; font:11px/1.35 ui-monospace, Menlo, monospace; white-space:pre-wrap; word-break:break-all; background:rgba(14,17,22,.88); border:1px solid var(--line); color:var(--mut); max-height:45%; overflow:auto; }
   pre.info.open { display:block; }
   .controls { padding:10px 12px calc(12px + env(safe-area-inset-bottom)); background:var(--panel); border-top:1px solid var(--line); }
@@ -62,6 +66,7 @@
       <button class="icon" id="btnInfo" aria-label="Diagnóstico">i</button>
     </div>
     <div id="status" class="status"></div>
+    <div id="update" class="update"><span>Nova versão disponível</span><button id="btnUpdate">Atualizar</button></div>
     <pre id="info" class="info"></pre>
   </div>
   <div class="controls">
