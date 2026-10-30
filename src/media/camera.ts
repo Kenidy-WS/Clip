@@ -66,7 +66,6 @@ let startSeq = 0; // cada chamada de start() tem um número; a mais recente venc
 
 /** Registro curto das etapas de início da câmera, mostrado no painel de diagnóstico (botão "i"). */
 let audioRetried = false;
-let voiceAutoNext = false; // a próxima abertura da câmera liga a voz sem esperar toque (veio do reinício do microfone)
 
 export function logCam(msg: string): void {
   S.camLog.push(`${(performance.now() / 1000).toFixed(1)}s ${msg}`);
@@ -141,12 +140,10 @@ function armWatchdog(my: number): void {
       logCam('vídeo ok');
       noVideoRetries = 0;
       try {
-        // Depois do reinício do microfone a escuta tenta ligar sozinha (sem exigir toque); se ficar surda, o aviso de toque cobre.
-        startVoice(voiceAutoNext ? 'auto' : 'wait'); // só age se a escuta não estiver viva; nunca pode impedir a câmera de funcionar
+        startVoice('wait'); // só age se a escuta não estiver viva; nunca pode impedir a câmera de funcionar
       } catch (e) {
         logCam(`voz falhou: ${(e as Error).message}`);
       }
-      voiceAutoNext = false;
       return;
     }
     if (document.visibilityState !== 'visible') {
@@ -242,7 +239,8 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   }
   watchdogSoftAt = 0;
   logCam(`start #${my}${isRetry ? ' (nova tentativa)' : ''}`);
-  setAudioSession('play-and-record');
+  // v0.12.5: sem `setAudioSession('play-and-record')` aqui. Numa página recém-carregada (o player recarrega ao fechar) ela é
+  // desnecessária e, desde a v0.9.8, coincide com o microfone da câmera nascendo mudo (pico 0.000) e a voz ficando surda.
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
   // A escuta de voz só funciona se nascer dentro de um toque do usuário (sem toque o iOS a deixa surda). Por isso ela é a
   // primeira coisa a ligar no toque em "Iniciar"; a câmera abre depois que o pedido de microfone da voz for respondido.
@@ -427,13 +425,9 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
       // Solta o microfone de verdade (a captura antiga mantida pelo reinício continuaria presa à sessão de áudio ruim).
       // A escuta de voz também fica presa ao microfone antigo: para e volta a esperar um toque (aviso na tela).
       stopVoice();
-      voiceAutoNext = true;
       S.stream?.getAudioTracks().forEach((t) => t.stop());
       setAudioSession('auto');
-      setTimeout(() => {
-        setAudioSession('play-and-record');
-        void start();
-      }, 450);
+      setTimeout(() => void start(), 450);
       setTimeout(() => (audioRetried = false), 15000);
     }
   }, 3000);

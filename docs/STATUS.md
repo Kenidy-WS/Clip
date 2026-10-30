@@ -520,3 +520,9 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 
 - Relato (v0.12.3): ainda pedia toque na tela para ativar o microfone. Hipótese: o reinício automático do microfone mudo (v0.10.4) parava a voz e a deixava em "aguardando toque". Agora, nesse reinício, a escuta tenta ligar sozinha (`voiceAutoNext` → `startVoice('auto')`); se o iOS a deixar surda, o aviso de toque e o toque seguinte a reiniciam como antes.
 - Se continuar pedindo toque, preciso do Diagnóstico logo depois: "Câmera: início" mostra se houve "microfone mudo … reabrindo" e "Comando de voz" mostra "aguardando toque na tela".
+
+## v0.12.5 — Teste: sem `setAudioSession('play-and-record')` ao abrir a câmera; desfeito o auto da voz
+
+- Relato/Diagnóstico (v0.12.4): o 1º microfone nasce mudo (pico 0.0000) após o recarregamento; o reinício o recuperou, mas a voz religada sozinha ficou surda e o microfone voltou a pico 0.000 → o `voiceAutoNext` da v0.12.4 piorou; desfeito (a voz volta a esperar um toque depois do reinício).
+- Hipótese em teste: o `setAudioSession('play-and-record')` que o `start()` chama desde a v0.9.8 faz o microfone da câmera nascer mudo. Numa página recém-carregada ela não é necessária. Removida de `start()`; no player seguem 'playback' (ao abrir) e 'auto' (ao fechar, antes do recarregamento).
+- Se o microfone ainda nascer mudo: o gatilho é a ordem voz→câmera (a voz abre o microfone primeiro); próximo teste = câmera primeiro, voz logo em seguida dentro do mesmo toque.
