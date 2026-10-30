@@ -84,7 +84,47 @@ function resync(reason: string, resetNudges = false): void {
   }, 900);
 }
 
+/**
+ * Prévia em tela cheia. Visto no iPhone (v0.8.1): ao trocar de lente o iOS desenha o vídeo menor que o elemento (faixas
+ * pretas em volta) mesmo com `object-fit: cover` no CSS. Aqui o elemento recebe o tamanho do container em pixels e o layout
+ * é refeito a cada mudança do stream (metadados, resize do vídeo, início da reprodução) e em pequenos atrasos depois.
+ */
+function fitPreview(reason = ''): void {
+  const v = document.querySelector<HTMLVideoElement>('video#preview');
+  const box = v?.parentElement;
+  if (!v || !box) return;
+  const w = box.clientWidth;
+  const h = box.clientHeight;
+  if (!w || !h) return; // tela escondida: o ResizeObserver refaz quando aparecer
+  v.style.inset = 'auto';
+  v.style.left = '0';
+  v.style.top = '0';
+  v.style.width = `${w}px`;
+  v.style.height = `${h}px`;
+  v.style.objectFit = 'cover';
+  // Força o WebKit a refazer a camada de vídeo (desliga e liga a composição).
+  v.style.transform = 'translateZ(0)';
+  void v.offsetHeight;
+  v.style.transform = '';
+  if (reason) note(`prévia (${reason}): fonte ${v.videoWidth}x${v.videoHeight}, caixa ${w}x${h}`);
+}
+
+function initPreviewFit(): void {
+  const v = document.querySelector<HTMLVideoElement>('video#preview');
+  if (!v) return;
+  const refit = (reason: string): void => {
+    fitPreview(reason);
+    setTimeout(() => fitPreview(), 250);
+    setTimeout(() => fitPreview(), 900);
+  };
+  for (const ev of ['loadedmetadata', 'resize', 'playing', 'emptied'])
+    v.addEventListener(ev, () => refit(ev));
+  addEventListener('resize', () => fitPreview());
+  if (v.parentElement) new ResizeObserver(() => fitPreview()).observe(v.parentElement);
+}
+
 export function initViewport(): void {
+  initPreviewFit();
   syncViewport('abertura');
   resync('abertura', true);
   addEventListener('resize', () => syncViewport('resize'));
@@ -114,7 +154,9 @@ export function viewportInfo(): string {
       : '',
     `margens ${cs.paddingTop}/${cs.paddingBottom}`,
     app ? `app ${Math.round(app.width)}x${Math.round(app.height)}` : '',
-    video ? `preview ${Math.round(video.width)}x${Math.round(video.height)}` : '',
+    video
+      ? `preview ${Math.round(video.width)}x${Math.round(video.height)} em ${Math.round(video.left)},${Math.round(video.top)}`
+      : '',
   ];
   return parts.filter(Boolean).join(', ') + (log.length ? '\n  ' + log.join('\n  ') : '');
 }

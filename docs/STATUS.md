@@ -2,6 +2,12 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.8.2 — faixas ao trocar de lente
+
+- Relato do Kenidy (v0.8.1): a janela já ocupa a tela, mas **ao trocar de lente** o vídeo da prévia fica menor, com faixas pretas em volta (retângulo ~9:16 no centro).
+- Hipótese: o iOS não refaz a camada do `<video>` ao trocar o stream. `fitPreview` (`src/ui/viewport.ts`) fixa o tamanho em px, refaz a composição e repete em `loadedmetadata`/`resize`/`playing`/`emptied` e com atrasos. Diagnóstico "Tela" mostra fonte/caixa da prévia.
+- Testar: trocar 0,5 ↔ 1× várias vezes e virar a câmera; se persistir, print do Diagnóstico (linha "Tela").
+
 ## Feito
 
 - Protótipo `v0.3.7` validado pelo Kenidy no iPhone: vídeo vertical 1080p, áudio nos clipes (também no player do app),
