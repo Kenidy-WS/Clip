@@ -1,18 +1,20 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.7 · `estavel` = 0.15.7 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.16.0 · `estavel` = 0.15.7 (validada no iPhone; avançar para a 0.16.0 só depois da confirmação dele)
 
-## Próximo bloco: design (ícone e marca) — começa em chat novo
+## v0.16.0 — marca e ícone (só visual, não toca na área protegida)
 
-**Estado:** v0.15.7 na `main` e no `estavel` (nível, espelhar frontal, textos e Sons no vídeo validados). Slogan oficial: "Câmera de ação com comando de voz.".
-**Design, o que já foi decidido (30/10):**
+**Decisões de design (30/10):**
 
-- "Clip" = **clipe de filmagem** (vídeo/câmera), NUNCA clipe de papel. Paleta: **amarelo + preto/cinza + vermelho de gravação** (as cores atuais do app; o azul-petróleo foi testado e descartado).
-- Direção que ele gostou um pouco: **1 · Claquete** (amarelo sobre preto, ponto vermelho no centro). Ideia da exclamação ("Clip!" / "Ei Clip!") ainda aberta: pode entrar no nome ou só como marca dentro do app (a opção 3, "visor com !", é a que carrega isso).
-- Descartados: volta no tempo (A), ondas/azul (B), "C" amarelo (C) e todas as variações com clipe de papel.
-- Arquivos: `docs/design/claquete.svg` (base da claquete), `docs/design/rodada1.png`..`rodada3.png` (as três rodadas), `docs/design/rodada3.html` (fonte da rodada 3: claquete, lente, visor com "!").
-  **Abertos para decidir:** nome ("Clip!", "Ei Clip!" ou "Ei Clip"); refinar a claquete (formas, contraste pequeno, talvez com a exclamação); depois gerar o ícone (180x180 apple-touch-icon, 192/512 do manifest, favicon) e aplicar no app e no `manifest.webmanifest`. Visual não pode tocar na área protegida (voz/microfone): versão separada.
-  **Depois do design:** polimento/robustez (ROADMAP, Onda 4) e, quando quiser, estabilização/lanterna/balanço de branco.
+- **Nome:** "Ei Clip", sem exclamação (Ei Clip é também o nome da empresa). A voz pode aceitar "Clip" sozinho como atalho; isso é área protegida e fica para uma versão separada, depois de testar falsos disparos no iPhone.
+- **Logotipo:** "Ei Clip" em Inter Display ExtraBold convertido em curvas, com o pingo de cada "i" vermelho (ponto de gravação). Arquivo: `public/brand/logo.svg`.
+- **Ícone: A2** — um C amarelo cujo rastro afina para trás (o buffer antes do toque), com o play dentro e o ponto vermelho de gravação na ponta. Arquivos: `public/icon.svg`, `public/icon-180.png` (apple-touch), `icon-192.png`, `icon-512.png` (também `maskable`), `favicon-32.png`; marca sem fundo em `public/brand/mark.svg`.
+- **Aplicado:** manifest, favicon, apple-touch-icon e a tela de Início (marca + logotipo no lugar do texto "Ei Clip"). Cores continuam as mesmas (amarelo, vermelho, preto, grafite, branco).
+- **Fontes e histórico:** `docs/design/marca/` (ícone, marca e logotipo em SVG) e `docs/design/rodada1.png`..`rodada4.png`. Descartados: claquete, lente, visor, volta no tempo, ondas, clipe de papel, "Eco" (barras com "!"), linha do tempo, quadro e "quadros em arco" (parece carregando). Variações guardadas: A3b (C em pé com botão de gravar no centro) e monograma "Ei".
+
+**Testar no iPhone:** o iOS guarda o ícone da tela de início no momento da instalação, então para ver o novo é preciso **remover o app da tela de início e adicionar de novo** (Safari → Compartilhar → Adicionar à Tela de Início). Conferir também a tela de Início (marca e logotipo cabem sem empurrar os "Recentes") e a aba do Safari (favicon).
+
+**Depois:** polimento/robustez (ROADMAP, Onda 4); gatilho de voz "Clip" sozinho (versão separada, área protegida); e, quando quiser, estabilização/lanterna/balanço de branco.
 
 ## v0.15.7 — "Sons no vídeo"
 
