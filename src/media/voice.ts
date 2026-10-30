@@ -321,6 +321,19 @@ export function voiceTap(): void {
   else if (!inGesture) restartNow();
 }
 
+/**
+ * Voltou do segundo plano com a escuta ainda de pé: ela costuma seguir ouvindo (visto no iPhone), mas o iOS pode tê-la
+ * interrompido sem aviso (ícone verde, escuta surda). Não derrubamos nada (isso exigiria um toque à toa); só a marcamos como
+ * não verificada, para o aviso de surdez (som alto sem fala ouvida) valer de novo; esse aviso pede um toque, que a reinicia.
+ */
+export function markVoiceUnverified(): void {
+  if (!rec || !wanted || fatal) return;
+  inGesture = false;
+  deafHinted = false;
+  loudSince = 0;
+  logVoice('voltou do segundo plano: escuta mantida (não verificada)');
+}
+
 /** Voltou para o app: se a escuta caiu enquanto estava fora, tenta religar. */
 export function resumeVoice(): void {
   if (wanted && !fatal && !rec && !restartTimer && !awaitingTap) waitForTap();

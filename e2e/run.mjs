@@ -546,6 +546,38 @@ try {
     await page.close();
   }
 
+  // 1f2) O iOS pode anunciar a volta ao app duas vezes seguidas (visto no Diagnóstico): a prévia é refeita uma só vez.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript(STUBS + VOICE);
+    await page.addInitScript(`{
+      const rw = Element.prototype.replaceWith;
+      window.__rw = 0;
+      Element.prototype.replaceWith = function (...a) { if (this.id === 'preview') window.__rw++; return rw.apply(this, a); };
+    }`);
+    await page.goto(URL_);
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    const before = await page.evaluate(() => window.__rw);
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+      document.dispatchEvent(new Event('visibilitychange'));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await page.waitForTimeout(300);
+    check(
+      (await page.evaluate(() => window.__rw)) - before === 1,
+      'volta anunciada duas vezes seguidas: a prévia é refeita uma só vez',
+    );
+    check(
+      (await page.getAttribute('#btnRec', 'data-state')) === 'ready',
+      'volta sem aviso de saída: a câmera segue ligada, sem pedir toque',
+    );
+    await page.close();
+  }
+
   // 1g) Layout em pé e deitado: sem rolagem da página, imagem em tela cheia, controles dentro da tela, zoom bloqueado.
   for (const vp of [
     { width: 390, height: 844 },

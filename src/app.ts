@@ -11,7 +11,7 @@ import {
 } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { previewBeep } from './media/beep';
-import { restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
+import { markVoiceUnverified, restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
 import { trySetupAudio } from './media/audio';
 import { cfg, S } from './state';
 import { T } from './strings';
@@ -214,7 +214,9 @@ async function pauseUntilTap(awayMs: number): Promise<void> {
 function returnFromBackground(awayMs: number): void {
   const tracks = S.stream?.getTracks() ?? [];
   const state = tracks.map((t) => `${t.kind[0]}:${t.readyState}${t.muted ? '/mudo' : ''}`).join(' ');
-  logCam(`voltou (${Math.round(awayMs / 1000)}s fora); faixas ${state || '-'}`);
+  logCam(
+    `voltou (${awayMs > 0 ? `${Math.round(awayMs / 1000)}s fora` : 'sem aviso de saída'}); faixas ${state || '-'}`,
+  );
   const live = tracks.length > 0 && tracks.every((t) => t.readyState === 'live');
   if (!live) {
     void pauseUntilTap(awayMs);
@@ -236,6 +238,7 @@ function returnFromBackground(awayMs: number): void {
 /** Saiu/voltou do app: o iOS pausa a câmera em segundo plano, então o buffer e os relógios ficam velhos. */
 function bindLifecycle(): void {
   let hiddenAt = 0;
+  let lastReturnAt = -1e9;
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
       hiddenAt = performance.now();
@@ -244,9 +247,21 @@ function bindLifecycle(): void {
         S.buffer.discardUntil(S.lastInTs);
         S.lastKeyMs = 0;
       }
-    } else if (S.running && !S.rec) returnFromBackground(performance.now() - hiddenAt);
+      return;
+    }
+    // Visto no Diagnóstico (v0.12.13): o iOS pode avisar a volta duas vezes seguidas e, às vezes, nem avisa a saída. A 2ª
+    // chamada refazia a prévia de novo (reiniciava o carregamento: ~0,7 s de tela preta/encolhida). `hiddenAt` 0 = saída
+    // sem aviso (tempo fora desconhecido; antes ele saía como "tempo desde a abertura do app").
+    const now = performance.now();
+    const duplicate = now - lastReturnAt < 1000;
+    lastReturnAt = now;
+    const awayMs = hiddenAt ? now - hiddenAt : 0;
+    hiddenAt = 0;
+    if (duplicate) return;
+    if (S.running && !S.rec) returnFromBackground(awayMs);
     else if (S.running) void acquireWake();
-    if (document.visibilityState === 'visible') resumeVoice();
+    markVoiceUnverified(); // a escuta pode ter sido interrompida sem aviso: o aviso de surdez volta a valer (não derruba nada)
+    resumeVoice();
   });
 
   // Qualquer toque reinicia uma escuta de voz que tenha começado sem gesto do usuário (ver voiceTap).

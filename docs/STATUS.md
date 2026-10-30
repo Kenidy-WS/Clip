@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.13 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.13 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.14 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.14 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -611,3 +611,12 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Diagnóstico, "Câmera: início": `voltou (Ns fora); faixas …` e `captura encerrada em segundo plano; aguardando toque para retomar`. Copie depois de alguns testes para ver a partir de quantos segundos fora o iOS encerra as faixas.
 - e2e: novo teste de voltar do segundo plano com faixas encerradas (pede toque; um toque retoma câmera e voz).
 - Testar: (1) minimizar 2 s e voltar: segue sem toque; (2) minimizar 20–30 s e voltar: aparece "Toque na tela para retomar a câmera."; um toque fora dos botões religa câmera, microfone e voz, e "Ei Clip" funciona; (3) câmera → Início/Galeria por ~30 s e voltar: instantâneo (prazo de 60 s); (4) acompanhar bateria/calor em uso longo.
+
+## v0.12.14 — Volta do segundo plano: sem refazer a prévia duas vezes, tempo fora correto, escuta marcada como não verificada
+
+- Relato (v0.12.13): às vezes, ao minimizar e voltar, a tela dá uma piscada, encolhe e volta; a voz às vezes não funciona. Diagnóstico de uma ocorrência **em que a voz seguiu funcionando** (a escuta sobreviveu).
+- O que o Diagnóstico mostrou: (1) o `visibilitychange` "visible" chegou **duas vezes seguidas** e **sem** "hidden" antes (nenhum "saiu do app" nem `pagehide`); as faixas voltaram `live/mudas` e desmutaram em 0,2–0,5 s; (2) a prévia foi refeita **duas vezes** em seguida (`prévia refeita` ×2 no mesmo instante) e a nova só entregou imagem ~0,7 s depois (19,8 s → 20,5 s) — essa é a piscada; (3) "voltou (20s fora)" estava errado: `hiddenAt` ficou 0 e o app contou "tempo desde a abertura".
+- Mudanças: (a) a 2ª notificação de volta em menos de 1 s é ignorada (a prévia é refeita uma vez só); (b) sem aviso de saída o tempo fora fica desconhecido (log: "sem aviso de saída"); (c) `markVoiceUnverified()` (`voice.ts`): ao voltar, a escuta que segue de pé **não é derrubada** (decisão do Kenidy: não exigir toque quando ela sobrevive); só é marcada como não verificada, para o aviso de surdez (som alto sem fala ouvida por ~1,5 s) valer de novo; esse aviso pede um toque, que reinicia a escuta dentro do gesto. Risco: em ambiente muito ruidoso (vento, motor) sem fala reconhecida o aviso pode aparecer à toa.
+- Não resolvido: a prévia ainda fica ~0,7 s sem imagem depois de refeita (o `<video>` novo demora a entregar o 1º quadro). Ideia: manter o antigo até o novo tocar e só então trocar (não implementada). A causa do "encolher" não ficou provada: o CSS do `<video>` novo já é tela cheia.
+- Testar: minimizar e voltar várias vezes (rápido e demorado): a piscada deve durar menos (uma refeita, não duas); a voz continua sem pedir toque quando sobrevive; se ela morrer em silêncio, o aviso de toque deve aparecer ao falar/ter som alto. Se acontecer de novo, copie o Diagnóstico logo depois (pela tela da câmera).
+- e2e: volta anunciada duas vezes refaz a prévia uma só vez; volta sem aviso de saída mantém a câmera ligada.
