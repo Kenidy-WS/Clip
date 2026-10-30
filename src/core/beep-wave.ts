@@ -11,9 +11,22 @@ const TONES: Record<BeepKind, Array<[number, number, number]>> = {
   ],
 };
 
-/** Normal = volume das versões anteriores (0,3). */
-const GAIN: Record<BeepVol, number> = { normal: 0.3, high: 0.5, max: 0.8 };
-export const beepGain = (v: BeepVol): number => GAIN[v];
+/**
+ * Perfis de volume. Só aumentar o pico não adianta: o iOS limita a saída enquanto o microfone está ligado e o bipe original
+ * (sobe e decai rápido, "ping") tem pouca energia. Por isso:
+ * - normal: o bipe original (pico 0,3, decai);
+ * - high: pico 0,7 e **mantido** em volume cheio até o fim do bipe (bem mais energia);
+ * - max: pico 1,0, mantido e levemente saturado (onda mais "cheia", mais forte no alto-falante).
+ */
+const PROFILE: Record<BeepVol, { peak: number; sustain: boolean; drive: number }> = {
+  normal: { peak: 0.3, sustain: false, drive: 0 },
+  high: { peak: 0.7, sustain: true, drive: 0 },
+  max: { peak: 1, sustain: true, drive: 2.2 },
+};
+export const beepGain = (v: BeepVol): number => PROFILE[v].peak;
+export const beepSustain = (v: BeepVol): boolean => PROFILE[v].sustain;
+/** Intensidade da saturação suave (0 = nenhuma). */
+export const beepDrive = (v: BeepVol): number => PROFILE[v].drive;
 
 /** Tons do bipe: [frequência Hz, início s, duração s]. */
 export const beepTones = (kind: BeepKind): ReadonlyArray<[number, number, number]> => TONES[kind];

@@ -1,10 +1,19 @@
-import { beepDurationSec, beepGain, beepTones, renderBeep } from '../core/beep-wave';
+import { beepDrive, beepDurationSec, beepGain, beepSustain, beepTones, renderBeep } from '../core/beep-wave';
 import type { BeepKind } from '../core/beep-wave';
 import { S } from '../state';
 import { ensureAudioCtx } from './audio';
 
 /** Quanto do bipe entra no clipe em relação ao tocado no alto-falante (evita estourar a voz). */
 const CLIP_MIX = 0.6;
+
+/** Curva de saturação suave: tanh(drive·x) normalizada para que a entrada ±1 continue saindo em ±1. */
+function softClipCurve(drive: number): Float32Array<ArrayBuffer> {
+  const n = 1024;
+  const curve = new Float32Array(n);
+  const norm = Math.tanh(drive);
+  for (let i = 0; i < n; i++) curve[i] = Math.tanh(drive * ((i / (n - 1)) * 2 - 1)) / norm;
+  return curve;
+}
 
 /** Duração do bipe em ms (a gravação espera esse tempo ao parar, quando o bipe entra no clipe). */
 export const beepMs = (kind: BeepKind): number => Math.round(beepDurationSec(kind) * 1000);
@@ -20,16 +29,28 @@ export function beep(kind: BeepKind): void {
   const peak = beepGain(S.beepVol);
   if (S.soundOn && ctx && ctx.state === 'running') {
     const t0 = ctx.currentTime + 0.01;
+    const sustain = beepSustain(S.beepVol);
+    const drive = beepDrive(S.beepVol);
+    // Saída comum a todas as notas do bipe: saturação suave (só no Máximo) e depois o alto-falante.
+    let out: AudioNode = ctx.destination;
+    if (drive > 0) {
+      const shaper = ctx.createWaveShaper();
+      shaper.curve = softClipCurve(drive);
+      shaper.oversample = '2x';
+      shaper.connect(ctx.destination);
+      out = shaper;
+    }
     for (const [f, off, d] of beepTones(kind)) {
       const o = ctx.createOscillator();
       const g = ctx.createGain();
       o.type = 'sine';
       o.frequency.value = f;
       g.gain.setValueAtTime(0.0001, t0 + off);
-      g.gain.exponentialRampToValueAtTime(peak, t0 + off + 0.01);
+      g.gain.exponentialRampToValueAtTime(peak, t0 + off + (sustain ? 0.006 : 0.01));
+      if (sustain) g.gain.setValueAtTime(peak, t0 + off + d - 0.03); // mantém o volume cheio até perto do fim
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + off + d);
       o.connect(g);
-      g.connect(ctx.destination);
+      g.connect(out);
       o.start(t0 + off);
       o.stop(t0 + off + d + 0.02);
     }

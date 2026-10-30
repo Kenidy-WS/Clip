@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { beepDurationSec, beepGain, renderBeep } from '../src/core/beep-wave';
+import { beepDrive, beepDurationSec, beepGain, beepSustain, renderBeep } from '../src/core/beep-wave';
 
 const peak = (a: Float32Array): number => a.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
 
@@ -19,5 +19,11 @@ describe('renderBeep', () => {
   it('o volume Alto é mais forte que o Normal', () => {
     expect(beepGain('high')).toBeGreaterThan(beepGain('normal'));
     expect(beepGain('max')).toBeGreaterThan(beepGain('high'));
+  });
+
+  it('Alto e Máximo mantêm o volume cheio e só o Máximo satura', () => {
+    expect([beepSustain('normal'), beepSustain('high'), beepSustain('max')]).toEqual([false, true, true]);
+    expect([beepDrive('normal'), beepDrive('high')]).toEqual([0, 0]);
+    expect(beepDrive('max')).toBeGreaterThan(0);
   });
 });

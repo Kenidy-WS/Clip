@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.9.5 — volume do bipe de verdade
+
+- Relato (v0.9.4): "Gravar bipe no vídeo" funciona. Na tela de gravação o bipe do alto-falante está muito baixo, até no Máximo, e os 3 volumes soam iguais.
+- Causa provável: o bipe original sobe e **decai** rápido (pouca energia) e o iOS limita a saída com o microfone ligado; aumentar só o pico (0,3→0,8) mal muda o que se ouve.
+- Agora (`core/beep-wave.ts` PROFILE, `media/beep.ts`): **Normal** = bipe original (pico 0,3, decai); **Alto** = pico 0,7 mantido em volume cheio até perto do fim; **Máximo** = pico 1,0 mantido + saturação suave (`WaveShaper` tanh, onda mais "cheia"). Mesmos tons (880 Hz / 660 Hz×2).
+- Se ainda estiver baixo no Máximo: provavelmente o iOS está usando o processamento de voz/saída de chamada. Conferir no Diagnóstico "Processamento do mic" (eco sim?) e, se for isso, tentar manter o cancelamento de eco desligado (nível 1 do áudio) ou `navigator.audioSession`.
+
 ## v0.9.4 — "Gravar bipe no vídeo" em destaque
 
 - Relato (v0.9.3): bipe original OK. O Kenidy queria um interruptor para o bipe **sair também na gravação**; ele só via "Sons de gravação" (que apenas liga/desliga o som no alto-falante). O interruptor já existia ("Bipe no vídeo", v0.9.0), mas ficava abaixo do volume, sem explicação.
