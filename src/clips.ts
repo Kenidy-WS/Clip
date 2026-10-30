@@ -3,7 +3,7 @@ import { retryAsync } from './core/retry';
 import { clipsChanged, notify } from './events';
 import { S } from './state';
 import { deleteClip, loadClips, requestPersistence, saveClip } from './storage/clip-store';
-import { clearExports, deleteExport, getExport, idbPartStore, putExport } from './storage/take-store';
+import { idbPartStore } from './storage/take-store';
 import { T } from './strings';
 import type { Clip, ClipRecord } from './types';
 
@@ -82,7 +82,6 @@ export function removeClips(list: Clip[]): void {
  * um vídeo tocável até o último fragmento, que vira um clipe na Galeria. Roda na abertura, depois de carregar os clipes.
  */
 export async function recoverTakes(): Promise<void> {
-  void clearExports().catch(() => {});
   try {
     const takes = await idbPartStore.openTakes();
     let recovered = 0;
@@ -127,16 +126,3 @@ export async function recoverTakes(): Promise<void> {
     /* sem IndexedDB */
   }
 }
-
-/** Clipes em disco acima disto passam por `prepareExport` antes de compartilhar. */
-export const bigShareBytes = (): number => (window as { __bigShare?: number }).__bigShare ?? 100e6; // `__bigShare`: só nos testes
-
-/** Faz uma cópia em arquivo único do clipe (ver `putExport`) e devolve o arquivo para compartilhar. Lança se falhar. */
-export async function prepareExport(c: Clip): Promise<File> {
-  await putExport(c.name, c.blob);
-  const b = await getExport(c.name);
-  if (!b || b.size !== c.blob.size) throw new Error('cópia incompleta');
-  return new File([b], c.name, { type: 'video/mp4' });
-}
-
-export const dropExport = (c: Clip): void => void deleteExport(c.name).catch(() => {});

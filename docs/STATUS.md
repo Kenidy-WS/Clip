@@ -1,12 +1,13 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.4 · `estavel` = 0.13.2 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.5 · `estavel` = 0.13.2 · aguardando teste no iPhone
 
-## v0.14.4 — salvar no Rolo clipe longo (5:38, 1,2 GB)
+## v0.14.5 — clipe longo: download pelo service worker (a v0.14.4 foi desfeita)
 
-v0.14.3 validada: gravação e player fluidos, qualidade boa. Falta: "Salvar / Compartilhar" de 1,2 GB derruba a página (tela branca, volta ao início).
-Hipótese: o clipe é centenas de pedaços e o iOS os junta na memória para entregar à folha de compartilhar. Solução: em 2 toques. O 1º prepara uma cópia em arquivo único (guardada e relida do IndexedDB, `prepareExport`); o botão vira "Salvar agora"; o 2º abre a folha. A cópia é apagada ao fechar o clipe e na abertura do app. Só vale para clipes em disco acima de 100 MB.
-**Testar:** o clipe de 5 min: tocar em Salvar/Compartilhar, esperar "Salvar agora", tocar, "Salvar vídeo". Se ainda cair: me dizer em qual passo (preparar ou abrir a folha). Plano B: dividir em partes de ~1 min.
+v0.14.3 validada (gravação e player fluidos). Salvar o clipe de 5:38 (1,2 GB) pela folha de compartilhar **continua derrubando a página**, mesmo com cópia em arquivo único (v0.14.4, revertida): o problema é entregar um `File` gigante à folha, que o iOS carrega na memória.
+Solução: o service worker serve o clipe como download comum (`./__clip/<nome>?take=<id>`, `scripts/sw-template.js`; lê os pedaços do IndexedDB, resposta com `Blob` de arquivos, `Content-Disposition: attachment`, suporta Range). O botão Salvar/Compartilhar de clipes em disco ≥ 100 MB usa esse download em vez da folha (`downloadViaWorker`, `clips-view.ts`). Clipes menores seguem pela folha ("Salvar vídeo").
+**Incerteza:** como o iOS mostra o download no app instalado (aviso de downloads, Arquivos ou visualizador). O arquivo deve acabar em Arquivos > Downloads, de onde "Salvar vídeo" é nativo (sem limite de memória da página).
+**Testar:** clipe de 5 min: Salvar/Compartilhar; ver o que aparece; achar o arquivo; salvar no Rolo; postar. Se a página ainda cair ou nada acontecer, me dizer o que apareceu.
 
 ## v0.14.2 e v0.14.3 — clipe em câmera lenta no player do app
 

@@ -75,7 +75,6 @@ export const els = {
   playerMeta: byId<HTMLElement>('playerMeta'),
   btnPlayerClose: byId<HTMLButtonElement>('btnPlayerClose'),
   btnShare: byId<HTMLButtonElement>('btnShare'),
-  btnShareLabel: byId<HTMLElement>('btnShareLabel'),
   btnDelete: byId<HTMLButtonElement>('btnDelete'),
 
   // ajustes

@@ -1213,36 +1213,46 @@ try {
           (await page.textContent('#status')).includes('Clipe salvo'),
           'gravação longa: aviso "Clipe salvo"',
         );
-        // Compartilhar clipe longo: 1º toque prepara um arquivo único; ao fechar o clipe a cópia é apagada.
-        await page.evaluate(() => (window.__bigShare = 1));
-        await page.click('#btnGallery');
-        await page.locator('#clips .tile').first().click();
-        await page.click('#btnShare');
-        await page.waitForFunction(
-          () => document.querySelector('#btnShareLabel').textContent === 'Salvar agora',
-          null,
-          {
-            timeout: 8000,
-          },
+        // Download do clipe longo pelo service worker (o iOS não monta o arquivo na memória da página).
+        await page.reload();
+        await page
+          .waitForFunction(() => !!navigator.serviceWorker.controller, null, { timeout: 8000 })
+          .catch(() => {});
+        const dl = await page.evaluate(async () => {
+          const rows = await new Promise((res) => {
+            const r = indexedDB.open('clip');
+            r.onsuccess = () => {
+              const q = r.result.transaction('clips').objectStore('clips').getAll();
+              q.onsuccess = () => {
+                r.result.close();
+                res(q.result);
+              };
+            };
+          });
+          const c = rows[0];
+          const url = `./__clip/${encodeURIComponent(c.name)}?take=${encodeURIComponent(c.take)}`;
+          const full = await fetch(url);
+          const body = await full.arrayBuffer();
+          const part = await fetch(url, { headers: { Range: 'bytes=0-9' } });
+          return {
+            status: full.status,
+            type: full.headers.get('content-type'),
+            disp: full.headers.get('content-disposition'),
+            size: body.byteLength,
+            ftyp: new TextDecoder().decode(new Uint8Array(body, 4, 4)),
+            pStatus: part.status,
+            pLen: (await part.arrayBuffer()).byteLength,
+          };
+        });
+        check(
+          dl.status === 200 &&
+            dl.size > 500 &&
+            dl.ftyp === 'ftyp' &&
+            /attachment/.test(dl.disp) &&
+            dl.type === 'video/mp4',
+          'download do clipe longo: o service worker serve o arquivo MP4 completo',
         );
-        const exportKeys = () =>
-          page.evaluate(
-            () =>
-              new Promise((res) => {
-                const r = indexedDB.open('clip');
-                r.onsuccess = () => {
-                  const q = r.result.transaction('parts').objectStore('parts').getAllKeys();
-                  q.onsuccess = () => {
-                    r.result.close();
-                    res(q.result.filter((k) => String(k).startsWith('export/')).length);
-                  };
-                };
-              }),
-          );
-        check((await exportKeys()) === 1, 'compartilhar clipe longo: o arquivo único é preparado');
-        await page.click('#btnPlayerClose');
-        await page.waitForTimeout(800);
-        check((await exportKeys()) === 0, 'compartilhar clipe longo: fechar o clipe apaga a cópia');
+        check(dl.pStatus === 206 && dl.pLen === 10, 'download do clipe longo: aceita pedido parcial (Range)');
         check(errs.length === 0, 'gravação longa: sem erros de JavaScript ' + errs.join(';'));
         await page.close();
       }
