@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.14 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.14 no FIM do arquivo)
 
+## v0.13.2 — miniaturas da Galeria com tamanho fixo
+
+- v0.13.1 validada (aviso falso sumiu); `estavel` avançou para ela.
+- Relato (23 clipes): miniaturas se sobrepunham e a última ficava comprida. Causa provável: no iOS as linhas `auto` da grade encolhem com `aspect-ratio` nos itens.
+- Correção só de CSS (`.grid .tile`): altura por `padding-bottom: 133.33%` + `grid-auto-rows: max-content`. Sem tocar na voz. No Chromium, 23 miniaturas dão 126×168 sem sobreposição.
+- **Testar:** Galeria com muitos clipes: todas iguais (3:4), sem sobrepor, rolagem normal; seleção, toque longo e arrastar continuam.
+
 ## v0.13.1 — aviso de toque falso retirado sozinho
 
 - v0.13.0 validada pelo Kenidy no iPhone (clipe mudo, voz segue ao voltar); branch `estavel` avançou para ela.

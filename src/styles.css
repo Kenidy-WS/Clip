@@ -617,9 +617,15 @@ p {
   gap: 4px;
   padding: 4px 4px 12px;
   align-content: start;
+  grid-auto-rows: max-content;
 }
 .grid .tile {
   border-radius: 6px;
+  /* Altura pelo preenchimento (3:4), não por `aspect-ratio`: no iOS, com muitos clipes, as linhas da grade encolhiam, as
+     miniaturas se sobrepunham e a última ficava comprida (v0.13.2). */
+  aspect-ratio: auto;
+  height: 0;
+  padding-bottom: 133.3333%;
 }
 
 .bar-end .btn-link,

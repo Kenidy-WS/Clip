@@ -786,6 +786,11 @@ try {
     });
     await page.click('#btnGallery'); // câmera estacionada de novo
     check((await page.locator('#clips .tile').count()) === 3, 'Galeria mostra os clipes guardados');
+    const tileBox = await page.locator('#clips .tile').first().boundingBox();
+    check(
+      Math.abs(tileBox.height - (tileBox.width * 4) / 3) < 2,
+      'miniaturas da Galeria mantêm a proporção 3:4 (altura não depende da grade)',
+    );
     check(
       (await page.locator('#clips .tile img').count()) === 3 &&
         (await page.locator('#clips .tile video').count()) === 0,
