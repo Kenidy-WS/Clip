@@ -59,7 +59,11 @@ function pump(now: number): void {
   // Passa pelo canvas: drawImage respeita a rotação do iOS; VideoFrame(<video>) pode sair deitado.
   let frame: VideoFrame;
   try {
+    // Frontal: o iOS entrega a imagem espelhada; o clipe sai como os outros veem (a prévia continua como espelho).
+    const flip = cfg.facing === 'user';
+    if (flip) S.ctx2d.setTransform(-1, 0, 0, 1, S.W, 0);
     S.ctx2d.drawImage(v, 0, 0, S.W, S.H);
+    if (flip) S.ctx2d.setTransform(1, 0, 0, 1, 0, 0);
     frame = new VideoFrame(S.canvas, { timestamp: ts, duration: Math.round(1e6 / cfg.fps) });
   } catch {
     S.dropped++;

@@ -1,6 +1,12 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.1 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.2 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.15.2 — frontal sem espelhar no clipe
+
+Kenidy viu o clipe da frontal espelhado e quer o contrário. Agora, com a frontal, o quadro é invertido na horizontal ao ir para o canvas (`video.ts`), então o clipe e a miniatura saem como os outros veem. A prévia não mudou. Lente traseira intacta.
+**Testar:** gravar com a frontal um papel com texto: no clipe o texto deve sair legível. (Se a prévia ao vivo também deve ficar sem espelho, me dizer.)
+**Deitado:** o diagnóstico enviado mostrou 1080x1920 e janela 393x852 (em pé). Possível causa: bloqueio de orientação do iPhone ligado (o app não gira) ou o diagnóstico foi copiado em pé. Sem girar, saber a posição do celular exigiria o sensor de movimento (permissão extra). Aguardando o teste com o bloqueio desligado.
 
 ## v0.15.1 — "Nível" e sondagem do foco
 
