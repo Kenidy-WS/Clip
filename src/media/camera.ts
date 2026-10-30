@@ -5,6 +5,7 @@ import { T } from '../strings';
 import { els, renewPreview } from '../ui/dom';
 import { setAudioSession } from './audio-session';
 import { ensureAudioCtx, trySetupAudio } from './audio';
+import { salvageRecording } from './recorder';
 import { support } from './support';
 import { startLoop } from './video';
 import { startVoice, stopVoice, voiceSettled } from './voice';
@@ -540,7 +541,7 @@ export async function stopAll(keepTracks = false, keepVoice = false): Promise<vo
   S.running = false;
   if (!keepVoice) stopVoice(); // reiniciar só a câmera não derruba a escuta de voz (ela não depende da captura)
   S.loopId++;
-  S.rec = null;
+  salvageRecording(); // reiniciar a captura no meio de uma gravação guarda o trecho em vez de descartá-lo
   if (!keepTracks) stopTracks(S.stream);
   S.stream = null;
   try {

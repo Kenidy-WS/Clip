@@ -123,6 +123,28 @@ const STANDALONE = `
   Object.defineProperty(screen, 'width', { get: () => 393 });
   Object.defineProperty(screen, 'height', { get: () => 852 });`;
 const DENY = `navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));`;
+// Codificador de vídeo falso que ENTREGA dados (suficientes para montar um MP4): permite gravar, parar e guardar de verdade.
+// __killEnc() simula o codificador morrendo (visto no iPhone com 4K/60).
+const EMIT = `
+  const AVCC = new Uint8Array([1, 0x42, 0xc0, 0x1e, 0xff, 0xe1, 0, 4, 0x67, 0x42, 0xc0, 0x1e, 1, 0, 2, 0x68, 0xce]);
+  window.__chunks = 0; window.__venc = null;
+  window.VideoEncoder = class {
+    constructor(i) { this.i = i; this.state = 'unconfigured'; this.encodeQueueSize = 0; this.n = 0; window.__venc = this; }
+    configure() { this.state = 'configured'; }
+    encode(frame, o) {
+      const first = this.n++ === 0;
+      const chunk = { byteLength: 6, type: first || (o && o.keyFrame) ? 'key' : 'delta', timestamp: frame.timestamp,
+        duration: frame.duration, copyTo(d) { d.set([0, 0, 0, 2, 0x65, 0x88]); } };
+      setTimeout(() => {
+        if (this.state === 'closed') return;
+        window.__chunks++;
+        this.i.output(chunk, first ? { decoderConfig: { codec: 'avc1.42c01e', description: AVCC } } : undefined);
+      }, 0);
+    }
+    close() { this.state = 'closed'; }
+    static async isConfigSupported(c) { return { supported: true, config: c }; }
+  };
+  window.__killEnc = () => window.__venc.i.error(new DOMException('falha simulada', 'EncodingError'));`;
 
 let failed = 0;
 const ok = (m) => console.log('OK   ', m);
@@ -989,6 +1011,113 @@ try {
     await page.waitForFunction(() => document.querySelector('#sheet').hidden, null, { timeout: 2000 });
     ok('Ajustes fecham depois da animação');
     await page.close();
+  }
+
+  // 3b) Gravação de verdade (codificador falso que entrega dados): gravar/parar guarda o clipe, e sair do app ou a falha do
+  // codificador no meio da gravação guardam o trecho já gravado em vez de perdê-lo.
+  {
+    const clipSizes = (page) =>
+      page.evaluate(
+        () =>
+          new Promise((res) => {
+            const r = indexedDB.open('clip', 1);
+            r.onerror = () => res(null);
+            r.onsuccess = () => {
+              const q = r.result.transaction('clips').objectStore('clips').getAll();
+              q.onsuccess = () => {
+                r.result.close();
+                res(q.result.map((c) => c.blob.size));
+              };
+            };
+          }),
+      );
+    const openRecordingPage = async () => {
+      const page = await (await browser.newContext()).newPage();
+      const errs = [];
+      page.on('pageerror', (e) => errs.push(String(e)));
+      await page.addInitScript(STUBS + EMIT);
+      await page.goto(URL_);
+      await page.click('#btnOpen');
+      await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+        timeout: 8000,
+      });
+      await page.waitForFunction(() => window.__chunks > 20, null, { timeout: 8000 });
+      return { page, errs };
+    };
+    const startRecording = async (page) => {
+      await page.click('#btnRec');
+      await page.waitForFunction(
+        () => document.querySelector('#btnRec').dataset.state === 'recording',
+        null,
+        {
+          timeout: 3000,
+        },
+      );
+      await page.waitForTimeout(1200);
+    };
+    const waitReady = (page) =>
+      page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+        timeout: 8000,
+      });
+
+    // Gravar e parar pelo botão.
+    {
+      const { page, errs } = await openRecordingPage();
+      await startRecording(page);
+      await page.click('#btnRec');
+      await waitReady(page);
+      await page.waitForTimeout(500);
+      const sizes = await clipSizes(page);
+      check(sizes && sizes.length === 1 && sizes[0] > 500, 'gravação: parar monta o MP4 e guarda o clipe');
+      check((await page.textContent('#status')).includes('Clipe salvo'), 'gravação: aviso "Clipe salvo"');
+      check(errs.length === 0, 'gravação: sem erros de JavaScript ' + errs.join(';'));
+      await page.close();
+    }
+
+    // Sair do app gravando guarda o clipe na hora (o iOS pode encerrar a página em segundo plano).
+    {
+      const { page, errs } = await openRecordingPage();
+      await startRecording(page);
+      await page.evaluate(() => {
+        Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      await page.waitForTimeout(700);
+      check(
+        (await page.getAttribute('#btnRec', 'data-state')) !== 'recording',
+        'sair do app gravando: a gravação termina',
+      );
+      const sizes = await clipSizes(page);
+      check(
+        sizes && sizes.length === 1 && sizes[0] > 500,
+        'sair do app gravando: o trecho gravado vira um clipe guardado',
+      );
+      check(
+        (await page.textContent('#status')).includes('interrompida'),
+        'sair do app gravando: avisa que o trecho foi salvo',
+      );
+      check(errs.length === 0, 'sair do app gravando: sem erros de JavaScript ' + errs.join(';'));
+      await page.close();
+    }
+
+    // O codificador morre no meio da gravação: o trecho já gravado é guardado.
+    {
+      const { page, errs } = await openRecordingPage();
+      await startRecording(page);
+      await page.evaluate(() => window.__killEnc());
+      await page.waitForTimeout(800);
+      const sizes = await clipSizes(page);
+      check(
+        sizes && sizes.length === 1 && sizes[0] > 500,
+        'codificador falhou gravando: o trecho gravado vira um clipe guardado',
+      );
+      check(
+        (await page.getAttribute('#btnRec', 'data-state')) !== 'recording',
+        'codificador falhou gravando: o app sai do estado de gravação',
+      );
+      check(errs.length === 0, 'codificador falhou gravando: sem erros de JavaScript ' + errs.join(';'));
+      await page.close();
+    }
   }
 
   // 4) Offline e 5) aviso de atualização.

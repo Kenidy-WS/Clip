@@ -76,7 +76,11 @@ export function salvageRecording(): void {
   const r = S.rec;
   if (!r) return;
   S.rec = null;
-  if (r.v.length) commitRecording(r, S.lastInTs, undefined, true);
+  const stopTs = S.lastInTs;
+  if (r.v.length) commitRecording(r, stopTs, undefined, true);
+  // Mesma regra do fim normal: o próximo clipe não pode repetir o final deste.
+  S.buffer.discardUntil(stopTs);
+  S.lastKeyMs = 0;
 }
 
 export async function stopRec(): Promise<void> {

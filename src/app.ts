@@ -24,6 +24,7 @@ import { bindDiagnostics } from './ui/diag-view';
 import { els } from './ui/dom';
 import { mountIcons } from './ui/icons';
 import { backToCamera, leaveGallery, openCamera, showScreen } from './ui/navigation';
+import { bindRecordingGuard } from './ui/rec-guard';
 import { setStatus } from './ui/status';
 import { initLifecycleLog } from './ui/lifecycle-log';
 import { hideAnimated, showAnimated } from './ui/transitions';
@@ -324,6 +325,7 @@ export function initApp(): void {
   bindSettings();
   bindPlayer();
   bindLifecycle();
+  bindRecordingGuard();
   els.ver.textContent = 'v' + APP_VERSION;
 
   setInterval(tick, 250);
