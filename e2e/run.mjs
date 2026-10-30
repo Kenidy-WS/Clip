@@ -64,7 +64,11 @@ const MUTED = `
   const _gum = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
   navigator.mediaDevices.getUserMedia = async (c) => {
     window.__gum++;
+    window.__order = window.__order || [];
+    window.__order.push('gum');
     const s = await _gum(c);
+    window.__firstStream = window.__firstStream || s;
+    s.getTracks().forEach((t) => { const st = t.stop.bind(t); t.stop = () => { if (s === window.__firstStream && !window.__order.includes('stop')) window.__order.push('stop'); st(); }; });
     const v = s.getVideoTracks()[0];
     if (v) {
       Object.defineProperty(v, 'muted', { get: () => window.__muted });
@@ -225,6 +229,14 @@ try {
     check(
       (await page2.evaluate(() => window.__gum)) === 2,
       'câmera muda que não libera: refaz uma vez e inicia',
+    );
+    check(
+      await page2.evaluate(() => window.__order.join() === 'gum,gum,stop'),
+      'câmera muda: nova captura aberta ANTES de fechar a antiga (sem novo pedido de permissão)',
+    );
+    check(
+      await page2.evaluate(() => window.__firstStream.getTracks().every((t) => t.readyState === 'ended')),
+      'câmera muda: captura antiga fechada depois da nova chegar',
     );
     await page2.close();
   }

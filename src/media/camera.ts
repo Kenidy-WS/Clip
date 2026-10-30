@@ -147,6 +147,14 @@ export function tapRecover(): void {
   void start(true);
 }
 
+function stopTracks(stream: MediaStream | null): void {
+  try {
+    stream?.getTracks().forEach((t) => t.stop());
+  } catch {
+    /* já parado */
+  }
+}
+
 /** Espera a faixa sair do estado "mudo" (o iOS a silencia por instantes ao abrir). Falso se não liberar a tempo. */
 function waitUnmute(track: MediaStreamTrack, ms: number): Promise<boolean> {
   if (!track.muted) return Promise.resolve(true);
@@ -172,9 +180,13 @@ export async function start(isRetry = false): Promise<void> {
   watchdogSoftAt = 0;
   logCam(`start #${my}${isRetry ? ' (nova tentativa)' : ''}`);
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
-  await stopAll();
+  // Nova tentativa: a captura antiga continua aberta até a nova chegar. Parar todas as faixas antes faz o iOS pedir a
+  // permissão de câmera/microfone de novo (era o 2º pedido igual ao 1º); com uma captura ainda ativa ele não pede.
+  const previous = isRetry ? S.stream : null;
+  await stopAll(!!previous);
   const sup = support();
   if (!sup.VideoEncoder) {
+    stopTracks(previous);
     notify(T.noWebCodecs, 'err');
     return;
   }
@@ -201,10 +213,12 @@ export async function start(isRetry = false): Promise<void> {
     } catch (e2) {
       const err2 = e2 as Error;
       logCam(`câmera recusada: ${err2.name}`);
+      stopTracks(previous);
       notify(T.cameraOpenFail(err2.name || err2.message), 'err');
       return;
     }
   }
+  stopTracks(previous); // a nova captura chegou: agora a antiga pode fechar
   if (my !== startSeq) {
     // Outra chamada de start() começou enquanto esta esperava a permissão: a mais recente vence.
     stream.getTracks().forEach((t) => t.stop());
@@ -279,16 +293,13 @@ export async function start(isRetry = false): Promise<void> {
   armWatchdog(my); // a escuta de voz só liga quando a câmera entregar o primeiro quadro
 }
 
-export async function stopAll(): Promise<void> {
+/** `keepTracks`: não para as faixas agora (quem chamou as para depois de abrir a nova captura, sem novo pedido de permissão). */
+export async function stopAll(keepTracks = false): Promise<void> {
   S.running = false;
   stopVoice();
   S.loopId++;
   S.rec = null;
-  try {
-    S.stream?.getTracks().forEach((t) => t.stop());
-  } catch {
-    /* já parado */
-  }
+  if (!keepTracks) stopTracks(S.stream);
   S.stream = null;
   try {
     if (S.vEnc && S.vEnc.state !== 'closed') S.vEnc.close();

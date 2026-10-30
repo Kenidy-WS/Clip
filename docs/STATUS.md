@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.5 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.6 · aguardando teste no iPhone
 
 ## Feito
 
@@ -70,7 +70,22 @@ permissão de novo = pedido 3) e a voz (abortada no meio do pedido) ficava muda.
 quadro de vídeo** (câmera viva); a recuperação tenta primeiro um **reinício leve** (religa o `<video>` à mesma captura, sem
 permissão) e só depois refaz a captura. Esperado: no máx. 2 pedidos (câmera+mic, depois mic da voz). Hipótese não confirmada.
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.5`)
+## Dois pedidos iguais (v0.5.6)
+
+Teste da `v0.5.5`: só 2 pedidos, **os dois de Câmera e Microfone**; após o 1º "Permitir" a tela fica preta ~2–3 s, vem o 2º pedido,
+e depois tudo funciona (imagem, gravação e voz). Leitura: a 1ª captura chega **muda** (sem imagem); `start()` espera 2 s ela liberar
+e, não liberando, refaz a captura sozinho; o `stopAll` parava as faixas antes de pedir a nova, e o iOS pede permissão de novo quando
+nenhuma captura está ativa (= 2º pedido). Na `v0.5.6`: em nova tentativa a captura antiga **continua aberta até a nova chegar**
+(`stopAll(keepTracks)` + `stopTracks(previous)`), para o iOS não pedir de novo. Hipótese (WebKit costuma não repetir o pedido
+com captura ativa), **não confirmada no iPhone**. Se ainda pedir 2x: o único jeito de evitar a captura muda inicial seria descobrir
+por que ela vem muda (ideia: esperar mais que 2 s o `unmute`; ver o "i": linhas mute/unmute com horário).
+
+## O que o Kenidy precisa testar no iPhone (`v0.5.6`)
+
+0. Fechar e abrir o app: aparece só 1 pedido de Câmera e Microfone (depois o do microfone da voz)? A tela preta passa de ~2–3 s
+   e a imagem aparece sozinha? Se ainda vier o 2º pedido igual, print do "i" (seção "Câmera (início)").
+
+## Anterior (`v0.5.5`)
 
 0. Fechar o app e abrir de novo: quantos pedidos de permissão aparecem e em que ordem? A imagem aparece sozinha? "Ei Clip"
    funciona depois do 2º pedido? Se algo falhar, print do "i" (seções "Câmera (início)" e "Voz").
