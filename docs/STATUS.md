@@ -1,6 +1,11 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.4 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.5 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.15.5 — nomes dos Ajustes (início da revisão de textos)
+
+Kenidy validou espelhamento e orientação deitada (com a rotação de tela do iPhone ligada). Estabilização ficou para depois (análise no ROADMAP). Renomeados: "Tempo antes do toque" → **Pré-gravação**; "Sons de gravação" → **Bipe ao gravar**; "Bipe no vídeo gravado" → **Bipe no clipe**. Só rótulos; nada de lógica.
+**Resto da revisão:** avisos do balão (`strings.ts`), telas do download de clipe grande, textos do Início e da Galeria.
 
 ## v0.15.4 — "Espelhar frontal" agora vale para prévia e clipe
 
