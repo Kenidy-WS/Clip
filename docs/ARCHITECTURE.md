@@ -41,6 +41,9 @@ mic ─► AudioWorklet ─► AudioEncoder (AAC) ─┘                        
   A escuta liga com a câmera (`startVoice` no fim de `start()`), para em `stopAll()` e reinicia sozinha quando o iOS a encerra.
   Plano B se falhar em campo: Porcupine Web (roda 100% no aparelho; exige chave e palavra treinada no Picovoice).
 
+- **Tela inicial com "Iniciar":** o iOS só libera áudio, câmera sem ficar muda e escuta de voz dentro de um gesto do usuário; um toque
+  na tela inicial liga tudo junto (`btnIntro` em `app.ts`). Reiniciar só a câmera não para a voz (`stopAll(keepTracks, keepVoice)`).
+
 ## Limites conhecidos
 
 Ver "Armadilhas do iOS/Safari" em `CLAUDE.md`. Gravação máxima de 90 s por clipe (memória). Permissões pedidas a cada abertura.

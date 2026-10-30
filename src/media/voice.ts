@@ -193,12 +193,12 @@ export function startVoice(fromTap = false): void {
   if (!S.voiceEnabled) return;
   wanted = true;
   fatal = false;
+  if (rec || restartTimer) return; // já está escutando (ou religando): não mexe
   quickEnds = 0;
   retries = 0;
   gate.reset();
   S.voiceLog.length = 0;
   setVoice('starting');
-  if (rec || restartTimer) return;
   if (fromTap) attempt(true);
   else waitForTap();
 }

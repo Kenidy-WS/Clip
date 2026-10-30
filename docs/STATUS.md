@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.7 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.6.0 · aguardando teste no iPhone
 
 ## Feito
 
@@ -91,7 +91,25 @@ o áudio da gravação (AudioContext), então é um toque só para tudo. Religam
 voz ainda não responder depois do toque: print do "i" (linha "Voz": deve aparecer "texto ..." quando falar) e dizer se o ícone
 estava verde.
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.7`)
+## Tela inicial com botão "Iniciar" (v0.6.0)
+
+Pedido do Kenidy: mais prático e simples. A `v0.5.7` funcionava "um pouco bugada" (voz depende de um toque que o app não explicava;
+câmera às vezes preta). **Aposta:** vários problemas vêm de ligar tudo sem gesto do usuário (câmera muda, AudioContext suspenso,
+voz surda). Agora o app **não abre a câmera sozinho**: mostra uma tela inicial ("Ei Clip", "Iniciar") e um único toque liga
+**câmera, áudio e escuta de voz juntos, dentro do gesto**. Mudanças: `S.introDone` + `#intro`/`#btnIntro`; o toque chama `start()` e
+`startVoice(true)` na mesma hora (não espera a câmera); `stopAll(keepTracks, keepVoice)`: reiniciar só a câmera (trocar câmera/
+qualidade, recuperação) **não derruba a escuta**; `startVoice()` não mexe numa escuta já viva; o botão "Iniciar câmera" (depois de
+assistir um clipe) também religa a voz no seu toque. Sem a abertura automática, o fluxo da `v0.5.x` (voz aguardando toque) só
+aparece em religamentos sem toque (voltar de segundo plano). **Não confirmado no iPhone:** se o iOS aceita a escuta de voz
+iniciada junto do pedido de permissão da câmera (pode virar 2 pedidos em sequência, ou conflito). Se der conflito: iniciar a voz
+logo que a câmera entregar o primeiro quadro, ainda no mesmo gesto, ou voltar ao toque pós-permissão.
+
+## O que o Kenidy precisa testar no iPhone (`v0.6.0`)
+
+0. Abrir o app → tela "Ei Clip / Iniciar" → tocar em **Iniciar** → permitir → conferir: imagem aparece sem tela preta? quantos
+   pedidos de permissão? o 🎙️ fica verde sozinho? "Ei Clip" grava/para sem tocar em mais nada? Print do "i" se algo falhar.
+
+## Anterior (`v0.5.7`)
 
 0. Fechar e abrir o app, dar a permissão, **tocar uma vez em qualquer lugar da tela** (ícone 🎙️ deve ficar verde) e dizer "Ei Clip".
    Depois de 2–3 gravações por voz, conferir se continua respondendo. Print do "i" se falhar.

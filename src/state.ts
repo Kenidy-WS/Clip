@@ -76,6 +76,8 @@ export interface AppState {
   voiceLog: string[];
   /** Etapas do início da câmera (permissão, stream, erros), só para o painel de diagnóstico. */
   camLog: string[];
+  /** O usuário já tocou em "Iniciar" na tela inicial (esconde a tela inicial). */
+  introDone: boolean;
 }
 
 export const S: AppState = {
@@ -141,4 +143,5 @@ export const S: AppState = {
   voiceEnabled: true,
   voiceLog: [],
   camLog: [],
+  introDone: false,
 };

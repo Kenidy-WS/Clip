@@ -183,7 +183,7 @@ export async function start(isRetry = false): Promise<void> {
   // Nova tentativa: a captura antiga continua aberta até a nova chegar. Parar todas as faixas antes faz o iOS pedir a
   // permissão de câmera/microfone de novo (era o 2º pedido igual ao 1º); com uma captura ainda ativa ele não pede.
   const previous = isRetry ? S.stream : null;
-  await stopAll(!!previous);
+  await stopAll(!!previous, true);
   const sup = support();
   if (!sup.VideoEncoder) {
     stopTracks(previous);
@@ -294,9 +294,9 @@ export async function start(isRetry = false): Promise<void> {
 }
 
 /** `keepTracks`: não para as faixas agora (quem chamou as para depois de abrir a nova captura, sem novo pedido de permissão). */
-export async function stopAll(keepTracks = false): Promise<void> {
+export async function stopAll(keepTracks = false, keepVoice = false): Promise<void> {
   S.running = false;
-  stopVoice();
+  if (!keepVoice) stopVoice(); // reiniciar só a câmera não derruba a escuta de voz (ela não depende da captura)
   S.loopId++;
   S.rec = null;
   if (!keepTracks) stopTracks(S.stream);

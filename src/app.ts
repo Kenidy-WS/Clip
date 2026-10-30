@@ -2,7 +2,7 @@ import { onClipsChange, onStateChange, onStatus, onVoiceCommand } from './events
 import { acquireWake, enableMic, start, tapRecover } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { beep } from './media/beep';
-import { voiceTap, restartVoice, resumeVoice, setVoiceEnabled } from './media/voice';
+import { restartVoice, resumeVoice, setVoiceEnabled, startVoice, voiceTap } from './media/voice';
 import { trySetupAudio } from './media/audio';
 import { cfg, S } from './state';
 import { T } from './strings';
@@ -21,9 +21,24 @@ async function paintStorage(): Promise<void> {
 }
 
 function bindControls(): void {
+  els.btnIntro.addEventListener('click', () => {
+    // Um único gesto liga tudo: o iOS só libera câmera, áudio e escuta de voz dentro de um toque do usuário.
+    S.introDone = true;
+    updateUI();
+    void start().then(() => {
+      if (S.running && S.audioCtx && S.audioCtx.state !== 'running') {
+        S.needTap = true;
+        setStatus(T.needTap, 'warn');
+      }
+    });
+    startVoice(true);
+  });
   els.btnRec.addEventListener('click', async () => {
-    if (!S.running) await start();
-    else if (S.rec) await stopRec();
+    if (!S.running) {
+      const starting = start();
+      startVoice(true); // religa a escuta dentro deste toque (ela foi parada ao assistir um clipe)
+      await starting;
+    } else if (S.rec) await stopRec();
     else startRec();
   });
   els.selBuffer.addEventListener('change', () => {
@@ -163,15 +178,5 @@ export function initApp(): void {
   void restoreClips();
   void paintStorage();
   updateUI();
-
-  // Ao abrir, já pede câmera e microfone e começa a encher o buffer, sem precisar tocar em "Iniciar câmera".
-  // O iOS só libera o áudio depois de um toque na tela, então avisamos para tocar uma vez.
-  if (document.visibilityState === 'visible') {
-    void start().then(() => {
-      if (S.running && S.audioCtx && S.audioCtx.state !== 'running') {
-        S.needTap = true;
-        setStatus(T.needTap, 'warn');
-      }
-    });
-  }
+  // A câmera não abre sozinha: a tela inicial espera o toque em "Iniciar" (ver btnIntro).
 }

@@ -8,6 +8,8 @@ function byId<T extends HTMLElement>(id: string): T {
 export const els = {
   video: byId<HTMLVideoElement>('preview'),
   btnRec: byId<HTMLButtonElement>('btnRec'),
+  intro: byId<HTMLElement>('intro'),
+  btnIntro: byId<HTMLButtonElement>('btnIntro'),
   selBuffer: byId<HTMLSelectElement>('selBuffer'),
   selQuality: byId<HTMLSelectElement>('selQuality'),
   btnFlip: byId<HTMLButtonElement>('btnFlip'),

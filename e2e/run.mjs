@@ -99,17 +99,25 @@ const browser = await chromium.launch({
   args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
 });
 try {
-  // 1) Abre sem tocar em nada: a câmera inicia sozinha.
+  // 1) A câmera só inicia depois do toque em "Iniciar" na tela inicial.
   {
     const page = await (await browser.newContext()).newPage();
     const errs = [];
     page.on('pageerror', (e) => errs.push(String(e)));
     await page.addInitScript(STUBS);
     await page.goto(URL_);
+    await page.waitForTimeout(600);
+    check(await page.isVisible('#intro'), 'tela inicial aparece ao abrir');
+    check(
+      (await page.textContent('#btnRec')).startsWith('Iniciar'),
+      'a câmera não abre sozinha antes do toque',
+    );
+    await page.click('#btnIntro');
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 8000,
     });
-    ok('câmera iniciou sozinha ao abrir');
+    ok('câmera iniciou depois do toque em Iniciar');
+    check(!(await page.isVisible('#intro')), 'tela inicial some depois do toque');
     check((await page.textContent('#ver')).startsWith('v'), 'versão exibida no rodapé');
     check(errs.length === 0, 'sem erros de JavaScript ao abrir ' + errs.join(';'));
     await page.close();
@@ -122,24 +130,24 @@ try {
     page.on('pageerror', (e) => errs.push(String(e)));
     await page.addInitScript(STUBS + VOICE);
     await page.goto(URL_);
+    await page.waitForTimeout(600);
+    check((await page.evaluate(() => window.__starts)) === 0, 'voz: não escuta antes do toque em Iniciar');
+    await page.click('#btnIntro');
+    // A escuta começa dentro do mesmo toque que liga a câmera (o iOS a deixaria surda sem gesto).
+    check((await page.evaluate(() => window.__starts)) === 1, 'voz: começa junto com o toque em Iniciar');
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 8000,
     });
-    // Sem toque a escuta não começa (o iOS a deixaria surda): fica aguardando, com aviso, e liga no primeiro toque.
-    await page.waitForTimeout(800);
-    check(
-      (await page.evaluate(() => window.__starts)) === 0,
-      'voz: não inicia a escuta sem toque do usuário',
-    );
-    check((await page.textContent('#status')).includes('comando de voz'), 'voz: avisa para tocar na tela');
-    await page.mouse.click(5, 5);
     await page.waitForFunction(
       () => document.querySelector('#btnVoice').classList.contains('listening'),
       null,
       { timeout: 3000 },
     );
-    ok('voz: liga no primeiro toque (verde só depois do áudio da escuta abrir)');
-    check((await page.evaluate(() => window.__starts)) === 1, 'voz: uma única instância iniciada pelo toque');
+    ok('voz: verde só depois do áudio da escuta abrir');
+    check(
+      (await page.evaluate(() => window.__starts)) === 1,
+      'voz: câmera pronta não reinicia a escuta que já está viva',
+    );
     await page.mouse.click(5, 5);
     check((await page.evaluate(() => window.__starts)) === 1, 'voz: toques seguintes não reiniciam de novo');
 
@@ -169,6 +177,15 @@ try {
     check(
       !(await page.evaluate(() => document.querySelector('#btnVoice').classList.contains('heard'))),
       'voz: comando repetido dentro de 3 s é ignorado',
+    );
+
+    // Trocar de câmera reinicia só a captura: a escuta de voz continua a mesma.
+    const startsBefore = await page.evaluate(() => window.__starts);
+    await page.click('#btnFlip');
+    await page.waitForTimeout(1500);
+    check(
+      (await page.evaluate(() => window.__starts)) === startsBefore,
+      'voz: continua escutando quando a câmera reinicia',
     );
 
     // O reconhecedor encerra sozinho (comum no iOS): o app religa.
@@ -207,6 +224,7 @@ try {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript('window.__freeAfter = 600;' + STUBS + MUTED);
     await page.goto(URL_);
+    await page.click('#btnIntro');
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 8000,
     });
@@ -219,6 +237,7 @@ try {
     const page2 = await (await browser.newContext()).newPage();
     await page2.addInitScript('window.__freeAfter = 0;' + STUBS + MUTED);
     await page2.goto(URL_);
+    await page2.click('#btnIntro');
     await page2.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 10000,
     });
@@ -242,6 +261,7 @@ try {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS + NOFRAMES);
     await page.goto(URL_);
+    await page.click('#btnIntro');
     await page.waitForFunction(() => document.querySelector('#status').textContent.includes('imagem'), null, {
       timeout: 25000,
     });
@@ -257,6 +277,7 @@ try {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS + DENY);
     await page.goto(URL_);
+    await page.click('#btnIntro');
     await page.waitForTimeout(1500);
     check(
       (await page.textContent('#btnRec')).startsWith('Iniciar'),
@@ -304,6 +325,7 @@ try {
         }),
     );
     await page.reload();
+    await page.click('#btnIntro');
     await page.waitForSelector('.clip video', { timeout: 8000 });
     ok('clipe restaurado do IndexedDB');
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {

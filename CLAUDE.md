@@ -55,7 +55,8 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   um toque. **Escuta iniciada sem toque (abertura do app, religamento automático) pode ficar muda sem dar erro** (visto no iPhone
   na v0.5.0: ícone verde e nenhum comando reconhecido até desligar/ligar o botão). Por isso o indicador só fica verde depois de
   `onaudiostart`/resultado. **A escuta só começa dentro de um toque** (`voiceTap`; sem toque ela fica surda, confirmado de novo na v0.5.6):
-  `startVoice()` sem toque só marca "aguardando toque" (ícone âmbar + aviso). Eventos da escuta ficam no
+  `startVoice()` sem toque só marca "aguardando toque" (ícone âmbar + aviso). Por isso a câmera **não abre sozinha** (v0.6.0):
+  a tela inicial tem o botão "Iniciar", que liga câmera, áudio e voz no mesmo gesto. Eventos da escuta ficam no
   painel "i" (linha "Voz").
 - **Dois pedidos de permissão:** o iOS pede (1) "Câmera e Microfone" (`getUserMedia`) e, quando a escuta de voz inicia, (2) "Microfone"
   de novo, só para o reconhecimento de voz (Web Speech). Não há como juntar os dois em código. No Safari, "aA → Ajustes do Site →
