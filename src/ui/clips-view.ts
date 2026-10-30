@@ -1,4 +1,4 @@
-import { removeClip, removeClips } from '../clips';
+import { bigShareBytes, dropExport, prepareExport, removeClip, removeClips } from '../clips';
 import { setAudioSession } from '../media/audio-session';
 import { releaseCamera } from '../media/camera';
 import { formatDuration } from '../core/format';
@@ -44,8 +44,8 @@ function downloadClips(list: Clip[]): void {
  * Abre a folha de compartilhar do iOS (de lá: "Salvar Vídeo" leva ao Rolo da Câmera). Se ela não existir ou falhar, o clipe é
  * baixado como arquivo, para nunca ficar preso no app. Fechar a folha sem escolher nada não é erro.
  */
-async function shareClips(list: Clip[]): Promise<void> {
-  const files = list.map((c) => c.file);
+async function shareClips(list: Clip[], withFiles?: File[]): Promise<void> {
+  const files = withFiles ?? list.map((c) => c.file);
   if (navigator.canShare && navigator.canShare({ files })) {
     try {
       await navigator.share({ files });
@@ -105,6 +105,58 @@ function tile(c: Clip, selectable = false): HTMLElement {
   return b;
 }
 
+/**
+ * Clipe longo gravado em disco: compartilhar em 2 toques. O 1º prepara um arquivo único (leva alguns segundos e a folha de
+ * compartilhar só abre dentro de um toque recente); o 2º abre a folha com o arquivo pronto.
+ */
+let prepared: { clip: Clip; file: File } | null = null;
+let preparing = false;
+const SHARE_LABEL = 'Salvar / Compartilhar';
+
+function resetShare(): void {
+  if (prepared) dropExport(prepared.clip);
+  prepared = null;
+  preparing = false;
+  els.btnShare.disabled = false;
+  els.btnShareLabel.textContent = SHARE_LABEL;
+}
+
+async function onShareClick(): Promise<void> {
+  const c = current;
+  if (!c || preparing) return;
+  if (prepared && prepared.clip === c) {
+    const { file } = prepared;
+    await shareClips([c], [file]);
+    resetShare();
+    return;
+  }
+  if (!c.take || c.blob.size < bigShareBytes()) {
+    void shareClips([c]);
+    return;
+  }
+  preparing = true;
+  els.btnShare.disabled = true;
+  els.btnShareLabel.textContent = T.shareBtnPreparing;
+  notify(T.sharePreparing);
+  try {
+    const file = await prepareExport(c);
+    if (current !== c) {
+      dropExport(c); // o usuário saiu do clipe enquanto preparava
+      return;
+    }
+    prepared = { clip: c, file };
+    els.btnShareLabel.textContent = T.shareBtnReady;
+    notify(T.shareReady, 'ok');
+  } catch {
+    dropExport(c);
+    notify(T.sharePrepFailed, 'warn');
+    els.btnShareLabel.textContent = SHARE_LABEL;
+  } finally {
+    preparing = false;
+    els.btnShare.disabled = false;
+  }
+}
+
 /** O som do clipe foi ligado nesta abertura do player (só então o iOS troca o modo de áudio e a captura é desligada). */
 let soundOn = false;
 
@@ -153,6 +205,7 @@ function onPlayerVolume(): void {
 }
 
 export function closePlayer(immediate = false): void {
+  resetShare();
   els.playerVideo.pause();
   els.playerVideo.removeAttribute('src');
   els.playerVideo.load();
@@ -428,7 +481,7 @@ export function bindPlayer(): void {
     S.playErr = e ? `código ${e.code}${e.message ? ' · ' + e.message : ''}` : 'erro';
   });
   els.btnPlayerClose.addEventListener('click', () => closePlayer());
-  els.btnShare.addEventListener('click', () => current && void shareClips([current]));
+  els.btnShare.addEventListener('click', () => void onShareClick());
   els.btnDelete.addEventListener('click', () => {
     if (current && confirm(T.removeConfirm)) {
       const c = current;

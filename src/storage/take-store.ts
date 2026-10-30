@@ -61,3 +61,34 @@ export const idbPartStore: PartStore = {
     return runStore(DB_TAKES, 'readonly', (s) => s.getAll() as IDBRequest<TakeMeta[]>);
   },
 };
+
+/**
+ * Cópia de um clipe em disco num arquivo único, só para compartilhar (v0.14.4): o clipe é formado por centenas de pedaços e o iOS
+ * monta o arquivo inteiro na memória para entregá-lo à folha de compartilhar (1,2 GB derrubava a página). Um Blob guardado e
+ * relido do IndexedDB é um arquivo só, entregue sem carregar na memória.
+ */
+const exportKey = (name: string): string => `export/${name}`;
+
+export const putExport = async (name: string, data: Blob): Promise<void> => {
+  await runStore(DB_PARTS, 'readwrite', (s) =>
+    s.put({ id: exportKey(name), takeId: 'export', seq: 0, data }),
+  );
+};
+
+export const getExport = async (name: string): Promise<Blob | null> => {
+  const row = await runStore(
+    DB_PARTS,
+    'readonly',
+    (s) => s.get(exportKey(name)) as IDBRequest<{ data: Blob } | undefined>,
+  );
+  return row?.data ?? null;
+};
+
+export const deleteExport = async (name: string): Promise<void> => {
+  await runStore(DB_PARTS, 'readwrite', (s) => s.delete(exportKey(name)));
+};
+
+/** Apaga as cópias de compartilhar que sobraram (o app foi encerrado no meio). */
+export const clearExports = async (): Promise<void> => {
+  await runStore(DB_PARTS, 'readwrite', (s) => s.delete(IDBKeyRange.bound('export/', 'export/\uffff')));
+};

@@ -1,6 +1,12 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.3 · `estavel` = 0.13.2 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.4 · `estavel` = 0.13.2 · aguardando teste no iPhone
+
+## v0.14.4 — salvar no Rolo clipe longo (5:38, 1,2 GB)
+
+v0.14.3 validada: gravação e player fluidos, qualidade boa. Falta: "Salvar / Compartilhar" de 1,2 GB derruba a página (tela branca, volta ao início).
+Hipótese: o clipe é centenas de pedaços e o iOS os junta na memória para entregar à folha de compartilhar. Solução: em 2 toques. O 1º prepara uma cópia em arquivo único (guardada e relida do IndexedDB, `prepareExport`); o botão vira "Salvar agora"; o 2º abre a folha. A cópia é apagada ao fechar o clipe e na abertura do app. Só vale para clipes em disco acima de 100 MB.
+**Testar:** o clipe de 5 min: tocar em Salvar/Compartilhar, esperar "Salvar agora", tocar, "Salvar vídeo". Se ainda cair: me dizer em qual passo (preparar ou abrir a folha). Plano B: dividir em partes de ~1 min.
 
 ## v0.14.2 e v0.14.3 — clipe em câmera lenta no player do app
 

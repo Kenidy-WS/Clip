@@ -1213,6 +1213,36 @@ try {
           (await page.textContent('#status')).includes('Clipe salvo'),
           'gravação longa: aviso "Clipe salvo"',
         );
+        // Compartilhar clipe longo: 1º toque prepara um arquivo único; ao fechar o clipe a cópia é apagada.
+        await page.evaluate(() => (window.__bigShare = 1));
+        await page.click('#btnGallery');
+        await page.locator('#clips .tile').first().click();
+        await page.click('#btnShare');
+        await page.waitForFunction(
+          () => document.querySelector('#btnShareLabel').textContent === 'Salvar agora',
+          null,
+          {
+            timeout: 8000,
+          },
+        );
+        const exportKeys = () =>
+          page.evaluate(
+            () =>
+              new Promise((res) => {
+                const r = indexedDB.open('clip');
+                r.onsuccess = () => {
+                  const q = r.result.transaction('parts').objectStore('parts').getAllKeys();
+                  q.onsuccess = () => {
+                    r.result.close();
+                    res(q.result.filter((k) => String(k).startsWith('export/')).length);
+                  };
+                };
+              }),
+          );
+        check((await exportKeys()) === 1, 'compartilhar clipe longo: o arquivo único é preparado');
+        await page.click('#btnPlayerClose');
+        await page.waitForTimeout(800);
+        check((await exportKeys()) === 0, 'compartilhar clipe longo: fechar o clipe apaga a cópia');
         check(errs.length === 0, 'gravação longa: sem erros de JavaScript ' + errs.join(';'));
         await page.close();
       }

@@ -72,6 +72,11 @@ export const T = {
   clipMeta: (c: { when: string; durText: string; mb: number; withAudio: boolean }) =>
     `${c.when} · ${c.durText} · ${c.mb.toFixed(1)} MB${c.withAudio ? '' : ' · sem áudio'}`,
   removeConfirm: 'Excluir este clipe? Se ainda não salvou no Rolo da Câmera, ele será perdido.',
+  sharePreparing: 'Preparando o arquivo. Aguarde, clipes longos levam alguns segundos.',
+  shareReady: 'Arquivo pronto. Toque em Salvar para escolher “Salvar vídeo”.',
+  sharePrepFailed: 'Não foi possível preparar o arquivo. Tente de novo.',
+  shareBtnPreparing: 'Preparando…',
+  shareBtnReady: 'Salvar agora',
   shareFallback: 'Não foi possível abrir o compartilhamento. O arquivo foi baixado.',
   storage: (usedMb: number, quotaMb: number, persisted: boolean) =>
     `${usedMb.toFixed(0)} MB de ~${quotaMb.toFixed(0)} MB${persisted ? ' · protegido' : ''}`,
