@@ -113,28 +113,38 @@ export function openPlayer(c: Clip): void {
 
 /**
  * Visto no iPhone (v0.10.1/v0.10.2): depois de tocar um clipe com som, o iOS deixa a sessão de áudio da página em modo de
- * reprodução e o microfone volta mudo (pico 0,000) mesmo reabrindo a captura. Só uma página nova resolve, por isso ao fechar o
- * player de um clipe com som a página recarrega e volta para a mesma tela. Fora do iPhone (testes) não recarrega.
+ * reprodução e o microfone volta mudo mesmo reabrindo a captura; só uma página nova resolve. Recarregar a cada fechamento do
+ * player piscava a tela (v0.12.0), então agora o recarregamento só acontece quando o usuário vai abrir a câmera
+ * (`audioNeedsReset` em `openCamera`). Fora do iPhone (testes) não recarrega.
  */
 export const RESUME_KEY = 'clip.resumeView';
-function resetAudioByReload(): void {
-  if (navigator.webdriver || !current?.withAudio) return;
+let audioDirty = false;
+
+export function audioNeedsReset(): boolean {
+  return audioDirty && !navigator.webdriver;
+}
+
+/** Recarrega a página e volta para `view` (a câmera fica pronta; um toque a liga). */
+export function reloadForAudio(view: 'camera' | 'home' | 'gallery'): boolean {
   try {
-    sessionStorage.setItem(RESUME_KEY, S.view);
+    sessionStorage.setItem(RESUME_KEY, view);
     location.reload();
+    return true;
   } catch {
-    /* sem sessionStorage: segue sem recarregar */
+    return false;
   }
 }
 
-export function closePlayer(): void {
-  const reload = !!current;
+export function closePlayer(immediate = false): void {
+  if (current?.withAudio) audioDirty = true;
   els.playerVideo.pause();
   els.playerVideo.removeAttribute('src');
   els.playerVideo.load();
-  hideAnimated(els.player);
+  if (immediate) {
+    els.player.hidden = true;
+    els.player.classList.remove('closing');
+  } else hideAnimated(els.player);
   setAudioSession('auto');
-  if (reload) resetAudioByReload();
   current = null;
 }
 
@@ -371,8 +381,14 @@ function bindPlayerSwipeDown(): void {
     if (!active) return;
     active = false;
     if (close) {
-      reset(false);
-      closePlayer();
+      // Continua a descer e esmaecer a partir de onde o dedo soltou, e só então esconde (sem voltar a 100% antes).
+      box.style.transition = 'transform 170ms ease-out, opacity 170ms ease-out';
+      box.style.transform = 'translateY(40%) scale(0.85)';
+      box.style.opacity = '0';
+      setTimeout(() => {
+        closePlayer(true);
+        reset(false);
+      }, 180);
     } else reset(true);
   };
   box.addEventListener('touchend', finish);
@@ -389,7 +405,7 @@ function bindPlayerSwipeDown(): void {
 export function bindPlayer(): void {
   bindSelection();
   bindPlayerSwipeDown();
-  els.btnPlayerClose.addEventListener('click', closePlayer);
+  els.btnPlayerClose.addEventListener('click', () => closePlayer());
   els.btnShare.addEventListener('click', () => current && void shareClips([current]));
   els.btnDelete.addEventListener('click', () => {
     if (current && confirm(T.removeConfirm)) {

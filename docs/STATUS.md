@@ -497,3 +497,9 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Para investigar melhor: Diagnóstico → Comando de voz mostra "texto …" de cada fala; mandar o texto de uma tentativa que falhou mostra se o problema é o iOS não ouvir (nenhuma linha "texto") ou o app não entender (linha sem ✓).
 
 **Testar:** arrastar o player; falar "Ei Clip" normalmente, sem gritar; se falhar, mandar o Diagnóstico logo depois.
+
+## v0.12.1 — Sem piscar ao fechar o player
+
+- Causa do piscar (Diagnóstico v0.12.0: 6 recarregamentos seguidos em "Cargas da página"): o recarregamento da v0.10.3 acontecia a cada fechamento do player. Agora ele só acontece ao **abrir a câmera** depois de ver um clipe com som (`audioNeedsReset`/`reloadForAudio` em `clips-view.ts`, chamado de `openCamera`); a câmera volta pronta e um toque a liga. Navegar na Galeria e fechar o player não recarrega mais.
+- Arrastar para baixo: ao soltar, a tela continua descendo/esmaecendo e só então esconde (antes voltava a 100% por um instante).
+- Pergunta do Kenidy: ativar e desativar usam a mesma regra — a frase completa ("ei clip", "aclip", "eiclip"…) alterna (liga/desliga); "clip"/"clipe" solto só **liga**.

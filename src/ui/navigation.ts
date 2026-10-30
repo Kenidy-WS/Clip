@@ -2,7 +2,7 @@ import { notify } from '../events';
 import { cancelStart, start, stopAll } from '../media/camera';
 import { S } from '../state';
 import { T } from '../strings';
-import { exitSelection } from './clips-view';
+import { audioNeedsReset, exitSelection, reloadForAudio } from './clips-view';
 import { updateUI } from './controls';
 
 let openSeq = 0;
@@ -14,6 +14,8 @@ let openSeq = 0;
  */
 export async function openCamera(): Promise<void> {
   if (S.opening && S.view === 'camera') return;
+  // Depois de ver um clipe com som o microfone só volta com uma página nova: recarrega e deixa a câmera pronta para um toque.
+  if (audioNeedsReset() && reloadForAudio('camera')) return;
   const mine = ++openSeq;
   S.view = 'camera';
   S.opening = true;

@@ -278,7 +278,7 @@ export function initApp(): void {
   try {
     const resume = sessionStorage.getItem(RESUME_KEY);
     sessionStorage.removeItem(RESUME_KEY);
-    if (resume === 'gallery' || resume === 'home') S.view = resume; // volta à tela de antes do recarregamento
+    if (resume === 'gallery' || resume === 'home' || resume === 'camera') S.view = resume; // volta à tela de antes do recarregamento
   } catch {
     /* sem sessionStorage */
   }
