@@ -6,6 +6,8 @@ import { exitSelection } from './clips-view';
 import { updateUI } from './controls';
 
 let openSeq = 0;
+/** De onde o usuário entrou na Galeria: o botão voltar volta para lá (a câmera reabre dentro do toque, como "Abrir câmera"). */
+let galleryFrom: 'home' | 'camera' = 'home';
 
 /**
  * Abre a tela da câmera e liga câmera, áudio e comando de voz. Chamar direto de dentro do toque do usuário:
@@ -38,6 +40,7 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
     return;
   }
   const leavingCamera = S.view === 'camera';
+  if (view === 'gallery') galleryFrom = leavingCamera ? 'camera' : 'home';
   S.view = view;
   if (view !== 'gallery') exitSelection();
   if (leavingCamera) {
@@ -60,4 +63,10 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   } catch {
     /* segue */
   }
+}
+
+/** Voltar na Galeria: para a tela de onde veio (câmera ou Início). Chamar de dentro do toque (a câmera e a voz dependem disso). */
+export function leaveGallery(): void {
+  if (galleryFrom === 'camera') void openCamera();
+  else void showScreen('home');
 }

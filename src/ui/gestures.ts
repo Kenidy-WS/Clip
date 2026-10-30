@@ -1,7 +1,7 @@
 import { S } from '../state';
 import { exitSelection } from './clips-view';
 import { els } from './dom';
-import { showScreen } from './navigation';
+import { leaveGallery, showScreen } from './navigation';
 
 /**
  * Navegação por gestos: arrastar a partir da borda esquerda para a direita volta (fecha a camada aberta ou a tela);
@@ -20,6 +20,7 @@ function goBack(): void {
   else if (visible(els.diag)) els.btnDiagClose.click();
   else if (visible(els.sheet)) els.btnSheetClose.click();
   else if (els.screenGallery.classList.contains('selecting')) exitSelection();
+  else if (S.view === 'gallery') leaveGallery();
   else if (S.view !== 'home') void showScreen('home');
 }
 

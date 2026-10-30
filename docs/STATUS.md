@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.9 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.9 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.10 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.10 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -572,3 +572,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Diagnóstico, "Câmera: início": `saiu da câmera` e `reabriu N ms após sair; aguardando M ms` (ou `sem espera`). Use para ajustar `MIN_REOPEN_MS`.
 - Testar: (1) entrar na Galeria pelo atalho e voltar **rápido** → a câmera deve demorar ~3 s para abrir, e a voz e o microfone devem funcionar sem pedir toque; (2) repetir pelo caminho voltar → Início → Galeria; (3) se ainda falhar, copiar o Diagnóstico pela tela da câmera (linhas "saiu da câmera", "reabriu…", "microfone mudo…").
 - Não resolve o microfone mudo depois de **reproduzir um clipe** (outro gatilho). Próximo: investigar `setAudioSession('playback')` no player e o tempo de liberação após fechar o player.
+
+## v0.12.10 — Voltar na Galeria volta para a tela de origem
+
+- Resultado da v0.12.9 (Kenidy): **deu certo**. Voltar rápido da Galeria (atalho ao lado do botão de gravar ou via Início) mantém microfone e voz funcionando sem pedir toque. `MIN_REOPEN_MS = 3000` serve por ora (conferir no Diagnóstico "reabriu … ms após sair" se algum dia falhar).
+- Observação dele: entrando na Galeria pelo atalho da câmera, o botão voltar levava ao **Início** em vez da câmera.
+- Mudança: `navigation.ts` guarda de onde a Galeria foi aberta (`galleryFrom`); `leaveGallery()` volta para a câmera (`openCamera()`, dentro do toque, com a espera mínima da v0.12.9 se for rápido) ou para o Início. Vale para o botão voltar e para o gesto de borda (`gestures.ts`). Entrando pelo Início ("Ver todos"), o voltar continua levando ao Início.
+- Testar: (1) câmera → atalho da Galeria → voltar: deve reabrir a câmera com a voz funcionando; (2) Início → Galeria → voltar: Início; (3) o mesmo com o gesto de arrastar da borda esquerda.
+- Pendente: microfone mudo depois de **reproduzir um clipe** (sessão `playback` do player).

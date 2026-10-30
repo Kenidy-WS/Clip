@@ -14,7 +14,7 @@ import { tick, updateUI } from './ui/controls';
 import { bindDiagnostics } from './ui/diag-view';
 import { els } from './ui/dom';
 import { mountIcons } from './ui/icons';
-import { openCamera, showScreen } from './ui/navigation';
+import { leaveGallery, openCamera, showScreen } from './ui/navigation';
 import { setStatus } from './ui/status';
 import { initLifecycleLog } from './ui/lifecycle-log';
 import { hideAnimated, showAnimated } from './ui/transitions';
@@ -84,7 +84,7 @@ function bindNavigation(): void {
   els.btnGalleryCam.addEventListener('click', () => void openCamera());
   els.btnBack.addEventListener('click', () => void showScreen('home'));
   els.btnGallery.addEventListener('click', () => void showScreen('gallery'));
-  els.btnGalleryBack.addEventListener('click', () => void showScreen('home'));
+  els.btnGalleryBack.addEventListener('click', leaveGallery);
   els.btnSeeAll.addEventListener('click', () => void showScreen('gallery'));
 }
 
