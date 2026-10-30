@@ -1,7 +1,7 @@
 import type { Screen } from '../types';
 
 /** Duração das transições (precisa casar com `--t-screen` em styles.css). */
-const MS = 340;
+const MS = 300;
 type Dir = 'fwd' | 'back' | 'fade';
 
 const reduced = (): boolean => matchMedia('(prefers-reduced-motion: reduce)').matches;

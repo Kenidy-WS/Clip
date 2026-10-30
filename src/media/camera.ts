@@ -417,12 +417,17 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
       `áudio após 3 s: contexto ${S.audioCtx?.state ?? '-'}, faixa ${at ? (at.muted ? 'MUDA' : at.readyState) : 'nenhuma'}, ${S.audioBlocks} blocos, pico ${S.audioPeak.toFixed(3)}`,
     );
     // Microfone mudo depois de ver um clipe no player: tenta uma vez reabrir só com a sessão de áudio reiniciada.
-    const dead = !!at && (at.muted || S.audioBlocks === 0 || (S.audioBlocks > 20 && S.audioPeak === 0));
+    const dead = !!at && (at.muted || S.audioBlocks === 0 || (S.audioBlocks > 20 && S.audioPeak < 0.0008));
     if (dead && !audioRetried) {
       audioRetried = true;
-      logCam('microfone mudo: reiniciando a sessão de áudio');
+      logCam(`microfone mudo (pico ${S.audioPeak.toFixed(4)}): liberando a captura e reabrindo`);
+      // Solta o microfone de verdade (a captura antiga mantida pelo reinício continuaria presa à sessão de áudio ruim).
+      S.stream?.getAudioTracks().forEach((t) => t.stop());
       setAudioSession('auto');
-      setTimeout(() => void start(), 250);
+      setTimeout(() => {
+        setAudioSession('play-and-record');
+        void start();
+      }, 450);
       setTimeout(() => (audioRetried = false), 15000);
     }
   }, 3000);

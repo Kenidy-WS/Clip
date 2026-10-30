@@ -21,7 +21,7 @@ const TONES: Record<BeepKind, Array<[number, number, number]>> = {
 const PROFILE: Record<BeepVol, { peak: number; sustain: boolean; drive: number }> = {
   normal: { peak: 0.3, sustain: false, drive: 0 },
   high: { peak: 0.7, sustain: true, drive: 0 },
-  max: { peak: 1, sustain: true, drive: 0.9 },
+  max: { peak: 0.9, sustain: true, drive: 0 },
 };
 export const beepGain = (v: BeepVol): number => PROFILE[v].peak;
 export const beepSustain = (v: BeepVol): boolean => PROFILE[v].sustain;

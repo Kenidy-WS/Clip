@@ -21,9 +21,9 @@ describe('renderBeep', () => {
     expect(beepGain('max')).toBeGreaterThan(beepGain('high'));
   });
 
-  it('Alto e Máximo mantêm o volume cheio e só o Máximo satura', () => {
+  it('Alto e Máximo mantêm o volume cheio sem saturação', () => {
     expect([beepSustain('normal'), beepSustain('high'), beepSustain('max')]).toEqual([false, true, true]);
     expect([beepDrive('normal'), beepDrive('high')]).toEqual([0, 0]);
-    expect(beepDrive('max')).toBeGreaterThan(0);
+    expect(beepDrive('max')).toBe(0);
   });
 });

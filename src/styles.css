@@ -912,7 +912,7 @@ p {
 
 /* ───────── Transições ───────── */
 :root {
-  --t-screen: 340ms;
+  --t-screen: 300ms;
   --ease-out: cubic-bezier(0.22, 0.8, 0.26, 1);
 }
 .screen.in-fwd,

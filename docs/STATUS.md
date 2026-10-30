@@ -405,3 +405,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Player: volume forçado a 1, sem mudo, e a categoria de áudio "playback" é reposta após 300 ms. Observação: nos Diagnósticos o pico do microfone é 0.002–0.013, ou seja, o áudio gravado é naturalmente baixo; se o som do clipe continuar fraco, o próximo passo é dar ganho digital ao microfone.
 
 **Testar:** bipe de parar (ainda estoura?); volume do clipe na Galeria; transição ao voltar com o gesto e ao fechar o player.
+
+## v0.10.2 — Reinício do microfone mais forte, bipe sem saturação
+
+- Dado (v0.10.1): com o player em modo "playback" o clipe toca com volume normal, mas o microfone voltava mudo (pico 0.000 em 65 blocos) e o reinício automático não disparou (exigia pico exatamente 0). Agora: pico < 0,0008 conta como mudo; o reinício solta as faixas de áudio, volta a sessão para `auto`, espera 450 ms, usa `play-and-record` e reabre a câmera. Linha no Diagnóstico: "microfone mudo (pico …)". Limitação: o reinício automático não é um toque, então a voz pode exigir um toque no botão de voz.
+- Bipe: removida a saturação (drive 0), pico 0,9 (mais limpo; pode soar um pouco mais baixo).
+- Transições: 340 → 300 ms.
+
+**Testar:** Galeria → clipe → câmera: o microfone volta sozinho (veja o Diagnóstico)? Bipe ainda estoura?
