@@ -430,3 +430,9 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - A recarga ao fechar o player (v0.10.3) segue; avaliar se ainda é necessária, já que o reinício automático resolveu o microfone sozinho.
 
 **Testar:** bipe ao vivo; voz após o reinício (um toque na tela); sincronia áudio/vídeo de um clipe.
+
+## v0.10.5 — Teste: bipe do alto-falante com pico 0,5
+
+- v0.10.4: o bipe estoura ao vivo mesmo em 1080p/30 Padrão, então não é carga de processamento; a gravação sai limpa. Hipótese: o 0,9 de pico passa do que o alto-falante aguenta com o microfone aberto.
+- Alto-falante agora usa 55% do pico (≈0,5); o bipe gravado no vídeo continua igual.
+- Se ainda estourar: o iOS limita a saída com o microfone aberto; alternativas = bipe só no vídeo ou vibração/aviso visual.

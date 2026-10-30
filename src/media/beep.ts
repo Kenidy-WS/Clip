@@ -24,9 +24,13 @@ export const beepMs = (kind: BeepKind): number => Math.round(beepDurationSec(kin
  *   O microfone fica mudo durante o bipe para não captá-lo em dobro.
  * - `beepInClip`: o bipe é somado digitalmente ao áudio do clipe (não depende do alto-falante nem da chave de silencioso).
  */
+/** Fração do pico usada no alto-falante: o 0,9 estourava ao vivo (só na saída do iPhone, a gravação saía limpa). Teste v0.10.5. */
+const SPEAKER_SCALE = 0.55;
+
 export function beep(kind: BeepKind): void {
   const ctx = S.audioCtx;
-  const peak = beepGain(S.beepVol);
+  const clipPeak = beepGain(S.beepVol); // o bipe gravado no vídeo mantém o nível de antes
+  const peak = clipPeak * SPEAKER_SCALE;
   if (S.soundOn && ctx && ctx.state === 'running') {
     const t0 = ctx.currentTime + 0.01;
     const sustain = beepSustain(S.beepVol);
@@ -66,7 +70,7 @@ export function beep(kind: BeepKind): void {
   }
   const rate = ctx?.sampleRate || S.sampleRate;
   if (S.beepInClip && S.rec && S.running && rate) {
-    S.beepMix = { data: renderBeep(kind, rate, peak * CLIP_MIX), pos: 0 };
+    S.beepMix = { data: renderBeep(kind, rate, clipPeak * CLIP_MIX), pos: 0 };
   }
 }
 
