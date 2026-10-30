@@ -460,3 +460,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Diagnóstico v0.10.7: o iOS ignora `autoGainControl: true` (continua "ganho não"); o teste de ganho não surtiu efeito. Bipe segue chiando mesmo com a escuta pausada — investigar depois (a pausa pode não estar chegando antes do bipe, ou o chiado vem de outro ponto).
 
 **Testar:** Galeria com muitos clipes (layout, últimos vídeos, velocidade das miniaturas); arrastar descendo fileiras.
+
+## v0.10.9 — Miniaturas: vídeo escondido na página + checagem de quadro
+
+- v0.10.8: as miniaturas (imagens) ficaram vazias no iPhone: o `<video>` solto, fora da página, não decodificou. Agora o vídeo da miniatura fica escondido dentro da página (2 px, quase transparente), espera `loadedmetadata` + `seeked`, e confere que o quadro desenhado não está em branco; se estiver, toca mudo por um instante e tenta de novo. Falhas não ficam em cache (a próxima abertura da Galeria repete).
+- Teste do Kenidy: 30 fps bateu 30 certinho na galeria nativa; 60 fps saiu ~55 (o Diagnóstico mostra a saída entre 48 e 55/s).
+- "Todos"/"Nenhum" existem na barra de seleção (botão alterna); conferir se ficou claro.
+
+**Testar:** miniaturas aparecem na Galeria e no Início? Se continuarem vazias, mandar o Diagnóstico.
