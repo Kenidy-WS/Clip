@@ -2,7 +2,7 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
-## v0.9.6 — Diagnóstico mais claro + resultado do teste 1080p/60/Alta
+## v0.9.7 — Diagnóstico mais claro + resultado do teste 1080p/60/Alta (a v0.9.6 saiu só com a documentação por engano)
 
 - Dados do Kenidy (v0.9.5, 1080p · 60 fps · Alta): câmera entregou **1080x1920 @ 60 fps** (track), 2619 quadros de entrada / 2618 de saída, **0 descartados**; último clipe 65,3 MB em 16,4 s ≈ **33,4 Mbps** (pedido 36 Mbps) → qualidade e 60 fps aplicados de verdade, pipeline aguenta 60 fps em 1080p. Clipe de 1 min nessa combinação ≈ 250 MB.
 - O relatório foi copiado com a câmera desligada (Início), por isso "Processamento do mic" e a prévia vieram vazios. Agora o Resumo avisa ("Dica") e o rótulo da voz distingue "parada (fora da câmera)" de "desativada nos Ajustes".

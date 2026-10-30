@@ -18,11 +18,12 @@ export interface DiagSection {
 
 const QUALITY_LABEL = { std: 'padrão', high: 'alta', max: 'máxima' } as const;
 const VOICE_LABEL = {
-  off: 'desligada',
+  off: 'parada (fora da câmera)',
   starting: 'iniciando',
   listening: 'escutando',
   unsupported: 'sem suporte',
 } as const;
+const voiceState = (): string => (S.voiceEnabled ? VOICE_LABEL[S.voice] : 'desativada nos Ajustes');
 const clean = (s: string): string => s.replace(/\s+/g, ' ').trim();
 
 /** Taxa real do último clipe salvo (tamanho ÷ duração): mostra se a Qualidade escolhida chegou ao arquivo. */
@@ -67,7 +68,15 @@ export function diagnosticsSections(): DiagSection[] {
       ['iPhone', ios ? `iOS ${ios[1]}.${ios[2]}` : '?'],
       ['Câmera', S.running ? 'ligada' : 'desligada'],
       ['Gravando', S.rec ? 'sim' : 'não'],
-      ['Voz', S.voiceEnabled ? VOICE_LABEL[S.voice] : 'desligada'],
+      ['Voz', voiceState()],
+      ...(S.running
+        ? []
+        : ([
+            [
+              'Dica',
+              'Câmera desligada: abra o Diagnóstico pela tela da câmera para ver vídeo e áudio ao vivo',
+            ],
+          ] as Row[])),
       ['App aberto há', `${Math.round(performance.now() / 1000)} s`],
     ],
   });
@@ -127,7 +136,7 @@ export function diagnosticsSections(): DiagSection[] {
   const voice = S.voiceLog.slice(-6);
   sections.push({
     title: 'Comando de voz',
-    rows: [['Estado', S.voiceEnabled ? VOICE_LABEL[S.voice] : 'desligado']],
+    rows: [['Estado', voiceState()]],
     lines: voice,
   });
 
