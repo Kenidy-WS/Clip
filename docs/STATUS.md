@@ -444,3 +444,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Volume do alto-falante voltou ao pico 0,9 (o teste de 0,55 não resolvia).
 
 **Testar:** bipes ao vivo (sem chiado?); depois do bipe, o comando de voz continua respondendo (várias gravações seguidas, por voz e por toque).
+
+## v0.10.7 — Bipe volta a tocar, ganho automático do microfone
+
+- Relato (v0.10.6): com a escuta pausada no bipe, os dois bipes ficaram **mudos** (a reconfiguração de áudio do iOS ao abortar a escuta engole o bipe agendado junto). Agora o alto-falante toca 200 ms depois (`BEEP_LEAD_SEC`), com a escuta já pausada; `beepMs` inclui essa espera. O bipe gravado no vídeo continua imediato. Volume mantido (pico 0,9).
+- Voz: o Kenidy precisa falar alto/repetir desde versões antigas e o pico do microfone fica em 0,002–0,013. Teste: `autoGainControl: true` na captura (eco e ruído seguem desligados). Verificar no Diagnóstico "ganho sim", o pico e se a voz responde melhor; se o clipe ficar com chiado de ganho, reverter.
+- Microfone sem sinal ao abrir (permissões recém-dadas): ainda cai no reinício automático (~3 s) com a voz esperando um toque.
+
+**Testar:** bipes ao vivo (tocam e sem chiado?); voz sem precisar falar alto; áudio do clipe (mais alto? chiado?).

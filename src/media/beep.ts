@@ -17,7 +17,12 @@ function softClipCurve(drive: number): Float32Array<ArrayBuffer> {
 }
 
 /** Duração do bipe em ms (a gravação espera esse tempo ao parar, quando o bipe entra no clipe). */
-export const beepMs = (kind: BeepKind): number => Math.round(beepDurationSec(kind) * 1000);
+/**
+ * Espera antes de o alto-falante tocar: a escuta de voz é abortada no mesmo instante e o iOS reconfigura a sessão de áudio;
+ * o bipe agendado junto com isso saía mudo (visto no iPhone na v0.10.6).
+ */
+const BEEP_LEAD_SEC = 0.2;
+export const beepMs = (kind: BeepKind): number => Math.round((beepDurationSec(kind) + BEEP_LEAD_SEC) * 1000);
 
 /**
  * Sons de início (um bipe) e fim (dois bipes) da gravação. Seguem a chave de silencioso do iPhone.
@@ -33,7 +38,7 @@ export function beep(kind: BeepKind): void {
   const clipPeak = beepGain(S.beepVol); // o bipe gravado no vídeo mantém o nível de antes
   const peak = clipPeak * SPEAKER_SCALE;
   if (S.soundOn && ctx && ctx.state === 'running') {
-    const t0 = ctx.currentTime + 0.01;
+    const t0 = ctx.currentTime + BEEP_LEAD_SEC;
     const sustain = beepSustain(S.beepVol);
     const drive = beepDrive(S.beepVol);
     // Saída comum a todas as notas do bipe: saturação suave (só no Máximo) e depois o alto-falante.

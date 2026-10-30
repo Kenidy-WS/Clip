@@ -12,7 +12,7 @@ import { startVoice, stopVoice, voiceSettled } from './voice';
 const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   echoCancellation: false,
   noiseSuppression: false,
-  autoGainControl: false,
+  autoGainControl: true, // v0.10.7: o microfone sem ganho vinha muito baixo (pico 0,002–0,013) e a voz exigia falar alto
   channelCount: { ideal: 2 },
 };
 
@@ -23,7 +23,7 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
  */
 const AUDIO_LEVELS: (MediaTrackConstraints | true)[] = [
   AUDIO_CONSTRAINTS,
-  { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+  { echoCancellation: false, noiseSuppression: false, autoGainControl: true },
   true,
 ];
 const VIDEO_CONSTRAINT_NAMES = ['deviceId', 'facingMode', 'width', 'height', 'frameRate', 'zoom'];
