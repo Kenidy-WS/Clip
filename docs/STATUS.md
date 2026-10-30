@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.14 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.14 no FIM do arquivo)
 
+## v0.13.1 — aviso de toque falso retirado sozinho
+
+- v0.13.0 validada pelo Kenidy no iPhone (clipe mudo, voz segue ao voltar); branch `estavel` avançou para ela.
+- Relato: às vezes, ao voltar do clipe, aparece "Toque na tela…" mas a voz já funciona. Causa provável: o aviso de surdez (`voice.ts`, som alto sem fala ouvida) dispara logo após um religamento do iOS e **nunca era retirado** fora de um toque.
+- Correção mínima: `retractDeafHint` retira o aviso (e volta o ícone a verde) assim que o reconhecedor vê fala (`speechstart` ou texto). Nada mais foi alterado na voz.
+- **Testar:** voltar de um clipe várias vezes; se o aviso aparecer, falar algo: ele deve sumir sozinho. Se aparecer e não sumir, copiar o Diagnóstico (linha "Voz").
+
 ## v0.13.0 — clipe abre mudo; som liga só por escolha
 
 - O player abre o clipe **mudo**, sem trocar o modo de áudio e sem desligar a câmera estacionada (voltar instantâneo, voz segue).

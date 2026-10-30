@@ -113,12 +113,26 @@ function markAlive(): void {
   }
 }
 
+/**
+ * O aviso de surdez (som alto sem fala ouvida) pode disparar à toa, por exemplo logo depois de um religamento do iOS, quando a escuta
+ * ainda demora a ouvir. Se o reconhecedor passa a ver fala, ele não está surdo: o aviso é retirado sem pedir toque (v0.13.1).
+ */
+function retractDeafHint(): void {
+  if (!deafHinted || !rec || awaitingTap) return;
+  deafHinted = false;
+  loudSince = 0;
+  logVoice('escuta ouviu fala: aviso de toque retirado');
+  setVoice('listening');
+  notify(S.note, S.note ? 'warn' : '');
+}
+
 /** Quando cada fala foi vista pela primeira vez (para medir quanto o reconhecedor demora). */
 const firstSeen = new Map<string, number>();
 
 function onResult(ev: SpeechEventLike, id: number): void {
   markAlive();
   lastSpeechAt = performance.now();
+  retractDeafHint();
   const now = performance.now();
   for (let i = ev.resultIndex; i < ev.results.length; i++) {
     const result = ev.results[i];
@@ -165,6 +179,7 @@ function begin(fromTap: boolean): void {
     if (id !== session) return;
     lastSpeechAt = performance.now();
     logVoice('speechstart');
+    retractDeafHint();
   };
   r.onresult = (ev) => {
     if (id === session) onResult(ev, id);
