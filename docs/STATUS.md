@@ -1,6 +1,11 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.5 · `estavel` = 0.13.2 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.5 (clipe longo validado no iPhone) · `estavel` = 0.13.2
+
+## v0.14.5 validada no iPhone (30/10, 16:22)
+
+Clipe de 5:38 (1,22 GB) baixou e foi para o Rolo da Câmera sem travar. Fluxo atual: Salvar/Compartilhar → aviso do app → visualizador do iOS (arquivo MP4, "Abrir com… / Mais…") → "Mais…" → folha de compartilhar → "Salvar Vídeo". Funciona, mas tem 2 telas a mais que o fluxo curto.
+**Pendente (pedido do Kenidy):** revisar os textos e a forma como as mensagens aparecem (ex.: aviso de download), deixando o fluxo mais harmonioso; ver se dá para encurtar o caminho até "Salvar Vídeo". `estavel` ainda em 0.13.2: avançar quando o Kenidy confirmar.
 
 ## v0.14.5 — clipe longo: download pelo service worker (a v0.14.4 foi desfeita)
 
