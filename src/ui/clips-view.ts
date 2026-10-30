@@ -115,6 +115,7 @@ let soundOn = false;
 export function openPlayer(c: Clip): void {
   current = c;
   soundOn = false;
+  S.playErr = '';
   els.playerVideo.src = c.url;
   els.playerVideo.muted = true;
   els.playerVideo.volume = 1;
@@ -422,6 +423,10 @@ export function bindPlayer(): void {
   bindSelection();
   bindPlayerSwipeDown();
   els.playerVideo.addEventListener('volumechange', onPlayerVolume);
+  els.playerVideo.addEventListener('error', () => {
+    const e = els.playerVideo.error;
+    S.playErr = e ? `código ${e.code}${e.message ? ' · ' + e.message : ''}` : 'erro';
+  });
   els.btnPlayerClose.addEventListener('click', () => closePlayer());
   els.btnShare.addEventListener('click', () => current && void shareClips([current]));
   els.btnDelete.addEventListener('click', () => {

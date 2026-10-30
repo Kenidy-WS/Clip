@@ -58,6 +58,8 @@ export interface ClipRecord {
   aSec: number;
   aInfo: string;
   at: number;
+  /** Clipe gravado em disco: o vídeo é formado pelos pedaços desta gravação (loja `parts`), sem cópia. */
+  take?: string;
 }
 
 export interface Clip extends ClipRecord {

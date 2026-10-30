@@ -1,6 +1,17 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.0 (gravação longa, experimental, aguardando teste no iPhone) · `estavel` = 0.13.2
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.1 (correção da gravação longa, aguardando teste no iPhone) · `estavel` = 0.13.2
+
+## v0.14.1 — clipe longo que não tocava nem baixava
+
+Relato (iPhone, v0.14.0): take de 4:01 (4K, 1265 MB) gravou bem e por voz, esquentou pouco, mas o clipe não tocava e não baixava.
+Causa provável: o clipe era uma montagem dos pedaços temporários e eu os **apagava** logo depois de salvar; no iOS o arquivo montado depende dos pedaços de origem e fica ilegível. Também copiava 1,2 GB (o dobro de espaço).
+Correção: o clipe em disco **usa os próprios pedaços** (`ClipRecord.take`); só o resumo da gravação é apagado (`release`). Apagar o clipe apaga os pedaços. Diagnóstico ganhou a linha "Player de clipes" (código de erro do `<video>`).
+O clipe de 4:01 gravado na v0.14.0 provavelmente não tem conserto: apagar.
+
+**Testar:** gravar um take longo (2+ min), tocar, "Salvar vídeo" no Rolo, fechar e reabrir o app e tocar de novo. Se ainda não tocar: abrir o "i" e copiar a linha "Player de clipes".
+
+**Pedidos novos do Kenidy (ainda não feitos):** (1) nível/horizonte na tela como o app nativo; (2) analisar estabilização de vídeo; (3) toque na tela para focar (hoje foco automático). Ver ROADMAP.
 
 ## v0.14.0 — gravação longa em disco (experimental, desligada por padrão)
 

@@ -19,7 +19,21 @@ export async function restoreClips(): Promise<void> {
   try {
     const rows = (await loadClips()) || [];
     rows.sort((a, b) => b.at - a.at);
-    S.clips = rows.map(hydrate);
+    const clips: Clip[] = [];
+    for (const r of rows) {
+      if (r.take) {
+        // Clipe em disco: o vídeo é formado pelos pedaços da gravação.
+        try {
+          const parts = await idbPartStore.readParts(r.take);
+          if (!parts.length) continue; // sem pedaços não há vídeo: o clipe não aparece
+          r.blob = new Blob(parts, { type: 'video/mp4' });
+        } catch {
+          continue;
+        }
+      }
+      if (r.blob) clips.push(hydrate(r));
+    }
+    S.clips = clips;
     clipsChanged();
   } catch {
     /* sem IndexedDB: segue só com a memória */
@@ -44,6 +58,7 @@ export function removeClip(c: Clip): void {
   S.clips = S.clips.filter((x) => x !== c);
   deleteClip(c.name)
     .catch(() => {})
+    .then(() => (c.take ? idbPartStore.deleteTake(c.take).catch(() => {}) : undefined))
     .then(storageListener);
   clipsChanged();
 }
@@ -53,7 +68,9 @@ export function removeClips(list: Clip[]): void {
   const gone = new Set(list);
   for (const c of gone) {
     URL.revokeObjectURL(c.url);
-    deleteClip(c.name).catch(() => {});
+    deleteClip(c.name)
+      .catch(() => {})
+      .then(() => (c.take ? idbPartStore.deleteTake(c.take).catch(() => {}) : undefined));
   }
   S.clips = S.clips.filter((x) => !gone.has(x));
   clipsChanged();
@@ -71,9 +88,9 @@ export async function recoverTakes(): Promise<void> {
     for (const t of takes) {
       const name = clipFileName(new Date(t.startedAt));
       try {
-        // Já virou clipe (o app foi encerrado depois de salvar, antes de limpar os pedaços): só limpa.
-        if (S.clips.some((c) => c.name === name)) {
-          await idbPartStore.deleteTake(t.takeId);
+        // Já virou clipe (o app foi encerrado depois de salvar, antes de limpar o resumo): os pedaços são o vídeo do clipe.
+        if (S.clips.some((c) => c.take === t.takeId)) {
+          await idbPartStore.deleteMeta(t.takeId);
           continue;
         }
         const parts = await idbPartStore.readParts(t.takeId);
@@ -96,8 +113,9 @@ export async function recoverTakes(): Promise<void> {
           aSec: t.aUs / 1e6,
           aInfo: '',
           at: t.startedAt,
+          take: t.takeId,
         });
-        addClip(clip, () => void idbPartStore.deleteTake(t.takeId).catch(() => {}));
+        addClip(clip, () => void idbPartStore.deleteMeta(t.takeId).catch(() => {}));
         recovered++;
       } catch {
         /* este fica para a próxima abertura; os outros continuam */

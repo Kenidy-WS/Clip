@@ -133,6 +133,15 @@ export class DiskRecorder {
     return (this.finishing ??= this.doFinish());
   }
 
+  /** O clipe foi salvo usando estes pedaços: apaga só o resumo da gravação (os pedaços ficam, são o vídeo do clipe). */
+  async release(): Promise<void> {
+    try {
+      await this.o.store.deleteMeta(this.takeId);
+    } catch {
+      /* na próxima abertura o app percebe que o clipe já existe e limpa o resumo */
+    }
+  }
+
   /** Apaga os pedaços guardados (chamar só depois que o clipe foi salvo por inteiro). */
   async discard(): Promise<void> {
     try {

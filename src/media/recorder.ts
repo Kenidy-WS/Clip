@@ -140,8 +140,9 @@ async function commitDiskRecording(r: Recording, thumb?: Blob, partial = false):
       aSec: res.aSec,
       aInfo: S.aInfo,
       at: Date.now(),
+      take: d.takeId,
     });
-    addClip(clip, () => void d.discard());
+    addClip(clip, () => void d.release());
     if (res.failed || partial) notify(T.clipSavedPartial, 'warn');
     else notify(T.clipSaved, 'ok');
     return true;

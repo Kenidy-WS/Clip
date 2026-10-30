@@ -48,7 +48,9 @@ export const saveClip = (c: ClipRecord): Promise<IDBValidKey> =>
   run('readwrite', (s) =>
     s.put({
       name: c.name,
-      blob: c.blob,
+      // Clipe em disco: o vídeo são os pedaços da gravação (não se copia 1 GB para uma 2ª linha).
+      blob: c.take ? undefined : c.blob,
+      take: c.take,
       thumb: c.thumb,
       durSec: c.durSec,
       preSec: c.preSec,
@@ -59,7 +61,7 @@ export const saveClip = (c: ClipRecord): Promise<IDBValidKey> =>
       aSec: c.aSec,
       aInfo: c.aInfo,
       at: c.at,
-    } satisfies ClipRecord),
+    } satisfies Omit<ClipRecord, 'blob'> & { blob?: Blob }),
   );
 
 export const deleteClip = (name: string): Promise<undefined> => run('readwrite', (s) => s.delete(name));

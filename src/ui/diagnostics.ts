@@ -98,6 +98,7 @@ export function diagnosticsSections(): DiagSection[] {
       ['Último clipe', lastClip()],
       ['Buffer', `${S.buffer.video.length} quadros · ${S.buffer.audio.length} blocos de áudio`],
       ['Elemento de vídeo', S.srcInfo || '-'],
+      ['Player de clipes', S.playErr || 'sem erro'],
     ],
   });
 

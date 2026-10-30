@@ -63,6 +63,8 @@ export interface AppState {
   canvas: HTMLCanvasElement | null;
   ctx2d: CanvasRenderingContext2D | null;
   srcInfo: string;
+  /** Último erro do player de clipes (código do `<video>`), para o Diagnóstico. */
+  playErr: string;
   audioBlocks: number;
   audioPeak: number;
   startedAt: number;
@@ -154,6 +156,7 @@ export const S: AppState = {
   canvas: null,
   ctx2d: null,
   srcInfo: '',
+  playErr: '',
   audioBlocks: 0,
   audioPeak: 0,
   startedAt: 0,

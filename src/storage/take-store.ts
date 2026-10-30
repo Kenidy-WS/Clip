@@ -24,7 +24,10 @@ export interface PartStore {
   putMeta(meta: TakeMeta): Promise<void>;
   /** Pedaços da gravação, em ordem. Cada Blob aponta para o arquivo guardado (não carrega os dados para a memória). */
   readParts(takeId: string): Promise<Blob[]>;
+  /** Apaga os pedaços e o resumo da gravação. */
   deleteTake(takeId: string): Promise<void>;
+  /** Apaga só o resumo: os pedaços passam a pertencer a um clipe já salvo. */
+  deleteMeta(takeId: string): Promise<void>;
   /** Gravações que ainda têm pedaços guardados (ou seja, não terminaram de virar clipe). */
   openTakes(): Promise<TakeMeta[]>;
 }
@@ -49,6 +52,9 @@ export const idbPartStore: PartStore = {
   },
   async deleteTake(takeId) {
     await runStore(DB_PARTS, 'readwrite', (s) => s.delete(partRange(takeId)));
+    await runStore(DB_TAKES, 'readwrite', (s) => s.delete(takeId));
+  },
+  async deleteMeta(takeId) {
     await runStore(DB_TAKES, 'readwrite', (s) => s.delete(takeId));
   },
   async openTakes() {

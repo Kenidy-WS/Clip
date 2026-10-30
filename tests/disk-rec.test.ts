@@ -23,6 +23,9 @@ class MemStore implements PartStore {
     this.parts.clear();
     this.deleted = true;
   }
+  async deleteMeta(): Promise<void> {
+    this.metas = [];
+  }
   async openTakes(): Promise<TakeMeta[]> {
     return this.metas;
   }

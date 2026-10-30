@@ -1136,7 +1136,9 @@ try {
                 tx.oncomplete = () => {
                   db.close();
                   res({
-                    clips: qs[0].result.map((c) => c.blob.size),
+                    clips: qs[0].result.map((c) => (c.take ? 1e9 : c.blob.size)),
+                    withTake: qs[0].result.filter((c) => c.take).length,
+                    partBytes: qs[1].result.reduce((n, p) => n + p.data.size, 0),
                     parts: qs[1].result.length,
                     takes: qs[2].result.length,
                   });
@@ -1184,8 +1186,8 @@ try {
         const end = await dbCounts(page);
         check(end && end.clips.length === 1 && end.clips[0] > 500, 'gravação longa: parar guarda o clipe');
         check(
-          end && end.parts === 0 && end.takes === 0,
-          'gravação longa: os pedaços temporários são apagados',
+          end && end.withTake === 1 && end.partBytes > 500 && end.takes === 0,
+          'gravação longa: o clipe usa os pedaços guardados (sem cópia, resumo liberado)',
         );
         check(
           (await page.textContent('#status')).includes('Clipe salvo'),
@@ -1210,8 +1212,8 @@ try {
           'gravação longa: sair do app gravando guarda o clipe',
         );
         check(
-          end && end.parts === 0 && end.takes === 0,
-          'gravação longa: sair do app apaga os pedaços temporários',
+          end && end.withTake === 1 && end.partBytes > 500 && end.takes === 0,
+          'gravação longa: sair do app também guarda o clipe com os pedaços',
         );
         check(errs.length === 0, 'gravação longa (sair do app): sem erros de JavaScript ' + errs.join(';'));
         await page.close();
@@ -1252,8 +1254,17 @@ try {
           'recuperação: o trecho gravado virou um clipe',
         );
         check(
-          end && end.parts === 0 && end.takes === 0,
-          'recuperação: os pedaços temporários foram apagados',
+          end && end.withTake === 1 && end.partBytes > 500 && end.takes === 0,
+          'recuperação: o clipe recuperado usa os pedaços e o resumo foi liberado',
+        );
+        // Reabrir o app de novo: o clipe continua na Galeria (o vídeo vem dos pedaços).
+        const page3 = await ctx2.newPage();
+        await page3.addInitScript(STUBS + EMIT);
+        await page3.goto(URL_);
+        await page3.waitForTimeout(1500);
+        check(
+          (await page3.locator('#clips > *').count()) === 1,
+          'recuperação: ao reabrir o app o clipe continua na Galeria',
         );
         check(errs.length === 0, 'recuperação: sem erros de JavaScript ' + errs.join(';'));
         await ctx2.close();
