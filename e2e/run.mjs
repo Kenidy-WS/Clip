@@ -138,10 +138,13 @@ try {
       null,
       { timeout: 5000 },
     );
-    check(
-      (await page.textContent('#status')).includes('Câmera pausada'),
-      'ao assistir clipe: câmera pausada e aviso exibido',
+    // O botão volta a "Iniciar" um instante antes do aviso aparecer: espera o aviso em vez de ler cedo demais.
+    await page.waitForFunction(
+      () => document.querySelector('#status').textContent.includes('Câmera pausada'),
+      null,
+      { timeout: 5000 },
     );
+    ok('ao assistir clipe: câmera pausada e aviso exibido');
     await page.click('#btnRec');
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 8000,

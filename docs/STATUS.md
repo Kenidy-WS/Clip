@@ -6,6 +6,7 @@
 
 - Protótipo `v0.3.7` validado pelo Kenidy no iPhone: vídeo vertical 1080p, áudio nos clipes (também no player do app),
   pre-roll desde o 1º segundo, sons de início/fim, offline, aviso de atualização, abertura já pedindo câmera/mic.
+- Correção na Onda 1: configuração de áudio pendente de uma sessão antiga não sobrescreve mais avisos da sessão nova.
 - Onda 1: migração para TypeScript + Vite em módulos (comportamento igual ao `v0.3.7`), nome "Ei Clip" em título,
   manifest e textos, 19 testes unitários, e2e no Chromium, ESLint/Prettier, CI e deploy (GitHub Actions), documentação.
 - Código antigo preservado no commit `0e9176b` (tag local `v0.3.7-legado`; a tag não subiu para o GitHub).

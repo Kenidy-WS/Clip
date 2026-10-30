@@ -18,23 +18,35 @@ export function ensureAudioCtx(): void {
   if (S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {});
 }
 
+/** Stream para o qual há uma configuração de áudio em andamento (cada sessão de câmera tem o seu stream). */
+let setupStream: MediaStream | null = null;
+
 export async function trySetupAudio(): Promise<void> {
-  if (S.audioSetupBusy || S.worklet || !S.stream || !S.stream.getAudioTracks().length) return;
+  const stream = S.stream;
+  if (!stream || S.worklet || !stream.getAudioTracks().length) return;
+  if (S.audioSetupBusy && setupStream === stream) return;
   S.audioSetupBusy = true;
+  setupStream = stream;
   try {
-    await setupAudio();
+    await setupAudio(stream);
     S.audioDisabled = false;
   } catch (e) {
-    S.note = T.audioNote((e as Error).message);
-    notify(S.note, 'warn');
+    // Sessão já encerrada ou reiniciada enquanto aguardava: o resultado é antigo e não deve aparecer.
+    if (S.stream === stream) {
+      S.note = T.audioNote((e as Error).message);
+      notify(S.note, 'warn');
+    }
   } finally {
-    S.audioSetupBusy = false;
+    if (setupStream === stream) {
+      S.audioSetupBusy = false;
+      setupStream = null;
+    }
   }
 }
 
-async function setupAudio(): Promise<void> {
+async function setupAudio(stream: MediaStream): Promise<void> {
   const ctx = S.audioCtx;
-  if (!ctx || !S.stream) throw new Error(T.noAudioContext);
+  if (!ctx) throw new Error(T.noAudioContext);
   if (ctx.state !== 'running') {
     await Promise.race([ctx.resume().catch(() => {}), new Promise((r) => setTimeout(r, 1500))]);
   }
@@ -46,7 +58,8 @@ async function setupAudio(): Promise<void> {
     URL.revokeObjectURL(url);
     S.workletReady = true;
   }
-  const src = ctx.createMediaStreamSource(new MediaStream(S.stream.getAudioTracks()));
+  if (S.stream !== stream) throw new Error(T.noAudioContext); // sessão encerrada durante a espera
+  const src = ctx.createMediaStreamSource(new MediaStream(stream.getAudioTracks()));
   S.micSrc = src;
   const node = new AudioWorkletNode(ctx, 'cap', {
     numberOfInputs: 1,
