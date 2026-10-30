@@ -13,6 +13,7 @@ import { startRec, stopRec } from './media/recorder';
 import { previewBeep } from './media/beep';
 import { markVoiceUnverified, restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
 import { trySetupAudio } from './media/audio';
+import { requestMotionPermission } from './media/orientation';
 import { cfg, S } from './state';
 import { T } from './strings';
 import { onStorageChange, recoverTakes, restoreClips } from './clips';
@@ -47,6 +48,7 @@ function loadPrefs(): void {
   if (iq === 'high' || iq === 'max') cfg.imageQuality = iq;
   S.beepInClip = getPref('beepClip') === '1';
   S.diskRec = getPref('diskRec') !== '0'; // ligada por padrão desde a v0.14.6
+  S.levelOn = getPref('level') === '1';
   const buffer = getPref('buffer');
   if (buffer === '15' || buffer === '30') cfg.bufferSec = Number(buffer);
   S.buffer.windowSec = cfg.bufferSec;
@@ -166,6 +168,24 @@ function bindSettings(): void {
     setPref('beepClip', S.beepInClip ? '1' : '0');
     updateUI();
   });
+  els.swLevel.addEventListener('click', () => {
+    void (async () => {
+      if (S.levelOn) {
+        S.levelOn = false;
+      } else {
+        // O pedido de permissão do iOS só pode sair de um toque: é este.
+        const p = await requestMotionPermission();
+        if (p !== 'granted') {
+          notify(p === 'unsupported' ? T.levelUnavailable : T.levelDenied, 'warn');
+          return;
+        }
+        S.levelOn = true;
+      }
+      setPref('level', S.levelOn ? '1' : '0');
+      updateUI();
+    })();
+  });
+  document.addEventListener('levelchange', updateUI);
   els.swDisk.addEventListener('click', () => {
     S.diskRec = !S.diskRec;
     setPref('diskRec', S.diskRec ? '1' : '0');

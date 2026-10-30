@@ -86,6 +86,8 @@ export const els = {
   segImageQuality: byId<HTMLElement>('segImageQuality'),
   swBeepClip: byId<HTMLButtonElement>('swBeepClip'),
   swDisk: byId<HTMLButtonElement>('swDisk'),
+  swLevel: byId<HTMLButtonElement>('swLevel'),
+  level: byId<HTMLElement>('level'),
   rowVoice: byId<HTMLElement>('rowVoice'),
   swVoice: byId<HTMLButtonElement>('swVoice'),
   swSound: byId<HTMLButtonElement>('swSound'),

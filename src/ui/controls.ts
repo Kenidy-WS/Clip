@@ -8,6 +8,7 @@ import { cfg, S } from '../state';
 import { T } from '../strings';
 import { refreshDiagnostics } from './diag-view';
 import { els } from './dom';
+import { syncLevel } from './level';
 import { showView } from './transitions';
 
 /** Depois de quanto tempo sem câmera aparece o botão "Ligar câmera" (reinícios rápidos não devem piscar o botão). */
@@ -56,6 +57,8 @@ export function updateUI(): void {
   paintSegment(els.segBuffer, String(cfg.bufferSec), false);
   els.swBeepClip.setAttribute('aria-checked', String(S.beepInClip));
   els.swDisk.setAttribute('aria-checked', String(S.diskRec));
+  els.swLevel.setAttribute('aria-checked', String(S.levelOn));
+  syncLevel();
   els.swDisk.disabled = locked;
   els.swVoice.setAttribute('aria-checked', String(S.voiceEnabled));
   els.swSound.setAttribute('aria-checked', String(S.soundOn));

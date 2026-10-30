@@ -190,6 +190,96 @@ try {
     await page.close();
   }
 
+  // 1a2) Nível de horizonte (opcional, desligado por padrão): ligar nos Ajustes pede a permissão; a linha segue o sensor.
+  {
+    const page = await (await browser.newContext()).newPage();
+    const errs = [];
+    page.on('pageerror', (e) => errs.push(String(e)));
+    await page.addInitScript(STUBS);
+    await page.goto(URL_);
+    await page.waitForTimeout(500);
+    check(
+      (await page.getAttribute('#swLevel', 'aria-checked')) === 'false',
+      'nível: desligado por padrão (sem pedido de permissão ao abrir)',
+    );
+    await page.click('#btnSettingsHome');
+    await page.waitForTimeout(400);
+    // Permissão negada (o Chromium de teste nega o pedido): a opção continua desligada e o app avisa.
+    await page.click('#swLevel');
+    await page.waitForTimeout(400);
+    check(
+      (await page.getAttribute('#swLevel', 'aria-checked')) === 'false' &&
+        (await page.textContent('#status')).includes('permissão'),
+      'nível: permissão negada mantém a opção desligada e avisa',
+    );
+    // Permissão concedida (como no iOS depois do "Permitir").
+    await page.evaluate(() => (DeviceOrientationEvent.requestPermission = async () => 'granted'));
+    await page.click('#swLevel');
+    await page.waitForTimeout(400);
+    check((await page.getAttribute('#swLevel', 'aria-checked')) === 'true', 'nível: ligar nos Ajustes');
+    await page.click('#btnSheetClose');
+    await page.waitForTimeout(500);
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    const send = (beta, gamma, n = 1) =>
+      page.evaluate(
+        ([b, g, k]) => {
+          for (let i = 0; i < k; i++)
+            window.dispatchEvent(new DeviceOrientationEvent('deviceorientation', { beta: b, gamma: g }));
+        },
+        [beta, gamma, n],
+      );
+    await send(80, -90, 40); // em pé, girado 10° como um volante
+    await page.waitForTimeout(200);
+    check(await page.isVisible('#level i'), 'nível: a linha aparece sobre a câmera');
+    const tilt = await page.evaluate(() =>
+      parseFloat(getComputedStyle(document.querySelector('#level')).getPropertyValue('--tilt')),
+    );
+    check(Math.abs(tilt - 10) < 0.6, 'nível: a linha acompanha a inclinação (' + tilt + '°)');
+    check(
+      !(await page.evaluate(() => document.querySelector('#level').classList.contains('on'))),
+      'nível: inclinado, a linha não fica amarela',
+    );
+    await send(90, 0, 60); // reto
+    await page.waitForTimeout(200);
+    check(
+      await page.evaluate(() => document.querySelector('#level').classList.contains('on')),
+      'nível: reto, a linha fica amarela',
+    );
+    await send(0, 0, 5); // deitado de barriga para cima: sem horizonte
+    await page.waitForTimeout(200);
+    check(!(await page.isVisible('#level i')), 'nível: apontado para cima, a linha some');
+    check(errs.length === 0, 'nível: sem erros de JavaScript ' + errs.join(';'));
+    await page.close();
+  }
+
+  // 1a3) Nível ligado, mas o iOS não entrega dados (permissão não lembrada): desliga sozinho e avisa.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript(STUBS);
+    await page.addInitScript(() => localStorage.setItem('clip.level', '1'));
+    await page.goto(URL_);
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    await page.waitForFunction(
+      () => document.querySelector('#status').textContent.includes('permissão de novo'),
+      null,
+      {
+        timeout: 6000,
+      },
+    );
+    ok('nível: sem dados do sensor, avisa que precisa de permissão de novo');
+    check(
+      (await page.getAttribute('#swLevel', 'aria-checked')) === 'false',
+      'nível: sem dados do sensor, a opção volta a desligada',
+    );
+    await page.close();
+  }
+
   // 1b) Comando de voz: reconhecedor falso entrega textos; "Ei Clip" aciona a gravação, outras falas não.
   {
     const page = await (await browser.newContext()).newPage();

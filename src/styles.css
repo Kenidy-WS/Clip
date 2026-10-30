@@ -1053,3 +1053,28 @@ p {
     animation: none !important;
   }
 }
+
+/* ───────── Nível de horizonte ───────── */
+.level {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 150px;
+  height: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 5;
+}
+.level i {
+  display: block;
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.6);
+  transform: rotate(var(--tilt, 0deg));
+  transition: background 0.12s;
+}
+.level.on i {
+  background: var(--accent);
+}

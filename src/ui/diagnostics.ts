@@ -99,6 +99,7 @@ export function diagnosticsSections(): DiagSection[] {
       ['Buffer', `${S.buffer.video.length} quadros · ${S.buffer.audio.length} blocos de áudio`],
       ['Elemento de vídeo', S.srcInfo || '-'],
       ['Player de clipes', S.playErr || 'sem erro'],
+      ['Nível', S.levelOn ? S.levelInfo || 'ligado, sem leitura' : 'desligado'],
     ],
   });
 

@@ -1,6 +1,16 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.7 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.0 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.15.0 — nível de horizonte (opcional)
+
+Linha sobre a prévia que mostra se o celular está torto; fica amarela quando está nivelado (até 1°) e some quando o celular aponta para cima ou para baixo. **Desligado por padrão**: o iOS exige uma permissão extra (sensores de movimento), então ela só é pedida ao ligar "Nível na tela" nos Ajustes, nunca ao abrir a câmera. Código: `core/level.ts` (conta, testada), `media/orientation.ts` (permissão e sensor), `ui/level.ts` (desenho). Fora da área protegida de voz/microfone.
+**Testar no iPhone:**
+
+- Ajustes → ligar "Nível na tela" → aceitar a permissão → ver a linha sobre a câmera (em pé e deitado).
+- Fechar e abrir o app: o iOS pede a permissão de novo ou lembra? (me contar)
+- Se a linha parecer invertida ou errada, copiar a linha "Nível" do Diagnóstico (mostra β/γ/inclinação).
+  **Próximos:** foco por toque (conferir antes se o Safari permite), espelhamento/orientação da câmera, análise de estabilização, revisão geral de textos.
 
 ## v0.14.7 — textos e balão de aviso
 
