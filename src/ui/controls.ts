@@ -26,6 +26,7 @@ export function updateUI(): void {
   els.btnFlip.disabled = els.selQuality.disabled = !!S.rec;
   els.btnMic.disabled = S.micBusy;
   els.btnVoice.classList.toggle('listening', S.voice === 'listening');
+  els.btnVoice.classList.toggle('starting', S.voice === 'starting');
   els.btnVoice.setAttribute('aria-pressed', String(S.voiceEnabled));
   els.btnVoice.hidden = S.voice === 'unsupported';
 }

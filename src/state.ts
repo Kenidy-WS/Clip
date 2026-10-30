@@ -68,10 +68,12 @@ export interface AppState {
   aLastTs: number;
   aResyncs: number;
   micErr: string;
-  /** Comando de voz: 'off' = parado, 'listening' = escutando, 'unsupported' = o navegador não oferece. */
-  voice: 'off' | 'listening' | 'unsupported';
+  /** Comando de voz: 'off' = parado, 'starting' = ligado mas sem áudio confirmado, 'listening' = escutando, 'unsupported' = sem suporte. */
+  voice: 'off' | 'starting' | 'listening' | 'unsupported';
   /** Preferência do usuário (a chave do botão de voz). */
   voiceEnabled: boolean;
+  /** Últimos eventos da escuta, só para o painel de diagnóstico. */
+  voiceLog: string[];
 }
 
 export const S: AppState = {
@@ -135,4 +137,5 @@ export const S: AppState = {
   micErr: '',
   voice: 'off',
   voiceEnabled: true,
+  voiceLog: [],
 };

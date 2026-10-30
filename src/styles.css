@@ -211,7 +211,7 @@ button.flip {
   border-radius: 10px;
   padding: 8px 10px;
 }
-/* Comando de voz: apagado = desligado; verde = escutando; pulso ao reconhecer "Ei Clip". */
+/* Comando de voz: apagado = desligado; âmbar = ligando; verde = escutando; pulso ao reconhecer "Ei Clip". */
 button.flip#btnVoice {
   opacity: 0.45;
   transition:
@@ -222,6 +222,10 @@ button.flip#btnVoice {
 button.flip#btnVoice.listening {
   opacity: 1;
   border-color: #2ea043;
+}
+button.flip#btnVoice.starting {
+  opacity: 1;
+  border-color: var(--warn);
 }
 button.flip#btnVoice.heard {
   opacity: 1;

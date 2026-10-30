@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.4.1 (inclui a página `/voz-teste/`) · **Na branch `onda-2`:** 0.5.0 (comando de voz integrado, ainda não testado no iPhone)
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.1 (comando de voz; correção do início da escuta) · aguardando teste no iPhone
 
 ## Feito
 
@@ -18,9 +18,19 @@
   borda verde = escutando, pulso verde = comando reconhecido; escolha guardada). **"Ei Clip" alterna a gravação:** inicia
   (com o pre-roll) e, dito de novo, para e salva. Cenário de voz no e2e (reconhecedor falso).
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.0`)
+## Teste da v0.5.0 e correção (v0.5.1)
 
-Depois do merge da `onda-2` na `main` e do deploy:
+Kenidy testou a `v0.5.0`: depois de dar permissão o ícone ficava verde, mas "Ei Clip" não funcionava; só depois de desligar e
+ligar o 🎙️ passou a funcionar (gravou e parou por voz). Ao recarregar o app, voltou a não funcionar de primeira.
+Causa provável (a confirmar no iPhone): escuta iniciada sem toque do usuário fica muda no iOS sem dar erro, e o ícone
+verde era mostrado cedo demais. Na `v0.5.1`: ícone âmbar enquanto liga e verde só com áudio da escuta aberto (`onaudiostart`);
+o primeiro toque na tela reinicia a escuta dentro do gesto; tocar no 🎙️ âmbar reinicia em vez de desligar; painel "i" mostra
+a linha "Voz" com os últimos eventos (start, audiostart, texto, end, erros).
+
+## O que o Kenidy precisa testar no iPhone (`v0.5.1`)
+
+0. **Abrir o app, dar as permissões, tocar uma vez em qualquer lugar da tela e dizer "Ei Clip"** — deve funcionar de primeira.
+   Se não funcionar, abrir o painel "i" e mandar um print da linha "Voz".
 
 1. **Áudio dos clipes com a escuta ligada** (o ponto de maior risco): gravar por voz e conferir se o som do clipe continua
    limpo e com volume normal. Se piorar, comparar com o botão 🎙️ desligado.

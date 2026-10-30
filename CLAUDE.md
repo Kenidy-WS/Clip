@@ -52,7 +52,10 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Comando de voz (Web Speech):** o reconhecedor devolve a mesma fala várias vezes (parciais e final) e a escreve como
   "Ei clipe", "Oi clipe", "Hey clipe", "Ec clipe"; por isso o gatilho é por fala (`WakeGate`) e a lista de variações fica em
   `src/core/wake-word.ts`. O iOS encerra a escuta sozinho de tempos em tempos (religamos em `onend`) e pode recusar iniciar sem
-  um toque (`nudgeVoice` tenta de novo no próximo toque).
+  um toque. **Escuta iniciada sem toque (abertura do app, religamento automático) pode ficar muda sem dar erro** (visto no iPhone
+  na v0.5.0: ícone verde e nenhum comando reconhecido até desligar/ligar o botão). Por isso o indicador só fica verde depois de
+  `onaudiostart`/resultado, e o primeiro toque na tela reinicia a escuta dentro do gesto (`voiceTap`). Eventos da escuta ficam no
+  painel "i" (linha "Voz").
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)

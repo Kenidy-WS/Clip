@@ -47,7 +47,7 @@ const STUBS = `
 const VOICE = `
   window.__starts = 0; window.__n = 0; window.__cur = null;
   class FakeRecognition {
-    start() { window.__starts++; window.__cur = this; }
+    start() { window.__starts++; window.__cur = this; setTimeout(() => this.onaudiostart && this.onaudiostart(), 0); }
     abort() { if (window.__cur === this) window.__cur = null; }
   }
   window.SpeechRecognition = window.webkitSpeechRecognition = FakeRecognition;
@@ -107,7 +107,20 @@ try {
         timeout: 3000,
       },
     );
-    ok('voz: escutando depois que a câmera liga');
+    ok('voz: escutando (verde) só depois do áudio da escuta abrir');
+
+    // Escuta iniciada na abertura (sem toque) é reiniciada no primeiro toque na tela, e só nele.
+    const before = await page.evaluate(() => window.__starts);
+    await page.mouse.click(5, 5);
+    check(
+      (await page.evaluate(() => window.__starts)) === before + 1,
+      'voz: primeiro toque reinicia a escuta',
+    );
+    await page.mouse.click(5, 5);
+    check(
+      (await page.evaluate(() => window.__starts)) === before + 1,
+      'voz: toques seguintes não reiniciam de novo',
+    );
 
     await page.evaluate(() => window.__say('Ei Felipe'));
     check(
@@ -139,7 +152,8 @@ try {
 
     // O reconhecedor encerra sozinho (comum no iOS): o app religa.
     await page.evaluate(() => window.__endRecognizer());
-    await page.waitForFunction(() => window.__starts >= 2, null, { timeout: 4000 });
+    const base = await page.evaluate(() => window.__starts);
+    await page.waitForFunction((n) => window.__starts > n, base, { timeout: 4000 });
     ok('voz: reconhecedor religa sozinho depois de encerrar');
 
     // Botão desliga a escuta e lembra a escolha.

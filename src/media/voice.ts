@@ -8,6 +8,9 @@ const MIN_GAP_MS = 3000;
 /** Espera antes de religar o reconhecedor quando o iOS o encerra (ele encerra sozinho de tempos em tempos). */
 const RESTART_MS = 250;
 const RESTART_MAX_MS = 3000;
+/** Tentativas seguidas de iniciar quando o `start()` é recusado (ex.: instância anterior ainda encerrando). */
+const START_RETRIES = 3;
+const LOG_LINES = 14;
 
 /** Subconjunto da Web Speech API usado aqui (o TypeScript não traz esses tipos). */
 interface SpeechResultLike {
@@ -23,6 +26,9 @@ interface RecognizerLike {
   continuous: boolean;
   interimResults: boolean;
   maxAlternatives: number;
+  onstart: (() => void) | null;
+  onaudiostart: (() => void) | null;
+  onspeechstart: (() => void) | null;
   onresult: ((ev: SpeechEventLike) => void) | null;
   onerror: ((ev: { error: string }) => void) | null;
   onend: (() => void) | null;
@@ -47,6 +53,15 @@ let restartTimer = 0;
 let quickEnds = 0; // quantas vezes seguidas o reconhecedor encerrou quase logo ao ligar
 let startedAt = 0;
 let fatal = false; // erro de permissão: não adianta insistir
+let inGesture = false; // a instância atual foi iniciada dentro de um toque do usuário
+let retries = 0;
+
+/** Registro curto dos eventos da escuta, mostrado no painel de diagnóstico (botão "i"). */
+function logVoice(msg: string): void {
+  const t = ((performance.now() - S.startedAt) / 1000).toFixed(1);
+  S.voiceLog.push(`${t}s ${msg}`);
+  if (S.voiceLog.length > LOG_LINES) S.voiceLog.shift();
+}
 
 function setVoice(state: typeof S.voice): void {
   if (S.voice === state) return;
@@ -54,16 +69,26 @@ function setVoice(state: typeof S.voice): void {
   stateChanged();
 }
 
+/** O microfone da escuta está realmente aberto (ou já chegou texto): só aí o indicador fica verde. */
+function markAlive(): void {
+  retries = 0;
+  setVoice('listening');
+}
+
 function onResult(ev: SpeechEventLike, id: number): void {
+  markAlive();
   for (let i = ev.resultIndex; i < ev.results.length; i++) {
     const result = ev.results[i];
     const alternatives = Array.from({ length: result.length }, (_, k) => result[k].transcript);
-    if (!alternatives.some(isWakePhrase)) continue;
+    const hit = alternatives.some(isWakePhrase);
+    logVoice(`texto "${alternatives[0] ?? ''}"${hit ? ' ✓' : ''}`);
+    if (!hit) continue;
     if (gate.accept(`${id}:${i}`, performance.now())) voiceCommand();
+    else logVoice('comando ignorado (repetido)');
   }
 }
 
-function begin(): void {
+function begin(fromTap: boolean): void {
   const Ctor = recognizerCtor();
   if (!Ctor) return;
   const id = ++session;
@@ -72,11 +97,23 @@ function begin(): void {
   r.continuous = true;
   r.interimResults = true; // o texto parcial chega ~1 s antes do final: o comando responde mais rápido
   r.maxAlternatives = 3;
+  r.onstart = () => {
+    if (id === session) logVoice('start');
+  };
+  r.onaudiostart = () => {
+    if (id !== session) return;
+    logVoice('audiostart');
+    markAlive();
+  };
+  r.onspeechstart = () => {
+    if (id === session) logVoice('speechstart');
+  };
   r.onresult = (ev) => {
     if (id === session) onResult(ev, id);
   };
   r.onerror = (ev) => {
     if (id !== session) return;
+    logVoice(`erro ${ev.error}`);
     if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
       fatal = true;
       setVoice('off');
@@ -86,33 +123,57 @@ function begin(): void {
   };
   r.onend = () => {
     if (id !== session) return;
+    logVoice('end');
     rec = null;
     if (!wanted || fatal) return;
+    setVoice('starting');
     quickEnds = performance.now() - startedAt < 1000 ? quickEnds + 1 : 0;
     const delay = Math.min(RESTART_MAX_MS, RESTART_MS * 2 ** Math.min(quickEnds, 4));
-    restartTimer = window.setTimeout(attempt, delay);
+    restartTimer = window.setTimeout(() => attempt(false), delay);
   };
   rec = r;
+  inGesture = fromTap;
   startedAt = performance.now();
   try {
     r.start();
-    setVoice('listening');
-  } catch {
-    // Ex.: o iOS recusa iniciar sem um toque do usuário. O próximo toque na tela tenta de novo (nudgeVoice).
+    logVoice(fromTap ? 'iniciando (toque)' : 'iniciando');
+    // Ainda não está verde: o iOS aceita o start() mesmo quando a escuta não chega a abrir o microfone.
+    setVoice('starting');
+  } catch (e) {
     rec = null;
-    setVoice('off');
+    logVoice(`start recusado: ${(e as Error).name}`);
+    setVoice('starting');
+    if (retries++ < START_RETRIES) restartTimer = window.setTimeout(() => attempt(fromTap), 300);
+    else setVoice('off');
   }
 }
 
-function attempt(): void {
+function attempt(fromTap: boolean): void {
   restartTimer = 0;
   if (!wanted || fatal || rec) return;
   if (document.visibilityState === 'hidden') return; // em segundo plano o iOS não deixa; ao voltar o app reinicia tudo
-  begin();
+  begin(fromTap);
+}
+
+/** Derruba a instância atual (se houver) e inicia outra, já dentro do toque que chamou. */
+function restartNow(): void {
+  clearTimeout(restartTimer);
+  restartTimer = 0;
+  retries = 0;
+  const old = rec;
+  session++; // ignora os eventos que a instância antiga ainda vai emitir
+  rec = null;
+  try {
+    old?.abort();
+  } catch {
+    /* já parado */
+  }
+  logVoice('reiniciando por toque');
+  begin(true);
 }
 
 /** Liga a escuta contínua (se o usuário não a desligou). Chamar com a câmera já ligada. */
-export function startVoice(): void {
+export function startVoice(fromTap = false): void {
   if (!recognizerCtor()) {
     setVoice('unsupported');
     return;
@@ -121,8 +182,11 @@ export function startVoice(): void {
   wanted = true;
   fatal = false;
   quickEnds = 0;
+  retries = 0;
   gate.reset();
-  if (!rec && !restartTimer) attempt();
+  S.voiceLog.length = 0;
+  setVoice('starting');
+  if (!rec && !restartTimer) attempt(fromTap);
 }
 
 /** Para a escuta (câmera desligada, clipe sendo assistido ou usuário desligou o comando de voz). */
@@ -140,15 +204,30 @@ export function stopVoice(): void {
   if (S.voice !== 'unsupported') setVoice('off');
 }
 
-/** Um toque na tela é um gesto do usuário: se a escuta devia estar ligada e não está, tenta de novo. */
-export function nudgeVoice(): void {
-  if (wanted && !fatal && !rec && !restartTimer) attempt();
+/**
+ * Chamar em todo toque na tela. Uma escuta iniciada sem toque (na abertura do app ou num religamento automático)
+ * pode ficar muda no iOS mesmo sem erro; o primeiro toque seguinte a reinicia dentro do gesto do usuário.
+ */
+export function voiceTap(): void {
+  if (!wanted || fatal) return;
+  if (!rec) attempt(true);
+  else if (!inGesture) restartNow();
 }
 
-/** Liga ou desliga o comando de voz pela preferência do usuário. */
+/** Voltou para o app: se a escuta caiu enquanto estava fora, tenta religar. */
+export function resumeVoice(): void {
+  if (wanted && !fatal && !rec && !restartTimer) attempt(false);
+}
+
+/** Botão 🎙️ com a escuta ligada mas ainda sem áudio: reinicia em vez de desligar. */
+export function restartVoice(): void {
+  if (wanted && !fatal) restartNow();
+}
+
+/** Liga ou desliga o comando de voz pela preferência do usuário (chamar de dentro do toque no botão). */
 export function setVoiceEnabled(on: boolean): void {
   S.voiceEnabled = on;
   if (!on) stopVoice();
-  else if (S.running) startVoice();
+  else if (S.running) startVoice(true); // já estamos dentro do toque no botão
   stateChanged();
 }

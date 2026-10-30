@@ -2,7 +2,7 @@ import { onClipsChange, onStateChange, onStatus, onVoiceCommand } from './events
 import { acquireWake, enableMic, start } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { beep } from './media/beep';
-import { nudgeVoice, setVoiceEnabled } from './media/voice';
+import { voiceTap, restartVoice, resumeVoice, setVoiceEnabled } from './media/voice';
 import { trySetupAudio } from './media/audio';
 import { cfg, S } from './state';
 import { T } from './strings';
@@ -82,6 +82,11 @@ function bindVoice(): void {
   }
   onVoiceCommand(onVoice);
   els.btnVoice.addEventListener('click', () => {
+    // Ligado mas ainda sem áudio (âmbar): o toque reinicia a escuta em vez de desligar.
+    if (S.voiceEnabled && S.voice === 'starting') {
+      restartVoice();
+      return;
+    }
     const on = !S.voiceEnabled;
     try {
       localStorage.setItem('clip.voice', on ? '1' : '0');
@@ -112,13 +117,15 @@ function bindLifecycle(): void {
         void start();
       } else void acquireWake();
     } else if (S.running) void acquireWake();
-    if (document.visibilityState === 'visible') nudgeVoice();
+    if (document.visibilityState === 'visible') resumeVoice();
   });
+
+  // Qualquer toque reinicia uma escuta de voz que tenha começado sem gesto do usuário (ver voiceTap).
+  document.addEventListener('click', () => voiceTap());
 
   // Qualquer toque tenta destravar o áudio (o Safari pode deixar o AudioContext suspenso).
   document.addEventListener('pointerdown', () => {
     if (!S.running) return; // sem câmera ligada não mexe no áudio (não atrapalha a reprodução dos clipes)
-    nudgeVoice(); // um toque é um gesto válido para o iOS aceitar iniciar a escuta de voz
     const retry = (): void => {
       if (S.running && !S.worklet) void trySetupAudio().then(() => void (S.worklet && setStatus('')));
     };
