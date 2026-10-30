@@ -1,7 +1,8 @@
-import { onClipsChange, onStateChange, onStatus } from './events';
+import { onClipsChange, onStateChange, onStatus, onVoiceCommand } from './events';
 import { acquireWake, enableMic, start } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { beep } from './media/beep';
+import { nudgeVoice, setVoiceEnabled } from './media/voice';
 import { trySetupAudio } from './media/audio';
 import { cfg, S } from './state';
 import { T } from './strings';
@@ -64,6 +65,35 @@ function bindControls(): void {
   paintSound();
 }
 
+/** "Ei Clip" reconhecido: alterna a gravação (inicia com o pre-roll ou para e salva). */
+function onVoice(): void {
+  if (!S.running || S.finalizing) return;
+  els.btnVoice.classList.add('heard');
+  setTimeout(() => els.btnVoice.classList.remove('heard'), 1200);
+  if (S.rec) void stopRec();
+  else startRec();
+}
+
+function bindVoice(): void {
+  try {
+    S.voiceEnabled = localStorage.getItem('clip.voice') !== '0';
+  } catch {
+    /* sem localStorage */
+  }
+  onVoiceCommand(onVoice);
+  els.btnVoice.addEventListener('click', () => {
+    const on = !S.voiceEnabled;
+    try {
+      localStorage.setItem('clip.voice', on ? '1' : '0');
+    } catch {
+      /* sem localStorage */
+    }
+    setVoiceEnabled(on);
+    setStatus(on ? T.voiceOn : T.voiceOff);
+    setTimeout(() => setStatus(S.note, S.note ? 'warn' : ''), 2000);
+  });
+}
+
 /** Saiu/voltou do app: o iOS pausa a câmera em segundo plano, então o buffer e os relógios ficam velhos. */
 function bindLifecycle(): void {
   let hiddenAt = 0;
@@ -82,11 +112,13 @@ function bindLifecycle(): void {
         void start();
       } else void acquireWake();
     } else if (S.running) void acquireWake();
+    if (document.visibilityState === 'visible') nudgeVoice();
   });
 
   // Qualquer toque tenta destravar o áudio (o Safari pode deixar o AudioContext suspenso).
   document.addEventListener('pointerdown', () => {
     if (!S.running) return; // sem câmera ligada não mexe no áudio (não atrapalha a reprodução dos clipes)
+    nudgeVoice(); // um toque é um gesto válido para o iOS aceitar iniciar a escuta de voz
     const retry = (): void => {
       if (S.running && !S.worklet) void trySetupAudio().then(() => void (S.worklet && setStatus('')));
     };
@@ -112,6 +144,7 @@ export function initApp(): void {
   onStorageChange(() => void paintStorage());
 
   bindControls();
+  bindVoice();
   bindLifecycle();
   els.ver.textContent = 'v' + APP_VERSION;
 

@@ -6,6 +6,7 @@ import { els } from '../ui/dom';
 import { ensureAudioCtx, trySetupAudio } from './audio';
 import { support } from './support';
 import { startLoop } from './video';
+import { startVoice, stopVoice } from './voice';
 
 const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   echoCancellation: false,
@@ -126,12 +127,14 @@ export async function start(): Promise<void> {
 
   void acquireWake();
   startLoop();
+  startVoice();
   notify(S.note, S.note ? 'warn' : '');
   stateChanged();
 }
 
 export async function stopAll(): Promise<void> {
   S.running = false;
+  stopVoice();
   S.loopId++;
   S.rec = null;
   try {

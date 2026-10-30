@@ -25,6 +25,9 @@ export function updateUI(): void {
   }
   els.btnFlip.disabled = els.selQuality.disabled = !!S.rec;
   els.btnMic.disabled = S.micBusy;
+  els.btnVoice.classList.toggle('listening', S.voice === 'listening');
+  els.btnVoice.setAttribute('aria-pressed', String(S.voiceEnabled));
+  els.btnVoice.hidden = S.voice === 'unsupported';
 }
 
 /** Atualização periódica (250 ms): barra de buffer, cronômetro, nível do microfone, avisos e diagnóstico. */

@@ -11,17 +11,17 @@ mic ─► AudioWorklet ─► AudioEncoder (AAC) ─┘                        
 
 ## Estrutura de pastas
 
-| Pasta          | Papel                                                                                                                                                                        |
-| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/core/`    | Lógica pura e testada: `replay-buffer` (janela, corte, descarte), `timestamps` (rebase), `aac` (ASC/ADTS), `clip-name`                                                       |
-| `src/media/`   | Motor: `camera` (permissões, start/stop), `video` (laço de captura + encoder), `audio` (worklet + AAC + relógio), `recorder` (início/fim do clipe), `mp4`, `beep`, `support` |
-| `src/storage/` | `clip-store`: IndexedDB e estimativa de armazenamento                                                                                                                        |
-| `src/ui/`      | Interface: `dom` (elementos), `controls` (botão, tick de 250 ms), `clips-view` (lista), `diagnostics`, `status`                                                              |
-| `src/pwa/`     | Registro do service worker e aviso de atualização                                                                                                                            |
-| `src/`         | `app.ts` (liga tudo), `main.ts` (entrada), `state.ts` (estado), `events.ts` (motor → interface), `strings.ts` (textos), `config.ts`                                          |
-| `scripts/`     | Plugin do Vite que gera `dist/sw.js` (lista de arquivos + versão por hash)                                                                                                   |
-| `tests/`       | Vitest: buffer, timestamps, AAC, montagem do MP4                                                                                                                             |
-| `e2e/`         | Fluxo no Chromium (Playwright)                                                                                                                                               |
+| Pasta          | Papel                                                                                                                                                                                                                  |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/core/`    | Lógica pura e testada: `replay-buffer` (janela, corte, descarte), `timestamps` (rebase), `aac` (ASC/ADTS), `clip-name`, `wake-word` (texto → "Ei Clip" e trava contra disparo duplo)                                   |
+| `src/media/`   | Motor: `camera` (permissões, start/stop), `video` (laço de captura + encoder), `audio` (worklet + AAC + relógio), `recorder` (início/fim do clipe), `mp4`, `beep`, `support`, `voice` (escuta contínua por Web Speech) |
+| `src/storage/` | `clip-store`: IndexedDB e estimativa de armazenamento                                                                                                                                                                  |
+| `src/ui/`      | Interface: `dom` (elementos), `controls` (botão, tick de 250 ms), `clips-view` (lista), `diagnostics`, `status`                                                                                                        |
+| `src/pwa/`     | Registro do service worker e aviso de atualização                                                                                                                                                                      |
+| `src/`         | `app.ts` (liga tudo), `main.ts` (entrada), `state.ts` (estado), `events.ts` (motor → interface), `strings.ts` (textos), `config.ts`                                                                                    |
+| `scripts/`     | Plugin do Vite que gera `dist/sw.js` (lista de arquivos + versão por hash)                                                                                                                                             |
+| `tests/`       | Vitest: buffer, timestamps, AAC, montagem do MP4                                                                                                                                                                       |
+| `e2e/`         | Fluxo no Chromium (Playwright)                                                                                                                                                                                         |
 
 ## Decisões
 
@@ -33,6 +33,13 @@ mic ─► AudioWorklet ─► AudioEncoder (AAC) ─┘                        
 - **Service worker gerado no build:** o nome do cache inclui hash do conteúdo, então toda mudança dispara a atualização.
   Não há `skipWaiting` automático: a versão nova só entra quando o usuário toca em "Atualizar" (nunca no meio de uma gravação).
 - **Caminhos relativos (`base: './'`):** o app roda em qualquer endereço (github.io/Clip/, domínio próprio).
+
+- **Comando de voz = Web Speech API (pt-BR), não Porcupine:** testada no iPhone com câmera+mic abertos, música alta e em
+  modo avião (3 min, 0 erros, 0 reinícios). Reconhece "Ei clipe/Oi clipe/Hey clipe"; o texto parcial chega ~0,4 a 0,9 s
+  depois do início da fala. Cada fala vale um comando (chave = instância + índice do resultado) e há 3 s de intervalo mínimo.
+  O comando **alterna** a gravação (inicia com o pre-roll / para e salva); o pre-roll de 15–30 s já cobre a latência.
+  A escuta liga com a câmera (`startVoice` no fim de `start()`), para em `stopAll()` e reinicia sozinha quando o iOS a encerra.
+  Plano B se falhar em campo: Porcupine Web (roda 100% no aparelho; exige chave e palavra treinada no Picovoice).
 
 ## Limites conhecidos
 

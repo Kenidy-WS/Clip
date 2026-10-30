@@ -47,6 +47,10 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Cache:** GitHub Pages manda `max-age=600`; o service worker usa rede primeiro com `cache: 'no-cache'`.
 - O pre-roll é **zerado depois de cada clipe** para o final de um clipe não reaparecer no começo do próximo.
 - Buffer guarda `janela + 3 s` e há keyframe forçado a cada 1 s (precisão do corte).
+- **Comando de voz (Web Speech):** o reconhecedor devolve a mesma fala várias vezes (parciais e final) e a escreve como
+  "Ei clipe", "Oi clipe", "Hey clipe", "Ec clipe"; por isso o gatilho é por fala (`WakeGate`) e a lista de variações fica em
+  `src/core/wake-word.ts`. O iOS encerra a escuta sozinho de tempos em tempos (religamos em `onend`) e pode recusar iniciar sem
+  um toque (`nudgeVoice` tenta de novo no próximo toque).
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)

@@ -43,6 +43,21 @@ const STUBS = `
     static async isConfigSupported(c){ return { supported:true, config:c }; } }
   window.VideoEncoder = class extends FakeEnc {};
   window.AudioEncoder = class extends FakeEnc {};`;
+// Reconhecedor de voz falso: __say(texto) entrega um resultado; __endRecognizer() simula o iOS encerrando a escuta.
+const VOICE = `
+  window.__starts = 0; window.__n = 0; window.__cur = null;
+  class FakeRecognition {
+    start() { window.__starts++; window.__cur = this; }
+    abort() { if (window.__cur === this) window.__cur = null; }
+  }
+  window.SpeechRecognition = window.webkitSpeechRecognition = FakeRecognition;
+  window.__say = (text, same) => {
+    const r = window.__cur; if (!r) return;
+    const idx = same ? window.__n - 1 : window.__n++;
+    const results = []; results[idx] = [{ transcript: text }];
+    r.onresult({ resultIndex: idx, results });
+  };
+  window.__endRecognizer = () => { const r = window.__cur; window.__cur = null; r && r.onend && r.onend(); };`;
 const DENY = `navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));`;
 
 let failed = 0;
@@ -72,6 +87,72 @@ try {
     ok('câmera iniciou sozinha ao abrir');
     check((await page.textContent('#ver')).startsWith('v'), 'versão exibida no rodapé');
     check(errs.length === 0, 'sem erros de JavaScript ao abrir ' + errs.join(';'));
+    await page.close();
+  }
+
+  // 1b) Comando de voz: reconhecedor falso entrega textos; "Ei Clip" aciona a gravação, outras falas não.
+  {
+    const page = await (await browser.newContext()).newPage();
+    const errs = [];
+    page.on('pageerror', (e) => errs.push(String(e)));
+    await page.addInitScript(STUBS + VOICE);
+    await page.goto(URL_);
+    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 8000,
+    });
+    await page.waitForFunction(
+      () => document.querySelector('#btnVoice').classList.contains('listening'),
+      null,
+      {
+        timeout: 3000,
+      },
+    );
+    ok('voz: escutando depois que a câmera liga');
+
+    await page.evaluate(() => window.__say('Ei Felipe'));
+    check(
+      !(await page.evaluate(() => document.querySelector('#btnVoice').classList.contains('heard'))),
+      'voz: fala comum não aciona o comando',
+    );
+
+    await page.evaluate(() => window.__say('Ei clipe'));
+    check(
+      await page.evaluate(() => document.querySelector('#btnVoice').classList.contains('heard')),
+      'voz: "Ei clipe" reconhecido (indicador acende)',
+    );
+    // Com os codificadores falsos o buffer não enche; o aviso prova que a gravação foi acionada.
+    check(
+      (await page.textContent('#status')).toLowerCase().includes('buffer'),
+      'voz: comando chamou a gravação',
+    );
+
+    // Repetição da mesma fala (parcial + final) e comando logo em seguida não disparam de novo.
+    await page.evaluate(() => {
+      document.querySelector('#btnVoice').classList.remove('heard');
+      window.__say('Ei clipe', 'mesma');
+      window.__say('Ei clipe');
+    });
+    check(
+      !(await page.evaluate(() => document.querySelector('#btnVoice').classList.contains('heard'))),
+      'voz: comando repetido dentro de 3 s é ignorado',
+    );
+
+    // O reconhecedor encerra sozinho (comum no iOS): o app religa.
+    await page.evaluate(() => window.__endRecognizer());
+    await page.waitForFunction(() => window.__starts >= 2, null, { timeout: 4000 });
+    ok('voz: reconhecedor religa sozinho depois de encerrar');
+
+    // Botão desliga a escuta e lembra a escolha.
+    await page.click('#btnVoice');
+    await page.waitForFunction(
+      () => !document.querySelector('#btnVoice').classList.contains('listening'),
+      null,
+      {
+        timeout: 3000,
+      },
+    );
+    ok('voz: botão desliga a escuta');
+    check(errs.length === 0, 'voz: sem erros de JavaScript ' + errs.join(';'));
     await page.close();
   }
 

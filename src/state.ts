@@ -68,6 +68,10 @@ export interface AppState {
   aLastTs: number;
   aResyncs: number;
   micErr: string;
+  /** Comando de voz: 'off' = parado, 'listening' = escutando, 'unsupported' = o navegador não oferece. */
+  voice: 'off' | 'listening' | 'unsupported';
+  /** Preferência do usuário (a chave do botão de voz). */
+  voiceEnabled: boolean;
 }
 
 export const S: AppState = {
@@ -129,4 +133,6 @@ export const S: AppState = {
   aLastTs: 0,
   aResyncs: 0,
   micErr: '',
+  voice: 'off',
+  voiceEnabled: true,
 };

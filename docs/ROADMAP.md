@@ -6,7 +6,7 @@ Uma onda por chat. Em cada uma: Claude entrega, o Kenidy testa no iPhone e aprov
 | ---- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | 0    | Protótipo funcional: pre-roll, qualidade, áudio, offline, aviso de atualização                                | Concluída (`v0.3.7`, commit 0e9176b) |
 | 1    | Base profissional: TypeScript + Vite, módulos, testes, lint, CI/deploy, documentação, nome "Ei Clip"          | Concluída e aprovada (`v0.4.0`)      |
-| 2    | Comando de voz "Ei Clip": teste de viabilidade no iPhone (vento/ruído) e integração                           | Próxima                              |
+| 2    | Comando de voz "Ei Clip": teste de viabilidade no iPhone (vento/ruído) e integração                           | Em andamento (`v0.5.0` na `onda-2`)  |
 | 3    | Interface, marca e ícone: tela limpa, textos finais, layout ocupando a tela toda, ícone, esconder diagnóstico | Planejada                            |
 | 4    | Polimento e robustez: áudio, permissões, armazenamento; decidir se vale migrar para app nativo                | Planejada                            |
 

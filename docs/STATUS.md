@@ -1,29 +1,43 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **Versão no ar:** 0.4.0 (Onda 1 aprovada) · **Próxima:** Onda 2 (comando de voz)
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.4.1 (inclui a página `/voz-teste/`) · **Na branch `onda-2`:** 0.5.0 (comando de voz integrado, ainda não testado no iPhone)
 
 ## Feito
 
 - Protótipo `v0.3.7` validado pelo Kenidy no iPhone: vídeo vertical 1080p, áudio nos clipes (também no player do app),
   pre-roll desde o 1º segundo, sons de início/fim, offline, aviso de atualização, abertura já pedindo câmera/mic.
-- Correção na Onda 1: configuração de áudio pendente de uma sessão antiga não sobrescreve mais avisos da sessão nova.
-- Onda 1: migração para TypeScript + Vite em módulos (comportamento igual ao `v0.3.7`), nome "Ei Clip" em título,
-  manifest e textos, 19 testes unitários, e2e no Chromium, ESLint/Prettier, CI e deploy (GitHub Actions), documentação.
-- Código antigo preservado no commit `0e9176b` (tag local `v0.3.7-legado`; a tag não subiu para o GitHub).
+- Onda 1 (`v0.4.0`, aprovada): TypeScript + Vite em módulos, nome "Ei Clip", testes, e2e, ESLint/Prettier, CI e deploy.
+- Onda 2, pesquisa do nome: nenhum app/marca "Ei Clip" encontrado nas buscas (a base do INPI não foi consultada; só importa se
+  um dia for publicar/comercializar). Nome mantido.
+- Onda 2, viabilidade (`v0.4.1`, página `/voz-teste/`): Web Speech API pt-BR testada no iPhone (Safari) com câmera+microfone
+  abertos. Música alta: 7/7 falas reconhecidas. **Modo avião, 3 min: ~13 falas, 0 erros, 0 reinícios, tudo reconhecido**
+  (funciona offline). Latência do texto parcial ~0,4–0,9 s. Variações devolvidas: "Ei clipe", "Oi clipe", "Hey clipe", "Ec clipe".
+  Falso reconhecimento visto: "Ei Felipe" (não dispara, pois exigimos saudação + "clip").
+- Onda 2, integração (`v0.5.0`, branch `onda-2`): `src/core/wake-word.ts` (reconhecimento + `WakeGate`, 21 testes),
+  `src/media/voice.ts` (escuta contínua, religa sozinha, para com a câmera), botão 🎙️ ao lado do som (apagado = desligado,
+  borda verde = escutando, pulso verde = comando reconhecido; escolha guardada). **"Ei Clip" alterna a gravação:** inicia
+  (com o pre-roll) e, dito de novo, para e salva. Cenário de voz no e2e (reconhecedor falso).
 
-## Validação da Onda 1
+## O que o Kenidy precisa testar no iPhone (`v0.5.0`)
 
-Aprovada pelo Kenidy no iPhone em 2026-10-29: publicada pelo GitHub Pages (fonte: GitHub Actions), `v0.4.0` no rodapé,
-gravação com pre-roll funcionando e áudio captado e salvo na galeria. A branch `onda-1` já foi incorporada à `main`.
+Depois do merge da `onda-2` na `main` e do deploy:
+
+1. **Áudio dos clipes com a escuta ligada** (o ponto de maior risco): gravar por voz e conferir se o som do clipe continua
+   limpo e com volume normal. Se piorar, comparar com o botão 🎙️ desligado.
+2. Fluxo: dizer "Ei Clip" (grava com pre-roll) e "Ei Clip" de novo (para e salva). Conferir se não para sozinho logo após começar.
+3. Escuta **no app instalado** (tela de início) e no Safari: no app instalado pode precisar de um toque na tela para a escuta começar.
+4. Ao ar livre: vento, motor de barco, distância de ~2 m.
+5. Sessão longa (10+ min) com a câmera aberta: o botão 🎙️ deve continuar com a borda verde.
 
 ## Pendências e perguntas em aberto
 
-- **Pre-roll:** decidido manter o comportamento atual (zera depois de cada clipe, sem repetir imagens). O Kenidy já tinha tratado a repetição como bug.
-- **Início da Onda 2 (pedido do Kenidy):** pesquisar se já existe app ou marca "Ei Clip" antes de fixar o nome.
+- **Pre-roll:** mantido o comportamento atual (zera depois de cada clipe, sem repetir imagens).
+- Se a escuta degradar o áudio gravado ou falhar em campo: plano B é o Porcupine Web (100% no aparelho; exige conta gratuita
+  no Picovoice para chave e palavra treinada).
 - Áudio a 16 kHz já foi visto uma vez (provável microfone Bluetooth); não confirmado.
 - Pausar a câmera ao assistir clipe apaga o buffer; avaliar `audioSession` na Onda 4 se incomodar.
 
 ## Próximo passo
 
-Onda 2 (comando de voz "Ei Clip"), em um chat novo: pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
-Começar pelo teste de viabilidade isolado da palavra de ativação no iPhone (ver `docs/ROADMAP.md`).
+Kenidy testa a `v0.5.0` (lista acima). Aprovada, a Onda 2 fecha e a Onda 3 (interface, marca e ícone) começa em chat novo:
+pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).

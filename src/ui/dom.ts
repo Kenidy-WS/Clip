@@ -14,6 +14,7 @@ export const els = {
   btnInfo: byId<HTMLButtonElement>('btnInfo'),
   btnClips: byId<HTMLButtonElement>('btnClips'),
   btnSound: byId<HTMLButtonElement>('btnSound'),
+  btnVoice: byId<HTMLButtonElement>('btnVoice'),
   btnMic: byId<HTMLButtonElement>('btnMic'),
   btnUpdate: byId<HTMLButtonElement>('btnUpdate'),
   fill: byId<HTMLElement>('fill'),

@@ -31,6 +31,13 @@ export const T = {
   noAudioTrack: 'sem faixa de áudio',
   restarting: 'Voltando ao app: reiniciando a câmera…',
 
+  // Comando de voz
+  voiceDenied:
+    'Comando de voz sem permissão. Permita o reconhecimento de voz em Ajustes → Safari e tente de novo.',
+  voiceOn: 'Comando de voz ativado.',
+  voiceOff: 'Comando de voz desativado.',
+  voiceUnsupported: 'Comando de voz indisponível neste aparelho.',
+
   // Gravação
   waitBuffer: 'Aguarde o buffer começar a encher.',
   noKeyframe: 'Ainda sem keyframe no buffer, tente de novo em 1 s.',
