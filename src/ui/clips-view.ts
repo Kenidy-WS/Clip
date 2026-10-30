@@ -28,22 +28,34 @@ const whenText = (c: Clip): string =>
     minute: '2-digit',
   });
 
+/** Baixa os clipes como arquivos (um a um, com intervalo: o navegador costuma barrar vários downloads no mesmo instante). */
+function downloadClips(list: Clip[]): void {
+  list.forEach((c, i) =>
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = c.url;
+      a.download = c.name;
+      a.click();
+    }, i * 600),
+  );
+}
+
+/**
+ * Abre a folha de compartilhar do iOS (de lá: "Salvar Vídeo" leva ao Rolo da Câmera). Se ela não existir ou falhar, o clipe é
+ * baixado como arquivo, para nunca ficar preso no app. Fechar a folha sem escolher nada não é erro.
+ */
 async function shareClips(list: Clip[]): Promise<void> {
-  try {
-    const files = list.map((c) => c.file);
-    if (navigator.canShare && navigator.canShare({ files })) await navigator.share({ files });
-    else {
-      for (const c of list) {
-        const a = document.createElement('a');
-        a.href = c.url;
-        a.download = c.name;
-        a.click();
-      }
+  const files = list.map((c) => c.file);
+  if (navigator.canShare && navigator.canShare({ files })) {
+    try {
+      await navigator.share({ files });
+      return;
+    } catch (e) {
+      if ((e as Error)?.name === 'AbortError') return;
+      notify(T.shareFallback, 'warn');
     }
-  } catch (e) {
-    const err = e as Error;
-    if (err && err.name !== 'AbortError') notify(T.shareFailed(err.message), 'err');
   }
+  downloadClips(list);
 }
 
 /** Miniatura: o primeiro quadro do próprio vídeo (sem gerar imagens à parte). */

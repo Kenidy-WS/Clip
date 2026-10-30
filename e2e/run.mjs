@@ -1120,6 +1120,81 @@ try {
     }
   }
 
+  // 3c) Compartilhar/salvar: se a folha do iOS falhar o clipe é baixado; fechar a folha sem escolher não faz nada.
+  {
+    const seed = (page) =>
+      page.evaluate(
+        () =>
+          new Promise((res, rej) => {
+            const r = indexedDB.open('clip', 1);
+            r.onupgradeneeded = () => r.result.createObjectStore('clips', { keyPath: 'name' });
+            r.onsuccess = () => {
+              const db = r.result;
+              const tx = db.transaction('clips', 'readwrite');
+              tx.objectStore('clips').put({
+                name: 'clip-compartilhar.mp4',
+                blob: new Blob([new Uint8Array(2000)], { type: 'video/mp4' }),
+                durSec: 8,
+                preSec: 3,
+                withAudio: true,
+                dims: '1080x1920',
+                mbps: 10,
+                aCount: 300,
+                aSec: 8,
+                aInfo: '',
+                at: Date.now(),
+              });
+              tx.oncomplete = () => {
+                db.close();
+                res();
+              };
+              tx.onerror = () => rej(tx.error);
+            };
+          }),
+      );
+    const shareWith = async (errName) => {
+      const page = await (await browser.newContext()).newPage();
+      const errs = [];
+      page.on('pageerror', (e) => errs.push(String(e)));
+      await page.addInitScript(STUBS);
+      await page.addInitScript(
+        `navigator.canShare = () => true; navigator.share = () => Promise.reject(Object.assign(new Error('x'), { name: '${errName}' }));`,
+      );
+      await page.goto(URL_);
+      await seed(page);
+      await page.reload();
+      await page.waitForSelector('.recent .tile', { timeout: 8000 });
+      await page.click('#btnSeeAll');
+      await page.click('#clips .tile');
+      const download = page.waitForEvent('download', { timeout: 2500 }).catch(() => null);
+      await page.click('#btnShare');
+      return { page, errs, file: await download };
+    };
+
+    const failed_ = await shareWith('NotAllowedError');
+    check(
+      failed_.file && failed_.file.suggestedFilename() === 'clip-compartilhar.mp4',
+      'compartilhar falhou: o clipe é baixado como arquivo',
+    );
+    check(
+      (await failed_.page.textContent('#status')).includes('baixado'),
+      'compartilhar falhou: avisa que o arquivo foi baixado',
+    );
+    check(
+      failed_.errs.length === 0,
+      'compartilhar falhou: sem erros de JavaScript ' + failed_.errs.join(';'),
+    );
+    await failed_.page.close();
+
+    const cancelled = await shareWith('AbortError');
+    check(!cancelled.file, 'compartilhar cancelado pelo usuário: nada é baixado');
+    check(
+      !(await cancelled.page.textContent('#status')).includes('baixado'),
+      'compartilhar cancelado pelo usuário: sem aviso de erro',
+    );
+    await cancelled.page.close();
+  }
+
   // 4) Offline e 5) aviso de atualização.
   {
     const ctx = await browser.newContext();
