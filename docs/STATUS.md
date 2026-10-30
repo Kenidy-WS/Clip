@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.8.3 — ações em lote, diagnóstico de recarga
+
+- Pedido do Kenidy: selecionar vários clipes na Galeria para excluir ou compartilhar/baixar de uma vez. Feito: "Selecionar" no topo da Galeria, marca com toque, "Todos/Nenhum", barra inferior com Compartilhar (folha de compartilhar com vários arquivos; sem suporte, baixa um a um) e Excluir (confirmação). Sai do modo ao sair da Galeria.
+- Relato (v0.8.2): faixas na troca de lente **continuam** (o ajuste de tamanho da prévia não resolveu). Falta dado: print do Diagnóstico logo após a troca (linha "Tela": janela, preview, fonte/caixa).
+- Relato: o iPhone pede câmera/microfone de novo ao minimizar ou após alguns minutos aberto. Hipóteses: (a) a página recarrega (iOS descarta o app em segundo plano ou encerra por memória); (b) o reconhecimento de voz pede "Microfone" a cada religamento; (c) `start()` ao voltar do app refaz a captura. Não confirmado. Novo no Diagnóstico: "Cargas da página" (hora e tipo: navigate/reload/back_forward), "Permissões" (estado de câmera/microfone) e "Ciclo" (saiu/voltou do app, tempo fora).
+- Testar: usar o app, minimizar, voltar, e abrir Ajustes → Diagnóstico. Se "Cargas da página" ganhou uma linha nova, o app recarregou (volta ao Início); se não, foi nova captura/voz dentro da mesma página.
+
 ## v0.8.2 — faixas ao trocar de lente
 
 - Relato do Kenidy (v0.8.1): a janela já ocupa a tela, mas **ao trocar de lente** o vídeo da prévia fica menor, com faixas pretas em volta (retângulo ~9:16 no centro).

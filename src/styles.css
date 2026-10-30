@@ -595,6 +595,65 @@ p {
   border-radius: 6px;
 }
 
+.bar-end {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.select-bar {
+  flex: none;
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px;
+  border-top: 1px solid var(--line, rgba(255, 255, 255, 0.12));
+}
+.gallery.selecting .select-bar {
+  display: flex;
+}
+.gallery.selecting #btnGalleryCam {
+  display: none;
+}
+.select-bar .btn-icon.danger {
+  color: var(--rec);
+}
+.select-bar .btn-icon:disabled,
+.select-bar .btn-icon[disabled] {
+  opacity: 0.35;
+}
+.tile .check {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: rgba(0, 0, 0, 0.35);
+  display: none;
+  place-items: center;
+  color: #000;
+}
+.tile .check svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3;
+  opacity: 0;
+}
+.gallery.selecting .tile .check {
+  display: grid;
+}
+.tile.sel .check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.tile.sel .check svg {
+  opacity: 1;
+}
+.tile.sel video {
+  opacity: 0.6;
+}
+
 /* ───────── Player ───────── */
 .player {
   position: absolute;

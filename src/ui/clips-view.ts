@@ -1,4 +1,4 @@
-import { removeClip } from '../clips';
+import { removeClip, removeClips } from '../clips';
 import { formatDuration } from '../core/format';
 import { notify } from '../events';
 import { S } from '../state';
@@ -11,6 +11,8 @@ import { icon } from './icons';
 const RECENT_COUNT = 4;
 
 let current: Clip | null = null;
+let selecting = false;
+const selected = new Set<Clip>();
 
 const whenText = (c: Clip): string =>
   new Date(c.at).toLocaleString('pt-BR', {
@@ -20,15 +22,17 @@ const whenText = (c: Clip): string =>
     minute: '2-digit',
   });
 
-async function shareClip(c: Clip): Promise<void> {
+async function shareClips(list: Clip[]): Promise<void> {
   try {
-    if (navigator.canShare && navigator.canShare({ files: [c.file] }))
-      await navigator.share({ files: [c.file] });
+    const files = list.map((c) => c.file);
+    if (navigator.canShare && navigator.canShare({ files })) await navigator.share({ files });
     else {
-      const a = document.createElement('a');
-      a.href = c.url;
-      a.download = c.name;
-      a.click();
+      for (const c of list) {
+        const a = document.createElement('a');
+        a.href = c.url;
+        a.download = c.name;
+        a.click();
+      }
     }
   } catch (e) {
     const err = e as Error;
@@ -37,7 +41,7 @@ async function shareClip(c: Clip): Promise<void> {
 }
 
 /** Miniatura: o primeiro quadro do próprio vídeo (sem gerar imagens à parte). */
-function tile(c: Clip): HTMLElement {
+function tile(c: Clip, selectable = false): HTMLElement {
   const b = document.createElement('button');
   b.className = 'tile';
   b.setAttribute('aria-label', T.clipOpen(whenText(c)));
@@ -63,7 +67,20 @@ function tile(c: Clip): HTMLElement {
     na.innerHTML = icon('micOff');
     b.append(na);
   }
-  b.onclick = () => openPlayer(c);
+  if (selectable) {
+    const ck = document.createElement('span');
+    ck.className = 'check';
+    ck.innerHTML = icon('check');
+    b.append(ck);
+    b.classList.toggle('sel', selected.has(c));
+    b.onclick = () => {
+      if (!selecting) return openPlayer(c);
+      if (selected.has(c)) selected.delete(c);
+      else selected.add(c);
+      b.classList.toggle('sel', selected.has(c));
+      paintSelection();
+    };
+  } else b.onclick = () => openPlayer(c);
   return b;
 }
 
@@ -90,10 +107,57 @@ export function closePlayer(): void {
   current = null;
 }
 
+/** Atualiza título, botões e barra de ações conforme a seleção. */
+function paintSelection(): void {
+  const n = S.clips.length;
+  els.screenGallery.classList.toggle('selecting', selecting);
+  els.btnSelect.hidden = n === 0;
+  els.btnSelect.textContent = selecting ? T.cancel : T.select;
+  els.galleryTitle.textContent = selecting ? T.selectedCount(selected.size) : n ? T.clipsCount(n) : 'Clipes';
+  els.btnSelectAll.textContent = selected.size === n && n > 0 ? T.selectNone : T.selectAll;
+  els.btnBatchShare.disabled = els.btnBatchDelete.disabled = selected.size === 0;
+}
+
+/** Sai do modo de seleção (ao sair da Galeria ou ao cancelar). */
+export function exitSelection(): void {
+  if (!selecting && selected.size === 0) return;
+  selecting = false;
+  selected.clear();
+  els.clips.querySelectorAll('.tile.sel').forEach((t) => t.classList.remove('sel'));
+  paintSelection();
+}
+
+function bindSelection(): void {
+  els.btnSelect.addEventListener('click', () => {
+    if (selecting) return exitSelection();
+    selecting = true;
+    paintSelection();
+  });
+  els.btnSelectAll.addEventListener('click', () => {
+    const all = selected.size === S.clips.length;
+    selected.clear();
+    if (!all) S.clips.forEach((c) => selected.add(c));
+    els.clips
+      .querySelectorAll('.tile')
+      .forEach((t, i) => t.classList.toggle('sel', selected.has(S.clips[i]!)));
+    paintSelection();
+  });
+  els.btnBatchShare.addEventListener('click', () => {
+    if (selected.size) void shareClips(S.clips.filter((c) => selected.has(c)));
+  });
+  els.btnBatchDelete.addEventListener('click', () => {
+    if (!selected.size || !confirm(T.removeManyConfirm(selected.size))) return;
+    const list = [...selected];
+    exitSelection();
+    removeClips(list);
+  });
+}
+
 /** Liga os botões do player (chamar uma vez). */
 export function bindPlayer(): void {
+  bindSelection();
   els.btnPlayerClose.addEventListener('click', closePlayer);
-  els.btnShare.addEventListener('click', () => current && void shareClip(current));
+  els.btnShare.addEventListener('click', () => current && void shareClips([current]));
   els.btnDelete.addEventListener('click', () => {
     if (current && confirm(T.removeConfirm)) {
       const c = current;
@@ -106,9 +170,11 @@ export function bindPlayer(): void {
 /** Redesenha a grade da Galeria, os recentes do Início e a miniatura da câmera. */
 export function renderClips(): void {
   const n = S.clips.length;
-  els.galleryTitle.textContent = n ? T.clipsCount(n) : 'Clipes';
-  els.clips.replaceChildren(...S.clips.map(tile));
-  els.recent.replaceChildren(...S.clips.slice(0, RECENT_COUNT).map(tile));
+  for (const c of selected) if (!S.clips.includes(c)) selected.delete(c);
+  if (n === 0) selecting = false;
+  els.clips.replaceChildren(...S.clips.map((c) => tile(c, true)));
+  paintSelection();
+  els.recent.replaceChildren(...S.clips.slice(0, RECENT_COUNT).map((c) => tile(c)));
   els.galleryEmpty.hidden = n > 0;
   els.recentEmpty.hidden = n > 0;
   els.btnSeeAll.hidden = n === 0;

@@ -84,10 +84,28 @@
         <header class="bar">
           <button class="btn-icon" id="btnGalleryBack" data-icon="back" aria-label="Voltar"></button>
           <h2 id="galleryTitle">Clipes</h2>
-          <button class="btn-icon" id="btnGalleryCam" data-icon="camera" aria-label="Abrir câmera"></button>
+          <div class="bar-end">
+            <button class="btn-link" id="btnSelect"></button>
+            <button class="btn-icon" id="btnGalleryCam" data-icon="camera" aria-label="Abrir câmera"></button>
+          </div>
         </header>
         <div class="grid" id="clips"></div>
         <p class="empty" id="galleryEmpty">Nenhum clipe ainda.</p>
+        <div class="select-bar" id="selectBar">
+          <button class="btn-link" id="btnSelectAll"></button>
+          <button
+            class="btn-icon"
+            id="btnBatchShare"
+            data-icon="share"
+            aria-label="Compartilhar selecionados"
+          ></button>
+          <button
+            class="btn-icon danger"
+            id="btnBatchDelete"
+            data-icon="trash"
+            aria-label="Excluir selecionados"
+          ></button>
+        </div>
       </section>
 
       <!-- Avisos (erros, atualização) -->

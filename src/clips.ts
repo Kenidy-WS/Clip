@@ -42,3 +42,15 @@ export function removeClip(c: Clip): void {
     .then(storageListener);
   clipsChanged();
 }
+
+/** Remove vários clipes de uma vez (a interface é redesenhada uma única vez). */
+export function removeClips(list: Clip[]): void {
+  const gone = new Set(list);
+  for (const c of gone) {
+    URL.revokeObjectURL(c.url);
+    deleteClip(c.name).catch(() => {});
+  }
+  S.clips = S.clips.filter((x) => !gone.has(x));
+  clipsChanged();
+  Promise.resolve().then(storageListener);
+}

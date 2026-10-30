@@ -51,6 +51,14 @@ export const T = {
   // Clipes
   storeFailed:
     'Clipe pronto, mas o navegador não deixou guardá-lo. Salve-o agora em “Salvar / Compartilhar”.',
+  select: 'Selecionar',
+  cancel: 'Cancelar',
+  selectAll: 'Todos',
+  selectNone: 'Nenhum',
+  selectedCount: (n: number) =>
+    n === 0 ? 'Selecione clipes' : n === 1 ? '1 selecionado' : `${n} selecionados`,
+  removeManyConfirm: (n: number) =>
+    `Excluir ${n} clipes? Os que ainda não foram salvos no Rolo da Câmera serão perdidos.`,
   clipsCount: (n: number) => (n === 1 ? '1 clipe' : `${n} clipes`),
   clipOpen: (when: string) => `Abrir clipe de ${when}`,
   clipMeta: (c: { when: string; durText: string; mb: number; withAudio: boolean }) =>

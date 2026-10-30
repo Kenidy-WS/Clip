@@ -2,6 +2,7 @@ import { notify } from '../events';
 import { cancelStart, start, stopAll } from '../media/camera';
 import { S } from '../state';
 import { T } from '../strings';
+import { exitSelection } from './clips-view';
 import { updateUI } from './controls';
 
 let openSeq = 0;
@@ -38,6 +39,7 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   }
   const leavingCamera = S.view === 'camera';
   S.view = view;
+  if (view !== 'gallery') exitSelection();
   if (leavingCamera) {
     openSeq++;
     S.opening = false;

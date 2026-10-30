@@ -23,6 +23,7 @@ export const ICONS = {
   share: svg(
     '<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M16 6l-4-4-4 4"/><path d="M12 2v13"/>',
   ),
+  check: svg('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
   trash: svg(
     '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   ),

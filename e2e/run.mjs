@@ -640,6 +640,32 @@ try {
     );
     await page.click('#btnPlayerClose');
     check(!(await page.isVisible('#player')), 'fechar volta para a Galeria');
+    // Ações em lote: selecionar, Todos/Nenhum, cancelar e excluir.
+    await page.click('#btnSelect');
+    check(await page.isVisible('#selectBar'), 'Selecionar mostra a barra de ações em lote');
+    check(
+      await page.locator('#btnBatchDelete').isDisabled(),
+      'sem seleção, as ações em lote ficam desligadas',
+    );
+    await page.click('#clips .tile');
+    check(!(await page.isVisible('#player')), 'no modo seleção, tocar no clipe não abre o player');
+    check((await page.locator('#clips .tile.sel').count()) === 1, 'tocar marca o clipe');
+    check((await page.textContent('#galleryTitle')) === '1 selecionado', 'título mostra a contagem');
+    check((await page.textContent('#btnSelectAll')) === 'Nenhum', 'com tudo marcado o botão vira "Nenhum"');
+    await page.click('#btnSelectAll');
+    check((await page.locator('#clips .tile.sel').count()) === 0, '"Nenhum" desmarca tudo');
+    check((await page.textContent('#btnSelectAll')) === 'Todos', 'e volta a ser "Todos"');
+    await page.click('#btnSelect');
+    check(!(await page.isVisible('#selectBar')), 'Cancelar sai do modo seleção');
+    check((await page.locator('#clips .tile.sel').count()) === 0, 'Cancelar limpa a seleção');
+    await page.click('#btnSelect');
+    await page.click('#btnSelectAll');
+    page.once('dialog', (d) => void d.accept());
+    await page.click('#btnBatchDelete');
+    await page.waitForFunction(() => document.querySelectorAll('#clips .tile').length === 0, null, {
+      timeout: 4000,
+    });
+    check(await page.isVisible('#galleryEmpty'), 'excluir em lote esvazia a Galeria');
     await page.click('#btnGalleryCam');
     await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
