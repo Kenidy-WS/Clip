@@ -2,6 +2,18 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.7 · `estavel` = 0.15.7 (validada no iPhone)
 
+## Próximo bloco: design (ícone e marca) — começa em chat novo
+
+**Estado:** v0.15.7 na `main` e no `estavel` (nível, espelhar frontal, textos e Sons no vídeo validados). Slogan oficial: "Câmera de ação com comando de voz.".
+**Design, o que já foi decidido (30/10):**
+
+- "Clip" = **clipe de filmagem** (vídeo/câmera), NUNCA clipe de papel. Paleta: **amarelo + preto/cinza + vermelho de gravação** (as cores atuais do app; o azul-petróleo foi testado e descartado).
+- Direção que ele gostou um pouco: **1 · Claquete** (amarelo sobre preto, ponto vermelho no centro). Ideia da exclamação ("Clip!" / "Ei Clip!") ainda aberta: pode entrar no nome ou só como marca dentro do app (a opção 3, "visor com !", é a que carrega isso).
+- Descartados: volta no tempo (A), ondas/azul (B), "C" amarelo (C) e todas as variações com clipe de papel.
+- Arquivos: `docs/design/claquete.svg` (base da claquete), `docs/design/rodada1.png`..`rodada3.png` (as três rodadas), `docs/design/rodada3.html` (fonte da rodada 3: claquete, lente, visor com "!").
+  **Abertos para decidir:** nome ("Clip!", "Ei Clip!" ou "Ei Clip"); refinar a claquete (formas, contraste pequeno, talvez com a exclamação); depois gerar o ícone (180x180 apple-touch-icon, 192/512 do manifest, favicon) e aplicar no app e no `manifest.webmanifest`. Visual não pode tocar na área protegida (voz/microfone): versão separada.
+  **Depois do design:** polimento/robustez (ROADMAP, Onda 4) e, quando quiser, estabilização/lanterna/balanço de branco.
+
 ## v0.15.7 — "Sons no vídeo"
 
 Kenidy não gostou de "Marcar no vídeo": o ajuste agora se chama **Sons no vídeo**. Ele aprovou a revisão de textos da v0.15.6 e não vê outros pontos; a frase do Início "Câmera de ação com comando de voz." fica como **slogan oficial** do app.

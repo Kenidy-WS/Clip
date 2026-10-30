@@ -1,0 +1,150 @@
+<!doctype html><meta charset="utf-8" /><style>
+  body {
+    margin: 0;
+    background: #111;
+    font-family: -apple-system, Helvetica, Arial, sans-serif;
+    color: #fff;
+    width: 1200px;
+  }
+  .row {
+    display: flex;
+    gap: 28px;
+    padding: 28px;
+  }
+  .card {
+    flex: 1;
+    background: #1c1c1e;
+    border-radius: 24px;
+    padding: 24px;
+    text-align: center;
+  }
+  .card h3 {
+    margin: 16px 0 4px;
+    font-size: 22px;
+  }
+  .card p {
+    margin: 0;
+    color: #aaa;
+    font-size: 15px;
+    line-height: 1.35;
+  }
+  svg.i {
+    width: 200px;
+    height: 200px;
+    border-radius: 44px;
+  }
+  .sm {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+  }
+  .sm svg {
+    width: 60px;
+    height: 60px;
+    border-radius: 20%;
+  }
+  .sw {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .sw i {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    display: block;
+    border: 1px solid #fff3;
+  }
+</style>
+<svg style="position: absolute; width: 0; height: 0">
+  <defs>
+    <clipPath id="arm"><rect x="38" y="52" width="124" height="28" rx="6" /></clipPath>
+    <g id="clap">
+      <rect x="38" y="90" width="124" height="70" rx="10" fill="#ffd60a" />
+      <g transform="rotate(-14 38 84)">
+        <g clip-path="url(#arm)">
+          <rect x="38" y="52" width="124" height="28" fill="#ffd60a" />
+          <polygon points="58,52 78,52 62,80 42,80" fill="#000" />
+          <polygon points="98,52 118,52 102,80 82,80" fill="#000" />
+          <polygon points="138,52 158,52 142,80 122,80" fill="#000" />
+        </g>
+      </g>
+      <circle cx="100" cy="125" r="19" fill="#000" />
+      <circle cx="100" cy="125" r="11" fill="#ff453a" />
+    </g>
+    <g id="lens">
+      <circle cx="100" cy="100" r="64" fill="none" stroke="#ffd60a" stroke-width="16" />
+      <circle cx="100" cy="100" r="40" fill="#000" />
+      <circle cx="100" cy="100" r="17" fill="#ff453a" />
+      <circle cx="86" cy="86" r="7" fill="#fff" opacity=".85" />
+    </g>
+    <g id="vf">
+      <path
+        d="M40 78 V50 a10 10 0 0 1 10-10 H78 M122 40 H150 a10 10 0 0 1 10 10 V78 M160 122 V150 a10 10 0 0 1-10 10 H122 M78 160 H50 a10 10 0 0 1-10-10 V122"
+        fill="none"
+        stroke="#ffd60a"
+        stroke-width="13"
+        stroke-linecap="round"
+      />
+      <rect x="93" y="62" width="14" height="50" rx="7" fill="#ffd60a" />
+      <circle cx="100" cy="132" r="9" fill="#ff453a" />
+    </g>
+  </defs>
+</svg>
+<div class="row">
+  <div class="card">
+    <svg class="i" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="#000" />
+      <use href="#clap" />
+    </svg>
+    <div class="sm">
+      <svg viewBox="0 0 200 200">
+        <rect width="200" height="200" fill="#000" />
+        <use href="#clap" />
+      </svg>
+    </div>
+    <h3>1 · Claquete</h3>
+    <p>A claquete do cinema: o "clip" de filmagem. Amarelo sobre preto, ponto de gravação no centro.</p>
+    <div class="sw">
+      <i style="background: #000"></i><i style="background: #ffd60a"></i><i style="background: #ff453a"></i>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg class="i" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="#3a3a3c" />
+      <use href="#lens" />
+    </svg>
+    <div class="sm">
+      <svg viewBox="0 0 200 200">
+        <rect width="200" height="200" fill="#3a3a3c" />
+        <use href="#lens" />
+      </svg>
+    </div>
+    <h3>2 · Lente</h3>
+    <p>A lente da câmera com o ponto de gravação no meio. Amarelo sobre cinza-grafite.</p>
+    <div class="sw">
+      <i style="background: #3a3a3c"></i><i style="background: #ffd60a"></i
+      ><i style="background: #ff453a"></i>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg class="i" viewBox="0 0 200 200">
+      <rect width="200" height="200" fill="#000" />
+      <use href="#vf" />
+    </svg>
+    <div class="sm">
+      <svg viewBox="0 0 200 200">
+        <rect width="200" height="200" fill="#000" />
+        <use href="#vf" />
+      </svg>
+    </div>
+    <h3>3 · Visor com "!"</h3>
+    <p>Os cantos do visor da câmera enquadrando a exclamação, com o ponto vermelho. Cores padrão do app.</p>
+    <div class="sw">
+      <i style="background: #000"></i><i style="background: #ffd60a"></i><i style="background: #ff453a"></i>
+    </div>
+  </div>
+</div>
