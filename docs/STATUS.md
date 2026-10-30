@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.14 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.14 no FIM do arquivo)
 
+## Fim do bloco (30/10) — v0.13.2 validada
+
+- v0.13.2 validada pelo Kenidy; `estavel` = v0.13.2. Bloco encerrado: voz ao voltar da Galeria/segundo plano, clipe mudo por padrão, aviso falso, miniaturas.
+- **Decisão de produto:** a base do app é a **pré-gravação (buffer) + botão vermelho manual**; o comando de voz é **bônus**. Falha da voz nunca pode atrapalhar o botão. Próximo bloco: revisar o caminho manual (buffer, gravar, parar, salvar/compartilhar) como prioridade.
+- Kenidy vai mandar o link a amigos para testar. Pedir a eles: instalar na Tela de Início, copiar o Diagnóstico ("i") logo após um problema, salvar clipes importantes no Rolo da Câmera. Qualquer push na `main` chega a todos (banner "Nova versão"): só publicar com `check` + `e2e` verdes.
+- Pendências abertas: prévia encolhida por <1 s ao voltar do app (adiado), microfone mudo depois de ligar o som (só vale se o som for ligado de propósito).
+
 ## v0.13.2 — miniaturas da Galeria com tamanho fixo
 
 - v0.13.1 validada (aviso falso sumiu); `estavel` avançou para ela.
