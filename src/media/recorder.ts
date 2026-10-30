@@ -30,10 +30,15 @@ export async function stopRec(): Promise<void> {
   stateChanged();
   // Sem flush(): ele reinicia o estado do encoder (principalmente o AAC) e gera
   // timestamps fora de ordem nos clipes seguintes. Esperamos os chunks já enviados saírem.
+  let stopTs = S.lastInTs; // o que vier depois do toque fica fora do clipe...
   beep('stop'); // toca já no toque
-  // Bipe dentro do clipe: o corte espera o bipe terminar; senão o que vier depois de stopTs fica fora do clipe.
-  if (S.beepInClip && S.beepMix) await new Promise((r) => setTimeout(r, beepMs('stop') + 80));
-  const stopTs = S.lastInTs;
+  // ...a não ser que o bipe entre no clipe: aí o corte espera o bipe terminar.
+  // Em qualquer caso esperamos o bipe acabar antes do trabalho pesado (montar o MP4 trava a página e o alto-falante chiava
+  // no 2º bipe).
+  if (S.soundOn || (S.beepInClip && S.beepMix)) {
+    await new Promise((r) => setTimeout(r, beepMs('stop') + 120));
+    if (S.beepInClip) stopTs = S.lastInTs;
+  }
   await drainEncoders();
   const r = S.rec;
   S.rec = null;

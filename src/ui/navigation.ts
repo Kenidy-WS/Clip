@@ -50,8 +50,12 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   if (!leavingCamera) return;
   await stopAll();
   try {
-    // Libera a sessão de áudio: com a captura ligada o iOS deixa o som de qualquer <video> mudo ou baixo.
-    if (S.audioCtx && S.audioCtx.state === 'running') await S.audioCtx.suspend();
+    // Libera a sessão de áudio de vez (fecha o contexto): com a captura ligada o iOS deixa o som de qualquer <video> mudo ou
+    // baixo, e depois de tocar um clipe o microfone podia ficar mudo ao voltar. O contexto novo nasce no toque que abre a câmera.
+    const ctx = S.audioCtx;
+    S.audioCtx = null;
+    S.workletReady = false;
+    if (ctx && ctx.state !== 'closed') await ctx.close();
   } catch {
     /* segue */
   }

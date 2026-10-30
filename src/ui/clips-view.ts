@@ -1,4 +1,5 @@
 import { removeClip, removeClips } from '../clips';
+import { setAudioSession } from '../media/audio-session';
 import { formatDuration } from '../core/format';
 import { notify } from '../events';
 import { S } from '../state';
@@ -96,6 +97,7 @@ export function openPlayer(c: Clip): void {
     mb: c.blob.size / 1048576,
     withAudio: c.withAudio,
   });
+  setAudioSession('playback');
   showAnimated(els.player);
   void els.playerVideo.play().catch(() => {
     /* se o iOS exigir, é só tocar em play */
@@ -107,6 +109,7 @@ export function closePlayer(): void {
   els.playerVideo.removeAttribute('src');
   els.playerVideo.load();
   els.player.hidden = true;
+  setAudioSession('auto');
   current = null;
 }
 

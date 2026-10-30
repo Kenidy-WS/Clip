@@ -2,6 +2,15 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.9.8 — chiado do bipe de parar, microfone após a Galeria, faixas ao voltar do app
+
+Relato (v0.9.7): volume do bipe bom; o **2º bipe (parar)** chia/estoura; **Câmera → Galeria → Câmera**: sem permissão nova, mas **microfone morto** (sem voz e sem áudio no clipe); às vezes **faixas pretas** voltam ao minimizar/trocar de tela (somem ao virar a câmera).
+
+- **Chiado:** hipótese principal = ao parar, o app monta o MP4 (trabalho pesado na thread principal) justo quando o 2º bipe toca. Agora `stopRec` espera o bipe terminar (+120 ms) antes de drenar e montar. Bipes Alto/Máximo usam bordas lineares a partir de zero (a subida exponencial de 0,0001 estalava); Normal continua o original. Saturação do Máximo reduzida (drive 2,2 → 1,8).
+- **Microfone morto:** hipótese principal = tocar um clipe com som na Galeria deixa a sessão de áudio do iOS em reprodução e o microfone volta mudo. Mudanças: `navigator.audioSession.type` ('play-and-record' ao abrir a câmera, 'playback' no player, 'auto' ao fechá-lo — `media/audio-session.ts`) e o `AudioContext` agora é **fechado** (não só suspenso) ao sair da câmera; um novo nasce no toque que abre a câmera. Novo registro em "Câmera: início": `áudio após 3 s: contexto…, faixa…, N blocos, pico…` (se o microfone morrer de novo, essa linha mostra onde).
+- **Faixas pretas:** o retorno do segundo plano "sem refazer a captura" (v0.8.4) mantinha o `<video>` velho. Agora recria o elemento, religa o mesmo stream (sem novo pedido de permissão) e reinicia o laço de captura (`refreshPreview`). Registro "prévia refeita (voltou do segundo plano)".
+- Testar: gravar com o bipe de parar nos 3 volumes; Câmera → Galeria → abrir um clipe com som → voltar → voz e áudio funcionam?; minimizar e voltar várias vezes (faixas?). Se algo falhar, "Copiar" o Diagnóstico **pela tela da câmera**.
+
 ## v0.9.7 — Diagnóstico mais claro + resultado do teste 1080p/60/Alta (a v0.9.6 saiu só com a documentação por engano)
 
 - Dados do Kenidy (v0.9.5, 1080p · 60 fps · Alta): câmera entregou **1080x1920 @ 60 fps** (track), 2619 quadros de entrada / 2618 de saída, **0 descartados**; último clipe 65,3 MB em 16,4 s ≈ **33,4 Mbps** (pedido 36 Mbps) → qualidade e 60 fps aplicados de verdade, pipeline aguenta 60 fps em 1080p. Clipe de 1 min nessa combinação ≈ 250 MB.

@@ -3,6 +3,7 @@ import { notify, stateChanged } from '../events';
 import { cfg, S } from '../state';
 import { T } from '../strings';
 import { els, renewPreview } from '../ui/dom';
+import { setAudioSession } from './audio-session';
 import { ensureAudioCtx, trySetupAudio } from './audio';
 import { support } from './support';
 import { startLoop } from './video';
@@ -236,6 +237,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   }
   watchdogSoftAt = 0;
   logCam(`start #${my}${isRetry ? ' (nova tentativa)' : ''}`);
+  setAudioSession('play-and-record');
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
   // A escuta de voz só funciona se nascer dentro de um toque do usuário (sem toque o iOS a deixa surda). Por isso ela é a
   // primeira coisa a ligar no toque em "Iniciar"; a câmera abre depois que o pedido de microfone da voz for respondido.
@@ -406,6 +408,26 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   stateChanged();
   logCam('rodando');
   armWatchdog(my); // a escuta de voz só liga quando a câmera entregar o primeiro quadro
+  setTimeout(() => {
+    if (my !== startSeq || !S.running) return;
+    const at = S.stream?.getAudioTracks()[0];
+    logCam(
+      `áudio após 3 s: contexto ${S.audioCtx?.state ?? '-'}, faixa ${at ? (at.muted ? 'MUDA' : at.readyState) : 'nenhuma'}, ${S.audioBlocks} blocos, pico ${S.audioPeak.toFixed(3)}`,
+    );
+  }, 3000);
+}
+
+/**
+ * Refaz só a prévia (elemento de vídeo novo, mesmo stream, sem novo pedido de permissão) e o laço de captura.
+ * Ao voltar do segundo plano o iOS pode redesenhar o vídeo menor que a tela (faixas pretas) e só um elemento novo resolve.
+ */
+export function refreshPreview(): void {
+  if (!S.stream || !S.running) return;
+  renewPreview();
+  els.video.srcObject = S.stream;
+  void els.video.play().catch(() => {});
+  startLoop(); // o laço antigo ficou preso ao elemento velho
+  logCam('prévia refeita (voltou do segundo plano)');
 }
 
 /** `keepTracks`: não para as faixas agora (quem chamou as para depois de abrir a nova captura, sem novo pedido de permissão). */

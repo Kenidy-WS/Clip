@@ -77,6 +77,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Prévia (v0.8.4):** ao trocar de lente o iOS pode desenhar o `<video>` menor que o elemento (faixas). O elemento é recriado a cada captura (`renewPreview`); nunca guardar referência ao `<video>`, use `els.video` (getter).
 - **Bipe (v0.9.0):** gerado por `core/beep-wave.ts` e tocado como `AudioBuffer`; com `beepInClip` as mesmas amostras são somadas ao bloco de áudio em `audio.ts` (`mixBeepInto`). O microfone fica mudo durante o bipe do alto-falante para não captá-lo em dobro.
 - **Qualidade (v0.9.0):** resolução, fps e taxa vêm de `cfg` e de `core/video-profile.ts` (tabelas de taxa, nível H.264, duração máxima do clipe). Não usar mais constantes `FPS`/`VIDEO_*` em `config.ts`.
+- **Sessão de áudio (v0.9.8):** tocar clipe com som na Galeria pode deixar o microfone mudo ao voltar para a câmera. `setAudioSession` (`media/audio-session.ts`) troca a categoria e o `AudioContext` é fechado ao sair da câmera. Montar o MP4 trava a página: não fazer isso enquanto o bipe de parar toca (`stopRec` espera).
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)

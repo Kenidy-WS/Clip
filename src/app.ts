@@ -1,5 +1,5 @@
 import { onClipsChange, onStateChange, onStatus, onVoiceCommand, notify } from './events';
-import { acquireWake, enableMic, logCam, start, tapRecover } from './media/camera';
+import { acquireWake, enableMic, logCam, refreshPreview, start, tapRecover } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { previewBeep } from './media/beep';
 import { restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
@@ -187,8 +187,8 @@ function returnFromBackground(awayMs: number): void {
     void start();
     return;
   }
+  refreshPreview();
   const framesBefore = S.framesIn;
-  void els.video.play().catch(() => {});
   void acquireWake();
   void S.audioCtx?.resume().catch(() => {});
   const mine = S.stream;

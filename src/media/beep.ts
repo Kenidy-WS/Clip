@@ -45,10 +45,18 @@ export function beep(kind: BeepKind): void {
       const g = ctx.createGain();
       o.type = 'sine';
       o.frequency.value = f;
-      g.gain.setValueAtTime(0.0001, t0 + off);
-      g.gain.exponentialRampToValueAtTime(peak, t0 + off + (sustain ? 0.006 : 0.01));
-      if (sustain) g.gain.setValueAtTime(peak, t0 + off + d - 0.03); // mantém o volume cheio até perto do fim
-      g.gain.exponentialRampToValueAtTime(0.0001, t0 + off + d);
+      if (sustain) {
+        // Volume cheio com bordas lineares a partir do zero (a subida exponencial a partir de 0,0001 estalava).
+        g.gain.setValueAtTime(0, t0 + off);
+        g.gain.linearRampToValueAtTime(peak, t0 + off + 0.008);
+        g.gain.setValueAtTime(peak, t0 + off + d - 0.035);
+        g.gain.linearRampToValueAtTime(0, t0 + off + d);
+      } else {
+        // Normal: o bipe original.
+        g.gain.setValueAtTime(0.0001, t0 + off);
+        g.gain.exponentialRampToValueAtTime(peak, t0 + off + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + off + d);
+      }
       o.connect(g);
       g.connect(out);
       o.start(t0 + off);
