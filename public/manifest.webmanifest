@@ -1,6 +1,6 @@
 {
-  "name": "Clip",
-  "short_name": "Clip",
+  "name": "Ei Clip",
+  "short_name": "Ei Clip",
   "description": "Câmera com gravação retroativa (últimos 15/30 s antes do toque)",
   "start_url": "./",
   "scope": "./",

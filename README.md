@@ -1,24 +1,28 @@
-# Clip
+# Ei Clip
 
-Câmera com gravação retroativa: o app mantém na memória os últimos 15 ou 30 segundos e, ao tocar em gravar, o clipe já começa antes do toque. Roda no navegador (PWA), sem App Store.
+Câmera de ação para iPhone com **gravação retroativa**: o app guarda na memória os últimos 15 ou 30 segundos e, ao tocar
+em gravar, o clipe já começa antes do toque. Roda no navegador (PWA), sem App Store e sem Mac. Em breve: comando de voz "Ei Clip".
 
-## Como funciona
-Câmera/mic → `VideoEncoder` (H.264) + `AudioEncoder` (AAC) → buffer circular em memória → ao gravar, pega o buffer desde o último keyframe antes do corte e continua gravando → ao parar, monta um `.mp4` com `mp4-muxer` (em `vendor/`, sem CDN).
+## Usar
 
-## Publicar (GitHub Pages)
-1. Repositório precisa ser **público** (Pages grátis).
-2. Settings → Pages → Source: *Deploy from a branch* → `main` / `(root)`.
-3. Abrir `https://<usuario>.github.io/<repositorio>/` no Safari do iPhone.
-4. Compartilhar → *Adicionar à Tela de Início*.
+Abra o endereço do app no Safari do iPhone → Compartilhar → **Adicionar à Tela de Início**. Permita câmera e microfone.
+Toque em Gravar e depois em Parar e salvar; em "Salvar / Compartilhar" envie o vídeo ao Rolo da Câmera.
 
-## Uso
-O app já abre pedindo câmera e microfone (toque uma vez na tela para liberar o áudio). Se a câmera estiver parada: Iniciar câmera → esperar o buffer encher → *Gravar* → *Parar e salvar* → *Salvar / Compartilhar* → *Salvar vídeo*.
-O botão **i** mostra o diagnóstico (suporte a WebCodecs, resolução real, fps de saída).
+## Desenvolver
+
+```bash
+npm ci
+npm run dev      # servidor local
+npm run check    # typecheck + lint + formatação + testes + build
+npm run e2e      # fluxo no Chromium (depois de npm run build)
+```
+
+Stack: TypeScript, Vite, Vitest, ESLint, Prettier, WebCodecs, mp4-muxer. Publicação automática no GitHub Pages
+(`.github/workflows/deploy.yml`). Detalhes em `docs/ARCHITECTURE.md`; continuidade em `CLAUDE.md` e `docs/STATUS.md`.
 
 ## Limites conhecidos
+
 - O app precisa ficar aberto com a tela ligada (limitação do iOS).
-- Clipes ficam guardados no IndexedDB do navegador (sobrevivem a fechar o app) até você excluir; salve no Rolo da Câmera para não depender disso. Trava em 90 s por gravação (memória).
+- Clipes ficam no IndexedDB do navegador até você excluir; salve no Rolo da Câmera para não depender disso. Máximo de 90 s por gravação.
 - Após cada gravação o buffer é zerado: o pre-roll do próximo clipe só tem imagens posteriores ao anterior.
-- Funciona offline depois do primeiro carregamento (service worker, rede primeiro).
-- O iOS pede permissão de câmera/microfone a cada abertura (limitação do WebKit, bug 280394).
-- Comando de voz: próxima etapa.
+- O iOS pede permissão de câmera e microfone a cada abertura do app instalado (bug do WebKit).
