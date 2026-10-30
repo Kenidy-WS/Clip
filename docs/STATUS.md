@@ -2,6 +2,11 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.16.1 · `estavel` = 0.15.7 (validada no iPhone; avançar para a 0.16.1 só depois da confirmação dele)
 
+## v0.16.3 — texto da marca menor
+
+- Na Início, o texto "Ei Clip" passou de 180 para 150 px (marca segue em 96 px). Só CSS/atributos; decisão do Kenidy após comparar 180/150/120.
+- Mantidos os dois pingos vermelhos no nome.
+
 ## v0.16.2 — abertura animada da marca
 
 - Na Início, a marca (C com rastro, play e ponto vermelho) se desenha uma vez ao abrir o app (~1,5 s); o texto "Ei Clip" fica parado. Depois a marca fica fixa.
