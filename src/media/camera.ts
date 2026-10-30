@@ -301,6 +301,7 @@ async function refreshLenses(stream: MediaStream): Promise<void> {
   }
   const caps = stream.getVideoTracks()[0]?.getCapabilities?.() as { zoom?: { min?: number } } | undefined;
   S.lensZoomMin = caps?.zoom?.min ?? 1;
+  S.camCaps = caps ? Object.keys(caps).join(', ') : 'nenhum';
   S.lensCan = !!S.lensId || S.lensZoomMin <= 0.55;
   logCam(`lentes: ${S.lensInfo || '-'}; ultra ${S.lensId ? 'sim' : 'não'}; zoom mín ${S.lensZoomMin}`);
   stateChanged();

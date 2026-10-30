@@ -7,7 +7,7 @@ import { T } from '../strings';
 import { els } from './dom';
 
 /**
- * Nível de horizonte sobre a prévia da câmera (opcional, Ajustes → "Nível na tela"). Escuta o sensor só enquanto a câmera está
+ * Nível de horizonte sobre a prévia da câmera (opcional, Ajustes → "Nível"). Escuta o sensor só enquanto a câmera está
  * na tela e a opção está ligada; sem dados em ~2,5 s (o iOS não lembrou a permissão) a opção é desligada com um aviso.
  */
 let listener: LevelListener | null = null;

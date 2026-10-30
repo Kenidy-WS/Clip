@@ -111,6 +111,8 @@ export interface AppState {
   lensZoomMin: number;
   /** Nomes das câmeras que o iOS informou, só para o painel de diagnóstico. */
   lensInfo: string;
+  /** Controles que a câmera informa (foco, zoom...): para saber se o foco por toque é possível. */
+  camCaps: string;
 }
 
 export const S: AppState = {
@@ -192,4 +194,5 @@ export const S: AppState = {
   lensCan: false,
   lensZoomMin: 1,
   lensInfo: '',
+  camCaps: '',
 };

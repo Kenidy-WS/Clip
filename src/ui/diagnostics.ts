@@ -160,6 +160,7 @@ export function diagnosticsSections(): DiagSection[] {
     title: 'Lentes',
     rows: [
       ['Câmeras', S.lensInfo ? clean(S.lensInfo) : '-'],
+      ['Controles', S.camCaps || '-'],
       ['Em uso', `${S.lensActive}×`],
       ['Ultra-angular', S.lensId ? 'sim' : 'não'],
       ['Zoom mínimo', String(S.lensZoomMin)],
