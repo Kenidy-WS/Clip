@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **Versão:** 0.4.0 (Onda 1) · **Branch com a Onda 1:** `onda-1`
+**Atualizado em:** 2026-10-29 · **Versão no ar:** 0.4.0 (Onda 1 aprovada) · **Próxima:** Onda 2 (comando de voz)
 
 ## Feito
 
@@ -11,20 +11,10 @@
   manifest e textos, 19 testes unitários, e2e no Chromium, ESLint/Prettier, CI e deploy (GitHub Actions), documentação.
 - Código antigo preservado no commit `0e9176b` (tag local `v0.3.7-legado`; a tag não subiu para o GitHub).
 
-## Para publicar a Onda 1 (ação do Kenidy)
+## Validação da Onda 1
 
-1. GitHub → repositório → Settings → Pages → **Source: GitHub Actions**.
-2. Avisar o Claude, que faz o merge da branch `onda-1` na `main`. O workflow publica sozinho.
-   (Antes disso a `main` ainda serve o app antigo, e nada quebra.)
-3. No iPhone: abrir o app, tocar em "Atualizar" no banner e conferir `v0.4.0` no rodapé.
-   Se o ícone da tela de início ainda mostrar o nome antigo, remover e adicionar de novo.
-
-## O que o Kenidy deve testar no iPhone (Onda 1)
-
-- Abre e pede câmera/mic; buffer enche; gravar e parar gera clipe com vídeo, áudio e orientação corretos.
-- Assistir um clipe no app: áudio sai (a câmera pausa durante o play).
-- Offline: com internet desligada o app abre.
-- Nada deve ter mudado de comportamento em relação ao `v0.3.7`; qualquer diferença é bug da migração.
+Aprovada pelo Kenidy no iPhone em 2026-10-29: publicada pelo GitHub Pages (fonte: GitHub Actions), `v0.4.0` no rodapé,
+gravação com pre-roll funcionando e áudio captado e salvo na galeria. A branch `onda-1` já foi incorporada à `main`.
 
 ## Pendências e perguntas em aberto
 
@@ -35,4 +25,5 @@
 
 ## Próximo passo
 
-Onda 2 (comando de voz), em um chat novo: pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
+Onda 2 (comando de voz "Ei Clip"), em um chat novo: pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
+Começar pelo teste de viabilidade isolado da palavra de ativação no iPhone (ver `docs/ROADMAP.md`).
