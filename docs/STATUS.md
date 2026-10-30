@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.9.3 — bipe: gerador original de volta
+
+- Relato (v0.9.2): bipe ainda agudo ao filmar e **a amostra dos Ajustes nem tocava mais**. Eu tinha trocado o gerador (osciladores → `AudioBuffer` com silêncio inicial e atraso) e isso piorou; as "melhorias" da v0.9.1/0.9.2 no som do alto-falante foram **revertidas**.
+- Agora: osciladores e envelope exponencial idênticos aos da v0.8 (880 Hz início, 660 Hz ×2 fim); só o pico muda por volume: Normal 0,3 (= antigo) · **Alto 0,5 (padrão)** · Máximo 0,8. A amostra dos Ajustes toca logo após o `resume()` (como na v0.9.1).
+- Mantido: rampa suave do microfone ao entrar/sair do silêncio (evita estalo no **áudio do clipe**) e o bipe digital no clipe (`beepInClip`, usa `renderBeep`).
+- Hipótese descartada/não confirmada: o iOS pode mudar a taxa de amostragem do áudio quando o microfone liga (tom deslocado). Se o bipe ainda soar mais agudo que na v0.8, comparar `Contexto de áudio`/"Processamento do mic" no Diagnóstico.
+
 ## v0.9.2 — estalos do bipe e prova das qualidades
 
 - Relato (v0.9.1): bipe ainda "ruim" (possivelmente ainda na v0.9.0: conferir o rodapé do Início), **estoura** ao tocar a amostra nos Ajustes e às vezes na gravação, mesmo o bipe antigo.

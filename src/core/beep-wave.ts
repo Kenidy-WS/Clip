@@ -12,8 +12,11 @@ const TONES: Record<BeepKind, Array<[number, number, number]>> = {
 };
 
 /** Normal = volume das versões anteriores (0,3). */
-const GAIN: Record<BeepVol, number> = { normal: 0.3, high: 0.6, max: 1 };
+const GAIN: Record<BeepVol, number> = { normal: 0.3, high: 0.5, max: 0.8 };
 export const beepGain = (v: BeepVol): number => GAIN[v];
+
+/** Tons do bipe: [frequência Hz, início s, duração s]. */
+export const beepTones = (kind: BeepKind): ReadonlyArray<[number, number, number]> => TONES[kind];
 
 export function beepDurationSec(kind: BeepKind): number {
   const last = TONES[kind][TONES[kind].length - 1]!;
