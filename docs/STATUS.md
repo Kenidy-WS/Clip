@@ -476,3 +476,10 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Clipes antigos (sem `thumb`) ainda tentam o caminho por vídeo escondido (v0.10.9); se falhar, mostram um ícone discreto de câmera em vez do quadrado cinza vazio.
 
 **Testar:** gravar um clipe novo → miniatura na Galeria, no Início e no botão da câmera, também depois de fechar e abrir o app. Os clipes antigos podem ficar com o ícone.
+
+## v0.11.0 — Toque longo para selecionar
+
+- Pressionar ~0,45 s num clipe da Galeria entra no modo de seleção com ele marcado (sem abrir o player); continuar arrastando marca os seguintes em ordem de leitura. O menu de pressionar do iOS foi desligado nas miniaturas (`-webkit-touch-callout`).
+- Miniaturas: a geração agora só custa um desenho de 240×320 do quadro que já está na tela, ao parar a gravação (~poucos ms); clipes antigos tentam o caminho por vídeo escondido uma vez por abertura.
+
+**Testar:** toque longo num clipe; arrastar logo depois; toque curto continua abrindo o player.

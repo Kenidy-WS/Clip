@@ -157,6 +157,7 @@ const tileAt = (x: number, y: number): HTMLElement | null =>
 function bindDragSelect(): void {
   const grid = els.clips;
   const SLOP = 8;
+  const LONG_PRESS_MS = 450;
   const EDGE = 56;
   let down: { id: number; x: number; y: number; tile: HTMLElement | null } | null = null;
   let dragging = false;
@@ -200,7 +201,9 @@ function bindDragSelect(): void {
     raf = dragging ? requestAnimationFrame(autoScroll) : 0;
   };
   const end = (): void => {
-    if (dragging) {
+    cancelPress();
+    if (dragging || forceMark) {
+      forceMark = false;
       suppressClick = true;
       setTimeout(() => (suppressClick = false), 80);
     }
@@ -208,20 +211,46 @@ function bindDragSelect(): void {
     down = null;
   };
 
+  // Toque longo num clipe: entra no modo de seleção já com ele marcado; seguir arrastando marca os próximos.
+  let pressTimer = 0;
+  let pressFrom = { x: 0, y: 0 };
+  let forceMark = false;
+  const cancelPress = (): void => {
+    clearTimeout(pressTimer);
+    pressTimer = 0;
+  };
+
   grid.addEventListener('pointerdown', (e) => {
-    if (!selecting) return;
-    down = { id: e.pointerId, x: e.clientX, y: e.clientY, tile: tileAt(e.clientX, e.clientY) };
+    const tile = tileAt(e.clientX, e.clientY);
+    if (!selecting) {
+      if (!tile || !clipOf.has(tile)) return;
+      pressFrom = { x: e.clientX, y: e.clientY };
+      const id = e.pointerId;
+      cancelPress();
+      pressTimer = window.setTimeout(() => {
+        pressTimer = 0;
+        selecting = true;
+        forceMark = true;
+        suppressClick = true; // o toque que termina o pressionar não pode desfazer a marca
+        setSelected(tile, true);
+        paintSelection();
+        down = { id, x: pressFrom.x, y: pressFrom.y, tile };
+      }, LONG_PRESS_MS);
+      return;
+    }
+    down = { id: e.pointerId, x: e.clientX, y: e.clientY, tile };
   });
   grid.addEventListener(
     'pointermove',
     (e) => {
+      if (pressTimer && Math.hypot(e.clientX - pressFrom.x, e.clientY - pressFrom.y) > SLOP) cancelPress();
       if (!selecting || !down || e.pointerId !== down.id) return;
       if (!dragging) {
         const dx = e.clientX - down.x;
         const dy = e.clientY - down.y;
         if (Math.abs(dx) < SLOP || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         dragging = true;
-        mode = down.tile ? !selected.has(clipOf.get(down.tile)!) : true;
+        mode = forceMark || !down.tile ? true : !selected.has(clipOf.get(down.tile)!);
         base = new Set(selected);
         const all = [...grid.querySelectorAll<HTMLElement>('.tile')];
         anchor = down.tile ? all.indexOf(down.tile) : -1;

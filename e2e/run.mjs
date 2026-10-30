@@ -739,7 +739,18 @@ try {
     await page.mouse.move(p0.x, p0.y, { steps: 10 });
     await page.mouse.up();
     check((await page.locator('#clips .tile.sel').count()) === 0, 'arrastar a partir de um marcado desmarca');
-    await page.click('#btnSelect');
+    // Toque longo num clipe (fora do modo seleção) entra na seleção já com ele marcado.
+    await page.click('#btnSelect'); // sai da seleção atual (tudo marcado)
+    await page.mouse.move(p0.x, p0.y);
+    await page.mouse.down();
+    await page.waitForTimeout(650);
+    await page.mouse.up();
+    check(!(await page.isVisible('#player')), 'toque longo não abre o player');
+    check(
+      (await page.locator('#clips .tile.sel').count()) === 1,
+      'toque longo marca o clipe e entra na seleção',
+    );
+    await page.click('#btnSelect'); // Cancelar
     check(!(await page.isVisible('#selectBar')), 'Cancelar sai do modo seleção');
     await page.click('#btnSelect');
     await page.click('#btnSelectAll');

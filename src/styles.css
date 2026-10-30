@@ -241,6 +241,9 @@ p {
 
 /* ───────── Miniaturas (Início e Galeria) ───────── */
 .tile {
+  -webkit-touch-callout: none; /* sem o menu do iOS ao pressionar: o toque longo seleciona */
+  -webkit-user-select: none;
+  user-select: none;
   position: relative;
   display: block;
   width: 100%;
@@ -628,6 +631,7 @@ p {
 .gallery.selecting #btnSelect {
   color: var(--accent);
 }
+.gallery .grid,
 .gallery.selecting .grid {
   touch-action: pan-y; /* arrastar na horizontal seleciona; na vertical continua rolando */
 }
