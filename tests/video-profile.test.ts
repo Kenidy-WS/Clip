@@ -7,7 +7,8 @@ describe('videoBitrate', () => {
   });
   it('sobe com a qualidade e com 60 fps', () => {
     expect(videoBitrate('1080', 30, 'high')).toBeGreaterThan(videoBitrate('1080', 30, 'std'));
-    expect(videoBitrate('1080', 60, 'std')).toBe(24e6);
+    expect(videoBitrate('1080', 60, 'std')).toBe(20e6);
+    expect(videoBitrate('1080', 60, 'max')).toBe(35e6);
   });
   it('respeita o teto de 50 Mbps', () => {
     expect(videoBitrate('2160', 60, 'max')).toBe(50e6);

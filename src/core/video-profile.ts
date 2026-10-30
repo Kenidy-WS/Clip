@@ -10,7 +10,7 @@ export const VIDEO_SIZE = {
 /** Mbps a 30 fps para Padrão / Alta / Máxima. O Padrão de 1080p (16) é o valor das versões anteriores. */
 const BASE_MBPS: Record<Quality, [number, number, number]> = {
   '720': [8, 12, 16],
-  '1080': [16, 24, 32],
+  '1080': [16, 22, 28],
   '2160': [30, 38, 45],
 };
 /** Teto de taxa: acima disso o buffer na memória do Safari fica grande demais. */
@@ -20,7 +20,7 @@ const MAX_REC_BYTES = 260e6;
 
 export function videoBitrate(q: Quality, fps: number, level: ImageQuality): number {
   const idx = level === 'std' ? 0 : level === 'high' ? 1 : 2;
-  const k = fps > 30 ? 1.5 : 1; // 60 fps precisa de mais taxa para manter a qualidade
+  const k = fps > 30 ? 1.25 : 1; // 60 fps precisa de mais taxa, mas não o dobro: 1,5× gerava arquivos de 1,2 GB em 4 min
   return Math.min(MAX_BITRATE, Math.round(BASE_MBPS[q][idx] * 1e6 * k));
 }
 
