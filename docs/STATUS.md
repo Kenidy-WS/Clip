@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.9.6 — Diagnóstico mais claro + resultado do teste 1080p/60/Alta
+
+- Dados do Kenidy (v0.9.5, 1080p · 60 fps · Alta): câmera entregou **1080x1920 @ 60 fps** (track), 2619 quadros de entrada / 2618 de saída, **0 descartados**; último clipe 65,3 MB em 16,4 s ≈ **33,4 Mbps** (pedido 36 Mbps) → qualidade e 60 fps aplicados de verdade, pipeline aguenta 60 fps em 1080p. Clipe de 1 min nessa combinação ≈ 250 MB.
+- O relatório foi copiado com a câmera desligada (Início), por isso "Processamento do mic" e a prévia vieram vazios. Agora o Resumo avisa ("Dica") e o rótulo da voz distingue "parada (fora da câmera)" de "desativada nos Ajustes".
+- "Cargas da página" mostrou `reload` em 00:37 e 00:46: foram as atualizações de versão (botão Atualizar), não recarga espontânea. Permissões aparecem como `prompt` mesmo concedidas (o iOS não informa o estado em app instalado).
+- Pendente: confirmar o volume do bipe (v0.9.5) e ver "Processamento do mic" com a câmera ligada.
+
 ## v0.9.5 — volume do bipe de verdade
 
 - Relato (v0.9.4): "Gravar bipe no vídeo" funciona. Na tela de gravação o bipe do alto-falante está muito baixo, até no Máximo, e os 3 volumes soam iguais.
