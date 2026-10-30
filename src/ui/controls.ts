@@ -58,6 +58,7 @@ export function updateUI(): void {
   els.swBeepClip.setAttribute('aria-checked', String(S.beepInClip));
   els.swDisk.setAttribute('aria-checked', String(S.diskRec));
   els.swMirror.setAttribute('aria-checked', String(S.mirrorFront));
+  document.body.classList.toggle('mirror-front', cfg.facing === 'user' && S.mirrorFront);
   els.swLevel.setAttribute('aria-checked', String(S.levelOn));
   syncLevel();
   els.swDisk.disabled = locked;

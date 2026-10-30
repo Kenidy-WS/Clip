@@ -1078,3 +1078,8 @@ p {
 .level.on i {
   background: var(--accent);
 }
+
+/* Frontal espelhada (Ajustes → Espelhar frontal): só a prévia; o clipe é invertido no canvas (video.ts). */
+body.mirror-front video#preview {
+  transform: scaleX(-1);
+}

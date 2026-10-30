@@ -1,6 +1,11 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.3 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.4 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.15.4 — "Espelhar frontal" agora vale para prévia e clipe
+
+Na v0.15.3 a chave só mexia no clipe e o Kenidy comparava a **prévia** com a do iPhone ("o botão não muda nada"). Hipótese: o iOS entrega a frontal sem espelhar, e a Câmera do iPhone espelha por padrão. Agora, com a chave ligada (padrão), a prévia é espelhada por CSS (`body.mirror-front`) e o clipe é invertido no canvas (`video.ts`); desligada, ambos saem como o iOS entrega. Diagnóstico ganhou a linha "Frontal".
+**Testar:** frontal com a chave ligada: a prévia deve ficar como a do app Câmera. Gravar com um papel de texto: o clipe deve sair igual à prévia. Se a prévia piorou (ficou o contrário do iPhone), a hipótese está errada: me contar e eu inverto.
 
 ## v0.15.3 — "Espelhar frontal"
 

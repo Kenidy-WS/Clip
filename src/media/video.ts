@@ -59,9 +59,9 @@ function pump(now: number): void {
   // Passa pelo canvas: drawImage respeita a rotação do iOS; VideoFrame(<video>) pode sair deitado.
   let frame: VideoFrame;
   try {
-    // Frontal: por padrão o clipe sai igual à prévia (espelhado, como o app Câmera do iPhone); com "Espelhar frontal"
-    // desligado a imagem é invertida e o clipe sai como os outros veem.
-    const flip = cfg.facing === 'user' && !S.mirrorFront;
+    // Frontal: o iOS entrega a imagem sem espelhar. Com "Espelhar frontal" ligado (padrão, como o app Câmera do iPhone)
+    // a prévia (CSS) e o clipe saem espelhados; desligado, ambos como os outros veem.
+    const flip = cfg.facing === 'user' && S.mirrorFront;
     if (flip) S.ctx2d.setTransform(-1, 0, 0, 1, S.W, 0);
     S.ctx2d.drawImage(v, 0, 0, S.W, S.H);
     if (flip) S.ctx2d.setTransform(1, 0, 0, 1, 0, 0);
