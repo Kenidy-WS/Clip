@@ -41,8 +41,8 @@ export async function openCamera(): Promise<void> {
 }
 
 /**
- * Vai para o Início ou a Galeria. Sair da câmera para o Início desliga captura, microfone e escuta de voz. Para a Galeria a
- * câmera fica "estacionada" por alguns segundos (voltar logo é instantâneo); tocar num clipe ou esperar a desliga.
+ * Vai para o Início ou a Galeria. Ao sair da câmera (para qualquer uma das duas) a captura fica "estacionada" por alguns
+ * segundos: voltar logo é instantâneo. Passado o prazo, ou ao tocar num clipe, ela é desligada (`releaseCamera`).
  */
 export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   if (S.rec || S.finalizing) {
@@ -51,7 +51,7 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   }
   const leavingCamera = S.view === 'camera';
   if (view === 'gallery') galleryFrom = leavingCamera ? 'camera' : 'home';
-  const park = leavingCamera && view === 'gallery' && S.running; // captura viva: segue ligada na Galeria
+  const park = leavingCamera && S.running; // captura viva: segue ligada alguns segundos fora da câmera (Início ou Galeria)
   S.view = view;
   if (view !== 'gallery') exitSelection();
   if (leavingCamera) {
@@ -62,7 +62,7 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   notify('');
   updateUI();
   if (park) return parkCamera();
-  if (leavingCamera || (isParked() && view !== 'gallery')) await releaseCamera();
+  if (leavingCamera) await releaseCamera();
 }
 
 /** Voltar na Galeria: para a tela de onde veio (câmera ou Início). Chamar de dentro do toque (a câmera e a voz dependem disso). */

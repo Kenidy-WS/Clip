@@ -429,26 +429,54 @@ try {
   {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS + VOICE);
+    // O prazo de 15 s da câmera estacionada (PARK_MS) vira 3 s nesta página, para o teste não esperar.
+    await page.addInitScript(
+      `{ const st = window.setTimeout.bind(window); window.setTimeout = (f, ms, ...a) => st(f, ms === 15000 ? 3000 : ms, ...a); }`,
+    );
     await page.goto(URL_);
     await page.click('#btnOpen');
     await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
+    const before = await page.evaluate(() => window.__ord.join());
     await page.click('#btnBack');
     check(await page.isVisible('#screenHome'), 'voltar: leva ao início');
     check(
-      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
-      'voltar: a câmera é desligada ao sair da tela',
+      (await page.getAttribute('#btnRec', 'data-state')) === 'ready',
+      'voltar: a captura fica estacionada por alguns segundos (voltar logo é instantâneo)',
     );
     check(
-      await page.evaluate(() => window.__cur === null),
-      'voltar: a escuta de voz é desligada ao sair da tela',
+      await page.evaluate(() => window.__cur !== null),
+      'voltar: a escuta de voz segue ligada enquanto a câmera está estacionada',
     );
+    await page.click('#btnOpen');
+    check(await page.isVisible('#screenCamera'), 'abrir logo depois: volta à câmera');
+    check(
+      (await page.evaluate(() => window.__ord.join())) === before,
+      'abrir logo depois: não pede câmera nem voz de novo (captura estacionada)',
+    );
+    // Ajuste que exige reabrir, feito no Início com a câmera estacionada, desliga a captura em vez de reabri-la fora da tela.
+    await page.click('#btnBack');
+    await page.click('#btnSettingsHome');
+    await page.click('#segFps button[data-v="60"]');
+    check(
+      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
+      'ajuste de vídeo no Início desliga a captura estacionada (o próximo "Abrir câmera" usa o ajuste novo)',
+    );
+    await page.click('#btnSheetClose');
     await page.click('#btnOpen');
     await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
     ok('abrir de novo: a câmera liga outra vez');
+    // Passado o prazo no Início, a captura estacionada desliga sozinha (câmera e voz).
+    await page.click('#btnBack');
+    await page.waitForFunction(
+      () => document.querySelector('#btnRec').dataset.state === 'idle' && window.__cur === null,
+      null,
+      { timeout: 6000 },
+    );
+    ok('passado o prazo no Início, a captura estacionada (câmera e voz) desliga sozinha');
     await page.close();
 
     const page2 = await (await browser.newContext()).newPage();

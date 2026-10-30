@@ -92,9 +92,10 @@ function markCameraLeft(): void {
 }
 
 /**
- * Câmera "estacionada" (v0.12.11): ao ir para a Galeria, câmera, microfone e voz seguem ligados por PARK_MS. Voltar nesse prazo
- * não reabre nada (sem espera, sem novo pedido de permissão, sem microfone mudo). Ela é desligada de verdade quando o prazo
- * acaba ou quando o usuário toca num clipe (com a captura ligada o iOS silencia o vídeo do player).
+ * Câmera "estacionada" (v0.12.11; também no Início desde a v0.12.12): ao sair da câmera para o Início ou a Galeria, câmera,
+ * microfone e voz seguem ligados por PARK_MS. Voltar nesse prazo não reabre nada (sem espera, sem novo pedido de permissão, sem
+ * microfone mudo). Ela é desligada de verdade quando o prazo acaba ou quando o usuário toca num clipe (com a captura ligada o
+ * iOS silencia o vídeo do player).
  */
 const PARK_MS = 15000;
 let parked = false;
@@ -102,19 +103,19 @@ let parkTimer = 0;
 
 export const isParked = (): boolean => parked;
 
-/** Mantém a captura ligada enquanto o usuário olha a Galeria; desliga sozinha depois de PARK_MS. */
+/** Mantém a captura ligada enquanto o usuário está fora da câmera (Início ou Galeria); desliga sozinha depois de PARK_MS. */
 export function parkCamera(): void {
   parked = true;
   clearTimeout(parkTimer);
-  logCam(`Galeria: câmera mantida ligada por ${PARK_MS / 1000} s`);
+  logCam(`fora da câmera: captura mantida ligada por ${PARK_MS / 1000} s`);
   parkTimer = window.setTimeout(() => {
-    logCam('Galeria há muito tempo: desligando a câmera');
+    logCam('fora da câmera há muito tempo: desligando a captura');
     void releaseCamera();
   }, PARK_MS);
 }
 
 /**
- * Voltou da Galeria com a câmera ainda estacionada: religa só a prévia (elemento novo, mesmo stream) e descarta o que o buffer
+ * Voltou à câmera (do Início ou da Galeria) com a captura ainda estacionada: religa só a prévia (elemento novo, mesmo stream) e descarta o que o buffer
  * guardou enquanto o usuário estava fora. Devolve falso se a captura já não estava viva (quem chamou abre a câmera normalmente).
  */
 export function resumeParked(): boolean {
@@ -122,7 +123,7 @@ export function resumeParked(): boolean {
   clearTimeout(parkTimer);
   parked = false;
   if (!S.running || !S.stream || S.stream.getTracks().some((t) => t.readyState !== 'live')) {
-    logCam('Galeria: a captura não estava mais viva; abrindo a câmera de novo');
+    logCam('captura estacionada não estava mais viva; abrindo a câmera de novo');
     return false;
   }
   S.buffer.discardUntil(S.lastInTs);
@@ -130,7 +131,7 @@ export function resumeParked(): boolean {
   refreshPreview();
   void S.audioCtx?.resume().catch(() => {});
   void acquireWake();
-  logCam('câmera retomada da Galeria (sem reabrir)');
+  logCam('câmera retomada (captura estacionada, sem reabrir)');
   stateChanged();
   return true;
 }

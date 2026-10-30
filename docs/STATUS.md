@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.11 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.11 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.12 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.12 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -590,3 +590,13 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Diagnóstico, "Câmera: início": `Galeria: câmera mantida ligada por 15 s`, `câmera retomada da Galeria (sem reabrir)`, `Galeria há muito tempo: desligando a câmera`, `saiu da câmera`.
 - e2e: o teste que esperava a captura desligada ao abrir a Galeria foi trocado (câmera estacionada; voltar sem nova captura; desliga sozinha; tocar no clipe desliga). O prazo vira 3 s só na página do teste.
 - Testar: (1) câmera → atalho da Galeria → voltar **rápido**: volta na hora, com imagem, voz e microfone funcionando, sem pedir toque; (2) ficar mais de 15 s na Galeria e voltar: reabre normal (com a espera mínima); (3) câmera → Galeria → tocar num clipe: tem som? Depois voltar: o microfone ainda para (problema conhecido, próximo item); (4) dizer "Ei Clip" dentro da Galeria: não deve gravar.
+
+## v0.12.12 — Câmera estacionada também no Início
+
+- Resultado da v0.12.11 (Kenidy): **fluido**, a volta da Galeria à câmera não pisca nem buga. Mas câmera → **Início** → "Abrir câmera" de novo (rápido) ainda pedia toque para o microfone e, **mesmo depois do toque, "Ei Clip" não reconhecia**.
+- Causa: o Início ainda desligava a captura de verdade, então voltar logo caía no mesmo problema do tempo (microfone nasce mudo; `MIN_REOPEN_MS` = 3 s é limite). A recuperação do microfone roda **uma vez a cada 15 s** (`audioRetried`); se a 2ª captura também nascer muda, a voz fica surda **mesmo após o toque**. **Correção de uma afirmação anterior:** "parar e esperar toque funciona após o toque" (tabela da v0.12.8) só vale se o microfone da câmera estiver bom; com o microfone mudo, o toque não adianta.
+- Mudança: `showScreen` estaciona a captura (15 s, `parkCamera`) ao sair da câmera para **qualquer** tela (Início ou Galeria); só desliga se a câmera ainda estava abrindo. Do Início para a Galeria e de volta, o prazo continua correndo (não reinicia).
+- Ajustes: qualidade/fluidez/imagem mudados no Início com a câmera estacionada **desligam** a captura (`applyCaptureSettings` em `app.ts`) em vez de reabri-la fora da tela (sem toque a voz ficaria surda); o próximo "Abrir câmera" já usa o ajuste novo (com a espera mínima da v0.12.9).
+- Diagnóstico, "Câmera: início": `fora da câmera: captura mantida ligada por 15 s`, `câmera retomada (captura estacionada, sem reabrir)`, `fora da câmera há muito tempo: desligando a captura`.
+- e2e: voltar ao Início deixa a câmera e a voz ligadas; abrir logo depois não chama `getUserMedia` nem a voz de novo; ajuste de vídeo no Início desliga a captura; passado o prazo desliga câmera e voz.
+- Testar: (1) câmera → Início → "Abrir câmera" **logo**: volta na hora, microfone e voz funcionando; (2) câmera → Início, esperar mais de 15 s, "Abrir câmera": reabre normal (~3 s de espera se for logo depois dos 15 s); (3) mudar a qualidade nos Ajustes do Início e abrir a câmera: usa o ajuste novo; (4) indicador de câmera/microfone do iOS aceso até 15 s no Início (bateria).

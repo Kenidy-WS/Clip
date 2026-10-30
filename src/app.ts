@@ -1,5 +1,14 @@
 import { onEncoderFail, onClipsChange, onStateChange, onStatus, onVoiceCommand, notify } from './events';
-import { acquireWake, enableMic, logCam, refreshPreview, start, tapRecover } from './media/camera';
+import {
+  acquireWake,
+  enableMic,
+  isParked,
+  logCam,
+  refreshPreview,
+  releaseCamera,
+  start,
+  tapRecover,
+} from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { previewBeep } from './media/beep';
 import { restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
@@ -108,6 +117,15 @@ function bindCamera(): void {
   });
 }
 
+/**
+ * Ajuste que exige reabrir a captura (qualidade, fluidez, imagem). Com a câmera estacionada (fora da tela) ela é desligada, e o
+ * próximo "Abrir câmera" já usa o ajuste novo; reabrir aqui ligaria câmera e voz fora da tela, sem toque.
+ */
+async function applyCaptureSettings(): Promise<void> {
+  if (isParked()) await releaseCamera();
+  else if (S.running) await start();
+}
+
 function bindSettings(): void {
   els.btnSettingsHome.addEventListener('click', openSheet);
   els.btnSettingsCam.addEventListener('click', openSheet);
@@ -123,7 +141,7 @@ function bindSettings(): void {
       setPref('fps', '30');
     }
     updateUI();
-    if (S.running) await start();
+    await applyCaptureSettings();
   });
   bindSegment(els.segFps, async (v) => {
     cfg.fps = Number(v) as Fps;
@@ -133,13 +151,13 @@ function bindSettings(): void {
       setPref('quality', '1080');
     }
     updateUI();
-    if (S.running) await start();
+    await applyCaptureSettings();
   });
   bindSegment(els.segImageQuality, async (v) => {
     cfg.imageQuality = v as ImageQuality;
     setPref('imageQuality', v);
     updateUI();
-    if (S.running) await start();
+    await applyCaptureSettings();
   });
   els.swBeepClip.addEventListener('click', () => {
     S.beepInClip = !S.beepInClip;
