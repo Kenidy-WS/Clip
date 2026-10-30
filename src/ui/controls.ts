@@ -5,7 +5,7 @@ import { sampleFps } from '../media/video';
 import { stopRec } from '../media/recorder';
 import { cfg, S } from '../state';
 import { T } from '../strings';
-import { diagnosticsText } from './diagnostics';
+import { refreshDiagnostics } from './diag-view';
 import { els } from './dom';
 import { showView } from './transitions';
 
@@ -103,5 +103,5 @@ export function tick(): void {
     notify(T.micNoSignal(S.audioCtx ? S.audioCtx.state : 'ausente'), 'warn');
   }
 
-  if (els.info.classList.contains('open')) els.info.textContent = diagnosticsText();
+  refreshDiagnostics();
 }

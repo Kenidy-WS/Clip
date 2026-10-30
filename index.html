@@ -212,8 +212,17 @@
             <span class="val" id="storage"></span>
           </div>
           <button class="row row-btn" id="btnInfo"><span>Diagnóstico</span></button>
-          <pre id="info" class="info"></pre>
         </div>
+      </div>
+
+      <!-- Diagnóstico (só para desenvolvimento) -->
+      <div id="diag" class="diag" hidden>
+        <div class="diag-bar">
+          <button class="btn-glass" id="btnDiagClose" data-icon="close" aria-label="Fechar"></button>
+          <h2>Diagnóstico</h2>
+          <button class="btn-link" id="btnDiagCopy">Copiar</button>
+        </div>
+        <div class="diag-body" id="diagBody"></div>
       </div>
     </main>
     <script type="module" src="/src/main.ts"></script>

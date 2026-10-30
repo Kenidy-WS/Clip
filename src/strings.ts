@@ -51,6 +51,8 @@ export const T = {
   // Clipes
   storeFailed:
     'Clipe pronto, mas o navegador não deixou guardá-lo. Salve-o agora em “Salvar / Compartilhar”.',
+  copied: 'Copiado',
+  copyFailed: 'Não copiou',
   select: 'Selecionar',
   cancel: 'Cancelar',
   selectAll: 'Todos',

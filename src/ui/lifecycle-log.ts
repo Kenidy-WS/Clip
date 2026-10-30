@@ -67,15 +67,14 @@ export function initLifecycleLog(): void {
 
 let bootsCache: Array<[number, string]> = [];
 
-/** Linhas do Diagnóstico: cargas recentes da página, idas/voltas e estado das permissões. */
-export function lifecycleInfo(): string {
-  const loads = bootsCache.map(([t, ty]) => `${clock(t)} ${ty}`).join(' | ');
-  const p = `câmera ${perms.camera ?? '?'}, microfone ${perms.microphone ?? '?'}`;
+/** Cargas recentes da página (a mais recente por último) e estado das permissões. */
+export function lifecycleRows(): Array<[string, string]> {
   return [
-    `Cargas da página (mais recente por último): ${loads || '-'}`,
-    `Permissões: ${p}`,
-    events.length ? 'Ciclo:\n  ' + events.join('\n  ') : '',
-  ]
-    .filter(Boolean)
-    .join('\n');
+    ['Câmera (permissão)', perms.camera ?? '?'],
+    ['Microfone (permissão)', perms.microphone ?? '?'],
+    ['Cargas da página', bootsCache.map(([t, ty]) => `${clock(t)} ${ty}`).join(' · ') || '-'],
+  ];
 }
+
+/** Idas e voltas ao app (saiu, voltou, quanto tempo ficou fora). */
+export const lifecycleEvents = (): string[] => [...events];

@@ -2,16 +2,17 @@ import type { BeepVol } from '../types';
 
 export type BeepKind = 'start' | 'stop';
 
-/** [frequência Hz, início s, duração s]. Agudos (1,5 a 2 kHz) passam melhor pelo ruído e pelo alto-falante do iPhone. */
+/** [frequência Hz, início s, duração s]. Os tons originais do app (o Kenidy achou 2 kHz agudo demais): 880 Hz no início, 660 Hz duas vezes no fim. */
 const TONES: Record<BeepKind, Array<[number, number, number]>> = {
-  start: [[2000, 0, 0.18]], // um bipe longo
+  start: [[880, 0, 0.12]],
   stop: [
-    [1500, 0, 0.12], // dois bipes curtos
-    [1500, 0.2, 0.12],
+    [660, 0, 0.09],
+    [660, 0.16, 0.09],
   ],
 };
 
-const GAIN: Record<BeepVol, number> = { normal: 0.35, high: 0.75, max: 1 };
+/** Normal = volume das versões anteriores (0,3). */
+const GAIN: Record<BeepVol, number> = { normal: 0.3, high: 0.6, max: 1 };
 export const beepGain = (v: BeepVol): number => GAIN[v];
 
 export function beepDurationSec(kind: BeepKind): number {
@@ -19,7 +20,7 @@ export function beepDurationSec(kind: BeepKind): number {
   return last[1] + last[2];
 }
 
-/** Gera as amostras (mono) do bipe: seno com um pouco de 3º harmônico (mais presença) e entrada/saída suaves. */
+/** Gera as amostras (mono) do bipe: seno puro com entrada e saída suaves. */
 export function renderBeep(kind: BeepKind, sampleRate: number, gain: number): Float32Array<ArrayBuffer> {
   const out = new Float32Array(Math.ceil(beepDurationSec(kind) * sampleRate) + 1);
   for (const [freq, off, dur] of TONES[kind]) {
@@ -29,7 +30,7 @@ export function renderBeep(kind: BeepKind, sampleRate: number, gain: number): Fl
     const rel = Math.max(1, Math.min(Math.floor(0.025 * sampleRate), Math.floor(len / 3)));
     for (let i = 0; i < len; i++) {
       const p = (2 * Math.PI * freq * i) / sampleRate;
-      const wave = (Math.sin(p) + 0.35 * Math.sin(3 * p)) / 0.96; /* pico da soma ≈ 0,955 */
+      const wave = Math.sin(p);
       const env = Math.min(1, i / atk, (len - i) / rel);
       out[i0 + i] = wave * env * gain;
     }

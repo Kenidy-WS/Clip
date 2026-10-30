@@ -11,7 +11,7 @@ import { getPref, setPref } from './storage/prefs';
 import { storageInfo } from './storage/clip-store';
 import { bindPlayer, renderClips } from './ui/clips-view';
 import { tick, updateUI } from './ui/controls';
-import { diagnosticsText } from './ui/diagnostics';
+import { bindDiagnostics } from './ui/diag-view';
 import { els } from './ui/dom';
 import { mountIcons } from './ui/icons';
 import { openCamera, showScreen } from './ui/navigation';
@@ -159,10 +159,7 @@ function bindSettings(): void {
     updateUI();
     previewBeep();
   });
-  els.btnInfo.addEventListener('click', () => {
-    els.info.classList.toggle('open');
-    if (els.info.classList.contains('open')) els.info.textContent = diagnosticsText();
-  });
+  bindDiagnostics();
 }
 
 /** "Ei Clip" reconhecido: alterna a gravação (inicia com o pre-roll ou para e salva). */

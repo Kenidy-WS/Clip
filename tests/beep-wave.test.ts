@@ -11,8 +11,8 @@ describe('renderBeep', () => {
   it('o pico respeita o ganho e nunca passa de 1', () => {
     const p = peak(renderBeep('start', 48000, beepGain('max')));
     expect(p).toBeLessThanOrEqual(1);
-    expect(p).toBeGreaterThan(0.8);
-    expect(peak(renderBeep('start', 48000, beepGain('normal')))).toBeLessThan(0.4);
+    expect(p).toBeGreaterThan(0.95);
+    expect(peak(renderBeep('start', 48000, beepGain('normal')))).toBeLessThan(0.35);
   });
   it('o volume Alto é mais forte que o Normal', () => {
     expect(beepGain('high')).toBeGreaterThan(beepGain('normal'));

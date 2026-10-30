@@ -91,7 +91,10 @@ export const els = {
   swSound: byId<HTMLButtonElement>('swSound'),
   storage: byId<HTMLElement>('storage'),
   btnInfo: byId<HTMLButtonElement>('btnInfo'),
-  info: byId<HTMLElement>('info'),
+  diag: byId<HTMLElement>('diag'),
+  diagBody: byId<HTMLElement>('diagBody'),
+  btnDiagClose: byId<HTMLButtonElement>('btnDiagClose'),
+  btnDiagCopy: byId<HTMLButtonElement>('btnDiagCopy'),
 
   // avisos
   status: byId<HTMLElement>('status'),

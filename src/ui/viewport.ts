@@ -136,8 +136,8 @@ export function initViewport(): void {
   });
 }
 
-/** Linha do Diagnóstico: valores que o iOS informa e o que o app está usando. */
-export function viewportInfo(): string {
+/** Linhas do Diagnóstico: valores que o iOS informa e o que o app está usando. */
+export function viewportRows(): Array<[string, string]> {
   if (!probe) {
     probe = document.createElement('div');
     probe.style.cssText =
@@ -148,16 +148,22 @@ export function viewportInfo(): string {
   const vv = window.visualViewport;
   const app = document.querySelector('.app')?.getBoundingClientRect();
   const video = document.querySelector('video#preview')?.getBoundingClientRect();
-  const parts = [
-    `Tela: janela ${innerWidth}x${innerHeight}, screen ${screen.width}x${screen.height}, ${standalone() ? 'instalado' : 'Safari'}`,
-    vv
-      ? `visual ${Math.round(vv.width)}x${Math.round(vv.height)} +${Math.round(vv.offsetTop)} x${vv.scale}`
-      : '',
-    `margens ${cs.paddingTop}/${cs.paddingBottom}`,
-    app ? `app ${Math.round(app.width)}x${Math.round(app.height)}` : '',
-    video
-      ? `preview ${Math.round(video.width)}x${Math.round(video.height)} em ${Math.round(video.left)},${Math.round(video.top)}`
-      : '',
+  const rows: Array<[string, string]> = [
+    ['Modo', standalone() ? 'app instalado' : 'Safari'],
+    ['Janela (iOS informa)', `${innerWidth}x${innerHeight}`],
+    ['Tela do aparelho', `${screen.width}x${screen.height}`],
   ];
-  return parts.filter(Boolean).join(', ') + (log.length ? '\n  ' + log.join('\n  ') : '');
+  if (app) rows.push(['Área do app', `${Math.round(app.width)}x${Math.round(app.height)}`]);
+  if (video)
+    rows.push([
+      'Prévia da câmera',
+      `${Math.round(video.width)}x${Math.round(video.height)} em ${Math.round(video.left)},${Math.round(video.top)}`,
+    ]);
+  rows.push(['Margens (topo/base)', `${cs.paddingTop} / ${cs.paddingBottom}`]);
+  if (vv)
+    rows.push(['Viewport visual', `${Math.round(vv.width)}x${Math.round(vv.height)} · zoom ${vv.scale}`]);
+  return rows;
 }
+
+/** Últimos ajustes que o app fez no tamanho da janela. */
+export const viewportLog = (): string[] => [...log];

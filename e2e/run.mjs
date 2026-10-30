@@ -560,10 +560,16 @@ try {
     );
     await page.click('#btnSettingsHome');
     await page.click('#btnInfo');
+    check(await page.isVisible('#diag'), 'Diagnóstico abre em tela própria');
     check(
-      (await page.textContent('#info')).includes('Tela: janela 393x793'),
-      'Diagnóstico mostra a linha "Tela" com a janela informada',
+      (await page.textContent('#diagBody')).includes('Janela (iOS informa)393x793'),
+      'Diagnóstico mostra a janela informada pelo iOS',
     );
+    check(
+      (await page.locator('#diagBody h3').allTextContents()).slice(0, 2).join('|') === 'Resumo|Vídeo',
+      'Diagnóstico começa por Resumo e Vídeo',
+    );
+    await page.click('#btnDiagClose');
     await page.close();
 
     // Fora do modo instalado (Safari comum) o app segue a janela, inclusive ao girar.
