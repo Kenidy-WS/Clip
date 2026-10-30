@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.7 · aguardando teste no iPhone (ver a seção v0.12.7 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.8 · aguardando teste no iPhone (ver as seções v0.12.7 e v0.12.8 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -555,3 +555,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Mudança: removido o `stopVoice()` dessa recuperação. A escuta (Web Speech) tem captura própria e `start()` já a preserva nos reinícios (`stopAll(…, keepVoice)`); `startVoice('wait')` sai sem fazer nada se a escuta está viva. Se ela ficar surda, o aviso de toque (som alto sem fala ouvida) continua como rede de segurança. **Hipótese não confirmada:** que a escuta não precise ser recriada junto com o microfone.
 - Testar no iPhone: Câmera → Galeria → tocar um clipe com som → voltar à câmera. A voz continua funcionando sem pedir toque? Se pedir, copie o Diagnóstico (pela tela da câmera): em "Câmera: início" procure "microfone mudo … reabrindo" e em "Comando de voz" o que veio depois (`aguardando toque na tela` ou `microfone com som, mas a escuta não ouviu fala`).
 - Não resolve a causa raiz do microfone nascer mudo. Próximo experimento: câmera primeiro e voz logo depois, no mesmo toque.
+
+## v0.12.8 — Desfeita a v0.12.7 (voz verde, mas surda)
+
+- Resultado da v0.12.7 no iPhone: Câmera → Galeria → clipe → câmera: a tela pisca (é o reinício do microfone mudo), o aviso de toque some, o ícone da voz fica **verde, mas "Ei Clip" não funciona**. A hipótese da v0.12.7 (a escuta não depende do microfone da câmera) está **refutada**.
+- Por que ficou silencioso: o ícone verde é o estado `S.voice = 'listening'` de antes da recuperação (o `stopVoice()` era o que o zerava); e o aviso de surdez (`voice.ts`, intervalo de 300 ms) fica desligado para escutas nascidas de toque (`inGesture`), então nada avisa.
+- Agora (v0.12.8): `stopVoice()` de volta na recuperação do microfone mudo; a voz espera um toque depois do reinício (comportamento da v0.12.6, que funciona após o toque). É preferível pedir um toque a mostrar verde estando surda.
+- Resumo do que já foi testado para a voz depois do reinício do microfone: religar sem toque (v0.12.4) → surda; manter viva (v0.12.7) → verde e surda; parar e esperar toque (v0.12.6/0.12.8) → funciona após o toque.
+- Conclusão: sem toque não dá para recuperar a voz; o caminho para eliminar o toque é **evitar o microfone mudo** (a recuperação não precisaria rodar). Próximo experimento: câmera primeiro e voz logo depois no mesmo toque (atenção: a v0.7.0 viu tela preta e 3 pedidos ao abrir voz e câmera juntas), ou pedir o ultra-angular já no 1º `getUserMedia` para evitar o "start #2".

@@ -423,8 +423,10 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
       audioRetried = true;
       logCam(`microfone mudo (pico ${S.audioPeak.toFixed(4)}): liberando a captura e reabrindo`);
       // Solta o microfone de verdade (a captura antiga mantida pelo reinício continuaria presa à sessão de áudio ruim).
-      // v0.12.7: a escuta de voz NÃO é derrubada aqui. Ela tem a própria captura (Web Speech) e `start()` já a preserva
-      // (`stopAll(…, keepVoice)`). Derrubá-la e religar sem toque a deixava surda (v0.12.4) e, sem toque, só restava esperar um toque.
+      // A escuta de voz também fica presa ao microfone/sessão de áudio antigos e precisa ser refeita dentro de um toque.
+      // Testado no iPhone: religá-la sem toque (v0.12.4) ou mantê-la viva (v0.12.7) a deixa surda; no segundo caso o ícone segue
+      // verde (estado velho) e o aviso de surdez não dispara (a escuta nasceu de um toque). Por isso: parar e pedir um toque.
+      stopVoice();
       S.stream?.getAudioTracks().forEach((t) => t.stop());
       setAudioSession('auto');
       setTimeout(() => void start(), 450);
