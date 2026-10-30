@@ -45,6 +45,8 @@ export const T = {
   noKeyframe: 'Ainda sem imagem suficiente, tente de novo em 1 s.',
   finalizing: 'Finalizando clipe…',
   clipSaved: 'Clipe salvo.',
+  clipSavedNoAudio: 'Clipe salvo, mas sem áudio.',
+  clipSavedPartial: 'Gravação interrompida. O trecho gravado foi salvo.',
   mp4Failed: (msg: string) => `Falha ao gerar o MP4: ${msg}`,
   noVideoData: 'sem dados de vídeo',
   finishRecordingFirst: 'Termine a gravação primeiro.',

@@ -1,3 +1,4 @@
+import { retryAsync } from './core/retry';
 import { clipsChanged, notify } from './events';
 import { S } from './state';
 import { deleteClip, loadClips, requestPersistence, saveClip } from './storage/clip-store';
@@ -26,7 +27,8 @@ export async function restoreClips(): Promise<void> {
 export function addClip(c: Clip): void {
   S.clips.unshift(c);
   clipsChanged();
-  saveClip(c)
+  // O IndexedDB do iOS às vezes falha uma vez e funciona logo depois: 3 tentativas antes de avisar.
+  retryAsync(() => saveClip(c), [800, 2500])
     .then(() => {
       requestPersistence();
       storageListener();

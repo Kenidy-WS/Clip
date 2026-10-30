@@ -6,10 +6,10 @@ import { T } from '../strings';
 import type { Clip, Recording } from '../types';
 import { aacMeta } from './audio';
 
-/** Monta o MP4 (H.264 + AAC) a partir dos chunks da gravação. */
-export function buildMp4(r: Recording): Clip {
+/** Monta o MP4 (H.264 + AAC) a partir dos chunks da gravação. `audio: false` monta só o vídeo (plano B se o áudio falhar). */
+export function buildMp4(r: Recording, audio = true): Clip {
   if (!r.v.length || !S.vMeta) throw new Error(T.noVideoData);
-  const withAudio = r.a.length > 0 && S.nCh > 0;
+  const withAudio = audio && r.a.length > 0 && S.nCh > 0;
   const muxer = new Muxer({
     target: new ArrayBufferTarget(),
     video: { codec: 'avc', width: S.W, height: S.H },

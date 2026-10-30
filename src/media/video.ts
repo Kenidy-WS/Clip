@@ -6,6 +6,7 @@ import { cfg, S } from '../state';
 import { els } from '../ui/dom';
 import { T } from '../strings';
 import type { Chunk } from '../types';
+import { salvageRecording } from './recorder';
 import { HAS_RVFC } from './support';
 
 /** Laço de captura: cada quadro novo do <video> passa pelo canvas e entra no VideoEncoder. */
@@ -158,7 +159,7 @@ function onEncoderError(e: DOMException, enc: VideoEncoder): void {
     changed = true;
   }
   S.note = changed ? T.encoderFallback : '';
-  S.rec = null; // clipe em andamento é perdido: o encoder morreu
+  salvageRecording(); // o encoder morreu, mas o trecho já gravado vira um clipe (antes era descartado)
   S.finalizing = false;
   S.vEnc = null; // o próximo quadro reconfigura
   S.buffer.clear();
