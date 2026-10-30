@@ -2,6 +2,15 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.8.4 — prévia recriada, voltar do app sem novo pedido, seleção por arrasto
+
+- Logs do Kenidy (v0.8.3): a página **não recarregou** (relógio do Diagnóstico contínuo entre prints). O pedido de permissão vem de uma **nova captura** (`getUserMedia`) dentro da mesma página: o iOS só dispensa o pedido enquanto ainda há uma captura ativa. Antes, `visibilitychange` refazia a captura sempre que ficava >1,5 s fora.
+- Mudança: ao voltar do app, se as faixas continuam `live` (iOS só silenciou), apenas `play()` + wake lock + áudio; refaz a captura só se as faixas acabaram ou se nenhum quadro novo chegar em 2,5 s. Linha nova no log "Câmera (início)": "voltou (Ns fora); faixas v:live/mudo a:live". **Sair da câmera (voltar ao Início) continua desligando tudo e voltar a abrir pede permissão** (limitação do iOS; só some com "Ajustes do Site" no Safari).
+- Faixas na troca de lente (3ª tentativa): o `<video>` é **recriado** a cada captura (`renewPreview` em `dom.ts`; `els.video` agora é getter). Hipótese: o iOS não refaz a camada do vídeo no mesmo elemento. Ainda sem confirmação.
+- Galeria: "Selecionar" mais visível; **seleção por arrasto** (horizontal marca/desmarca; vertical rola; borda do topo/rodapé rola sozinha).
+- Texto/ícones "embaçados" perto do notch (Galeria): não há blur no CSS ali. Hipótese: efeito de borda do próprio iOS (blur sob a barra de status) que atinge o topo de elementos `position: fixed`. Se persistir, testar `.app` sem `position: fixed`.
+- Testar: trocar de lente várias vezes (faixas?); minimizar e voltar (pede permissão?); arrastar na Galeria.
+
 ## v0.8.3 — ações em lote, diagnóstico de recarga
 
 - Pedido do Kenidy: selecionar vários clipes na Galeria para excluir ou compartilhar/baixar de uma vez. Feito: "Selecionar" no topo da Galeria, marca com toque, "Todos/Nenhum", barra inferior com Compartilhar (folha de compartilhar com vários arquivos; sem suporte, baixa um a um) e Excluir (confirmação). Sai do modo ao sair da Galeria.

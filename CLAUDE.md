@@ -73,6 +73,8 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   sem microfone. `getMedia` (`camera.ts`) pede áudio em 3 níveis (estrito → sem `channelCount` → padrão) e só desce nesse erro.
 - **Lente 0,5×:** o iOS só informa os nomes das câmeras depois da permissão; a ultra-angular é a câmera cujo nome casa `/ultra/i`
   (`deviceId: {exact}`); sem ela, tenta `zoom` < 1. Detalhes em `refreshLenses` (`camera.ts`).
+- **Permissão e capturas (v0.8.4):** o iOS só dispensa o pedido de câmera/microfone enquanto ainda existe uma captura ativa na página; parar todas as faixas e chamar `getUserMedia` de novo pede de novo. Por isso, ao voltar do segundo plano **não** refazemos a captura se as faixas seguem `live` (`returnFromBackground` em `app.ts`).
+- **Prévia (v0.8.4):** ao trocar de lente o iOS pode desenhar o `<video>` menor que o elemento (faixas). O elemento é recriado a cada captura (`renewPreview`); nunca guardar referência ao `<video>`, use `els.video` (getter).
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)

@@ -595,6 +595,23 @@ p {
   border-radius: 6px;
 }
 
+.bar-end .btn-link,
+.select-bar .btn-link {
+  opacity: 1;
+  font-weight: 600;
+  padding: 8px 6px;
+}
+.gallery.selecting #btnSelect {
+  color: var(--accent);
+}
+.gallery.selecting .grid {
+  touch-action: pan-y; /* arrastar na horizontal seleciona; na vertical continua rolando */
+}
+.gallery.selecting .tile {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
 .bar-end {
   display: flex;
   align-items: center;

@@ -325,8 +325,16 @@ try {
     });
     await page.waitForFunction(() => !document.querySelector('#lens').hidden, null, { timeout: 3000 });
     check((await page.getAttribute('#lensMain', 'aria-pressed')) === 'true', 'lente: começa na 1×');
+    await page.evaluate(() => (document.querySelector('#preview').dataset.gen = 'antigo'));
     await page.click('#lensWide');
     await page.waitForFunction(() => window.__cons.length >= 2, null, { timeout: 5000 });
+    await page.waitForFunction(() => document.querySelector('#preview').dataset.gen !== 'antigo', null, {
+      timeout: 5000,
+    });
+    check(
+      await page.evaluate(() => !!document.querySelector('#preview').srcObject),
+      'lente: a prévia é recriada na troca e recebe o novo stream',
+    );
     check(
       await page.evaluate(
         () => window.__cons[1].includes('"exact":"back-ultra"') && !window.__cons[1].includes('facingMode'),
@@ -597,19 +605,20 @@ try {
           r.onsuccess = () => {
             const db = r.result;
             const tx = db.transaction('clips', 'readwrite');
-            tx.objectStore('clips').put({
-              name: 'clip-teste.mp4',
-              blob: new Blob([new Uint8Array(2000)], { type: 'video/mp4' }),
-              durSec: 8,
-              preSec: 3,
-              withAudio: true,
-              dims: '1080x1920',
-              mbps: 10,
-              aCount: 300,
-              aSec: 8,
-              aInfo: '',
-              at: Date.now(),
-            });
+            for (const [k, nm] of ['clip-teste.mp4', 'clip-b.mp4', 'clip-c.mp4'].entries())
+              tx.objectStore('clips').put({
+                name: nm,
+                blob: new Blob([new Uint8Array(2000)], { type: 'video/mp4' }),
+                durSec: 8,
+                preSec: 3,
+                withAudio: true,
+                dims: '1080x1920',
+                mbps: 10,
+                aCount: 300,
+                aSec: 8,
+                aInfo: '',
+                at: Date.now() - k * 1000,
+              });
             tx.oncomplete = () => {
               db.close();
               res();
@@ -631,7 +640,7 @@ try {
       (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
       'ao abrir a Galeria a captura é desligada (áudio de reprodução no iOS)',
     );
-    check((await page.locator('#clips .tile').count()) === 1, 'Galeria mostra o clipe guardado');
+    check((await page.locator('#clips .tile').count()) === 3, 'Galeria mostra os clipes guardados');
     await page.click('#clips .tile');
     check(await page.isVisible('#player'), 'tocar no clipe abre o player');
     check(
@@ -640,24 +649,44 @@ try {
     );
     await page.click('#btnPlayerClose');
     check(!(await page.isVisible('#player')), 'fechar volta para a Galeria');
-    // Ações em lote: selecionar, Todos/Nenhum, cancelar e excluir.
+    // Ações em lote: selecionar, Todos/Nenhum, arrastar, cancelar e excluir.
     await page.click('#btnSelect');
     check(await page.isVisible('#selectBar'), 'Selecionar mostra a barra de ações em lote');
     check(
       await page.locator('#btnBatchDelete').isDisabled(),
       'sem seleção, as ações em lote ficam desligadas',
     );
-    await page.click('#clips .tile');
+    await page.click('#clips .tile >> nth=0');
     check(!(await page.isVisible('#player')), 'no modo seleção, tocar no clipe não abre o player');
     check((await page.locator('#clips .tile.sel').count()) === 1, 'tocar marca o clipe');
     check((await page.textContent('#galleryTitle')) === '1 selecionado', 'título mostra a contagem');
+    await page.click('#btnSelectAll');
+    check((await page.locator('#clips .tile.sel').count()) === 3, '"Todos" marca tudo');
     check((await page.textContent('#btnSelectAll')) === 'Nenhum', 'com tudo marcado o botão vira "Nenhum"');
     await page.click('#btnSelectAll');
     check((await page.locator('#clips .tile.sel').count()) === 0, '"Nenhum" desmarca tudo');
-    check((await page.textContent('#btnSelectAll')) === 'Todos', 'e volta a ser "Todos"');
+    // Arrastar na horizontal por cima dos três clipes marca todos.
+    const box = async (n) => {
+      const b = await page.locator('#clips .tile').nth(n).boundingBox();
+      return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+    };
+    const p0 = await box(0);
+    const p2 = await box(2);
+    await page.mouse.move(p0.x, p0.y);
+    await page.mouse.down();
+    await page.mouse.move((p0.x + p2.x) / 2, p0.y, { steps: 6 });
+    await page.mouse.move(p2.x, p2.y, { steps: 6 });
+    await page.mouse.up();
+    check((await page.locator('#clips .tile.sel').count()) === 3, 'arrastar sobre os clipes marca todos');
+    check(!(await page.isVisible('#player')), 'o fim do arrasto não abre o player nem desfaz a seleção');
+    // Arrastar de novo a partir de um clipe marcado desmarca.
+    await page.mouse.move(p2.x, p2.y);
+    await page.mouse.down();
+    await page.mouse.move(p0.x, p0.y, { steps: 10 });
+    await page.mouse.up();
+    check((await page.locator('#clips .tile.sel').count()) === 0, 'arrastar a partir de um marcado desmarca');
     await page.click('#btnSelect');
     check(!(await page.isVisible('#selectBar')), 'Cancelar sai do modo seleção');
-    check((await page.locator('#clips .tile.sel').count()) === 0, 'Cancelar limpa a seleção');
     await page.click('#btnSelect');
     await page.click('#btnSelectAll');
     page.once('dialog', (d) => void d.accept());

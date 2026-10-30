@@ -13,6 +13,8 @@ const RECENT_COUNT = 4;
 let current: Clip | null = null;
 let selecting = false;
 const selected = new Set<Clip>();
+const clipOf = new WeakMap<HTMLElement, Clip>();
+let suppressClick = false; // depois de arrastar para selecionar, o toque final não pode desfazer a seleção
 
 const whenText = (c: Clip): string =>
   new Date(c.at).toLocaleString('pt-BR', {
@@ -72,12 +74,12 @@ function tile(c: Clip, selectable = false): HTMLElement {
     ck.className = 'check';
     ck.innerHTML = icon('check');
     b.append(ck);
+    clipOf.set(b, c);
     b.classList.toggle('sel', selected.has(c));
     b.onclick = () => {
+      if (suppressClick) return;
       if (!selecting) return openPlayer(c);
-      if (selected.has(c)) selected.delete(c);
-      else selected.add(c);
-      b.classList.toggle('sel', selected.has(c));
+      setSelected(b, !selected.has(c));
       paintSelection();
     };
   } else b.onclick = () => openPlayer(c);
@@ -107,6 +109,86 @@ export function closePlayer(): void {
   current = null;
 }
 
+function setSelected(tileEl: HTMLElement, on: boolean): void {
+  const c = clipOf.get(tileEl);
+  if (!c) return;
+  if (on) selected.add(c);
+  else selected.delete(c);
+  tileEl.classList.toggle('sel', on);
+}
+
+const tileAt = (x: number, y: number): HTMLElement | null =>
+  (document.elementFromPoint(x, y) as HTMLElement | null)?.closest<HTMLElement>('#clips .tile') ?? null;
+
+/**
+ * Seleção por arrasto, como na galeria do iPhone: no modo seleção, arrastar o dedo na horizontal por cima dos clipes marca
+ * todos os que ele cruzar (ou desmarca, se o primeiro já estava marcado). Rolar para cima/baixo continua rolando.
+ * Perto da borda de cima/baixo a lista rola sozinha.
+ */
+function bindDragSelect(): void {
+  const grid = els.clips;
+  const SLOP = 8;
+  const EDGE = 56;
+  let down: { id: number; x: number; y: number; tile: HTMLElement | null } | null = null;
+  let dragging = false;
+  let mode = true;
+  let last = { x: 0, y: 0 };
+  let raf = 0;
+
+  const apply = (x: number, y: number): void => {
+    // Percorre o caminho desde o último ponto (dedo rápido pode pular clipes).
+    const steps = Math.max(1, Math.ceil(Math.hypot(x - last.x, y - last.y) / 24));
+    for (let i = 1; i <= steps; i++) {
+      const t = tileAt(last.x + ((x - last.x) * i) / steps, last.y + ((y - last.y) * i) / steps);
+      if (t) setSelected(t, mode);
+    }
+    last = { x, y };
+    paintSelection();
+  };
+  const autoScroll = (): void => {
+    const r = grid.getBoundingClientRect();
+    const dy = last.y < r.top + EDGE ? -10 : last.y > r.bottom - EDGE ? 10 : 0;
+    if (dragging && dy) {
+      grid.scrollTop += dy;
+      apply(last.x, last.y);
+    }
+    raf = dragging ? requestAnimationFrame(autoScroll) : 0;
+  };
+  const end = (): void => {
+    if (dragging) {
+      suppressClick = true;
+      setTimeout(() => (suppressClick = false), 80);
+    }
+    dragging = false;
+    down = null;
+  };
+
+  grid.addEventListener('pointerdown', (e) => {
+    if (!selecting) return;
+    down = { id: e.pointerId, x: e.clientX, y: e.clientY, tile: tileAt(e.clientX, e.clientY) };
+  });
+  grid.addEventListener(
+    'pointermove',
+    (e) => {
+      if (!selecting || !down || e.pointerId !== down.id) return;
+      if (!dragging) {
+        const dx = e.clientX - down.x;
+        const dy = e.clientY - down.y;
+        if (Math.abs(dx) < SLOP || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+        dragging = true;
+        mode = down.tile ? !selected.has(clipOf.get(down.tile)!) : true;
+        last = { x: down.x, y: down.y };
+        if (!raf) raf = requestAnimationFrame(autoScroll);
+      }
+      e.preventDefault();
+      apply(e.clientX, e.clientY);
+    },
+    { passive: false },
+  );
+  grid.addEventListener('pointerup', end);
+  grid.addEventListener('pointercancel', end);
+}
+
 /** Atualiza título, botões e barra de ações conforme a seleção. */
 function paintSelection(): void {
   const n = S.clips.length;
@@ -128,6 +210,7 @@ export function exitSelection(): void {
 }
 
 function bindSelection(): void {
+  bindDragSelect();
   els.btnSelect.addEventListener('click', () => {
     if (selecting) return exitSelection();
     selecting = true;

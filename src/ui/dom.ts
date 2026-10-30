@@ -4,6 +4,27 @@ function byId<T extends HTMLElement>(id: string): T {
   return el as T;
 }
 
+let previewEl: HTMLVideoElement | null = null;
+
+/**
+ * Troca o <video> da prévia por um novo, igual ao anterior. Visto no iPhone: depois de trocar de lente o iOS desenha a imagem
+ * menor que o elemento (faixas pretas) e só um elemento novo volta a ocupar a tela toda. Chamar antes de ligar o stream.
+ */
+export function renewPreview(): HTMLVideoElement {
+  const old = previewEl ?? byId<HTMLVideoElement>('preview');
+  const fresh = document.createElement('video');
+  fresh.id = old.id;
+  fresh.className = old.className;
+  fresh.setAttribute('playsinline', '');
+  fresh.setAttribute('muted', '');
+  fresh.setAttribute('autoplay', '');
+  fresh.muted = true;
+  old.srcObject = null;
+  old.replaceWith(fresh);
+  previewEl = fresh;
+  return fresh;
+}
+
 /** Referências aos elementos da tela (resolvidas uma vez, na carga do módulo). */
 export const els = {
   // telas
@@ -20,7 +41,9 @@ export const els = {
   ver: byId<HTMLElement>('ver'),
 
   // câmera
-  video: byId<HTMLVideoElement>('preview'),
+  get video(): HTMLVideoElement {
+    return (previewEl ??= byId<HTMLVideoElement>('preview'));
+  },
   btnBack: byId<HTMLButtonElement>('btnBack'),
   btnVoice: byId<HTMLButtonElement>('btnVoice'),
   btnSettingsCam: byId<HTMLButtonElement>('btnSettingsCam'),

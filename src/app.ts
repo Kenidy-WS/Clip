@@ -1,5 +1,5 @@
 import { onClipsChange, onStateChange, onStatus, onVoiceCommand, notify } from './events';
-import { acquireWake, enableMic, start, tapRecover } from './media/camera';
+import { acquireWake, enableMic, logCam, start, tapRecover } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { beep } from './media/beep';
 import { restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
@@ -144,6 +144,36 @@ function onVoice(): void {
   else startRec();
 }
 
+/**
+ * Voltou do segundo plano com a câmera ligada. Refazer a captura (getUserMedia) faz o iOS pedir câmera e microfone de novo,
+ * então só refazemos se as faixas acabaram ou se, depois de uma espera, nenhum quadro novo chegou. O iOS costuma apenas
+ * silenciar as faixas em segundo plano e religá-las ao voltar.
+ */
+const RESUME_WAIT_MS = 2500;
+function returnFromBackground(awayMs: number): void {
+  const tracks = S.stream?.getTracks() ?? [];
+  const state = tracks.map((t) => `${t.kind[0]}:${t.readyState}${t.muted ? '/mudo' : ''}`).join(' ');
+  logCam(`voltou (${Math.round(awayMs / 1000)}s fora); faixas ${state || '-'}`);
+  const live = tracks.length > 0 && tracks.every((t) => t.readyState === 'live');
+  if (!live) {
+    setStatus(T.restarting, 'warn');
+    void start();
+    return;
+  }
+  const framesBefore = S.framesIn;
+  void els.video.play().catch(() => {});
+  void acquireWake();
+  void S.audioCtx?.resume().catch(() => {});
+  const mine = S.stream;
+  setTimeout(() => {
+    if (!S.running || S.rec || S.stream !== mine || document.visibilityState !== 'visible') return;
+    if (S.framesIn > framesBefore) return logCam('voltou: imagem seguiu sem refazer a captura');
+    logCam('voltou: sem imagem nova; refazendo a captura');
+    setStatus(T.restarting, 'warn');
+    void start();
+  }, RESUME_WAIT_MS);
+}
+
 /** Saiu/voltou do app: o iOS pausa a câmera em segundo plano, então o buffer e os relógios ficam velhos. */
 function bindLifecycle(): void {
   let hiddenAt = 0;
@@ -155,13 +185,8 @@ function bindLifecycle(): void {
         S.buffer.discardUntil(S.lastInTs);
         S.lastKeyMs = 0;
       }
-    } else if (S.running && !S.rec) {
-      const live = S.stream && S.stream.getTracks().every((t) => t.readyState === 'live');
-      if (!live || performance.now() - hiddenAt > 1500) {
-        setStatus(T.restarting, 'warn');
-        void start();
-      } else void acquireWake();
-    } else if (S.running) void acquireWake();
+    } else if (S.running && !S.rec) returnFromBackground(performance.now() - hiddenAt);
+    else if (S.running) void acquireWake();
     if (document.visibilityState === 'visible') resumeVoice();
   });
 

@@ -2,7 +2,7 @@ import { VIDEO_SIZE, FPS } from '../config';
 import { notify, stateChanged } from '../events';
 import { cfg, S } from '../state';
 import { T } from '../strings';
-import { els } from '../ui/dom';
+import { els, renewPreview } from '../ui/dom';
 import { ensureAudioCtx, trySetupAudio } from './audio';
 import { support } from './support';
 import { startLoop } from './video';
@@ -350,6 +350,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
     t.addEventListener('mute', () => logCam(`${t.kind}: mute`));
     t.addEventListener('unmute', () => logCam(`${t.kind}: unmute`));
   }
+  renewPreview();
   els.video.srcObject = S.stream;
   const vt = stream.getVideoTracks()[0];
   // Se a câmera liberar depois (saindo do estado mudo), o vídeo precisa voltar a tocar sozinho.

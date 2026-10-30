@@ -110,17 +110,18 @@ function fitPreview(reason = ''): void {
 }
 
 function initPreviewFit(): void {
-  const v = document.querySelector<HTMLVideoElement>('video#preview');
-  if (!v) return;
+  const box = document.querySelector<HTMLVideoElement>('video#preview')?.parentElement;
+  if (!box) return;
   const refit = (reason: string): void => {
     fitPreview(reason);
     setTimeout(() => fitPreview(), 250);
     setTimeout(() => fitPreview(), 900);
   };
+  // O <video> é recriado a cada captura nova; eventos de mídia não borbulham, então ouvimos na fase de captura do container.
   for (const ev of ['loadedmetadata', 'resize', 'playing', 'emptied'])
-    v.addEventListener(ev, () => refit(ev));
+    box.addEventListener(ev, () => refit(ev), true);
   addEventListener('resize', () => fitPreview());
-  if (v.parentElement) new ResizeObserver(() => fitPreview()).observe(v.parentElement);
+  new ResizeObserver(() => fitPreview()).observe(box);
 }
 
 export function initViewport(): void {
