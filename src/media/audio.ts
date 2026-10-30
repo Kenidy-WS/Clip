@@ -119,7 +119,7 @@ async function configureAudio(nChIn: number): Promise<void> {
 }
 
 /** Soma o bipe pendente ao bloco de áudio do clipe (planar, `frames` amostras por canal). */
-function mixBeepInto(planar: Float32Array, frames: number, nCh: number): void {
+export function mixBeepInto(planar: Float32Array, frames: number, nCh: number): void {
   const m = S.beepMix;
   if (!m) return;
   const n = Math.min(frames, m.data.length - m.pos);

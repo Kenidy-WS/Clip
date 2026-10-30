@@ -758,6 +758,12 @@ p {
   border-top: 1px solid var(--line);
   text-align: left;
 }
+.row small {
+  display: block;
+  margin-top: 1px;
+  font-size: 12px;
+  color: var(--mut);
+}
 .val {
   color: var(--mut);
   font-size: 14px;

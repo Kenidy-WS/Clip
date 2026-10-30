@@ -2,6 +2,12 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.9.4 — "Gravar bipe no vídeo" em destaque
+
+- Relato (v0.9.3): bipe original OK. O Kenidy queria um interruptor para o bipe **sair também na gravação**; ele só via "Sons de gravação" (que apenas liga/desliga o som no alto-falante). O interruptor já existia ("Bipe no vídeo", v0.9.0), mas ficava abaixo do volume, sem explicação.
+- Agora: ordem Sons de gravação → **Gravar bipe no vídeo** (com a frase "O bipe também sai no clipe salvo") → Volume do bipe. Teste unitário novo da mistura (`tests/beep-mix.test.ts`).
+- Testar: ligar "Gravar bipe no vídeo", gravar um clipe, salvar/assistir e ouvir o bipe no início e no fim (funciona mesmo com o iPhone no silencioso). Com "Sons de gravação" desligado e este ligado, o bipe sai só no vídeo.
+
 ## v0.9.3 — bipe: gerador original de volta
 
 - Relato (v0.9.2): bipe ainda agudo ao filmar e **a amostra dos Ajustes nem tocava mais**. Eu tinha trocado o gerador (osciladores → `AudioBuffer` com silêncio inicial e atraso) e isso piorou; as "melhorias" da v0.9.1/0.9.2 no som do alto-falante foram **revertidas**.
