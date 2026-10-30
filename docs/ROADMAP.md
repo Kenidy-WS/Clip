@@ -47,5 +47,8 @@ técnicos/avisos que o usuário final não precisa ver.
 
 ## Ideias futuras
 
+- **Câmera (pedidos do Kenidy, 30/10):** (1) nível/horizonte na tela como o app nativo (sensor de movimento; pede permissão no iOS); (2) toque na tela para focar (o Safari só permite em alguns aparelhos: verificar no iPhone antes); (3) analisar a estabilização de vídeo (o que o Safari entrega e o que dá para fazer).
+- **Marca (3b):** ideia do Kenidy: **ponto de exclamação na marca** ("Clip!"). Analisar junto com a identidade visual.
+
 - App nativo em Swift (4K60, estabilização, escolha de lente), compilado por GitHub Actions macOS; expira em 7 dias com Apple ID gratuito.
 - Domínio próprio para o endereço do app.
