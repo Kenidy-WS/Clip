@@ -1,6 +1,21 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.6 · aguardando teste no iPhone
+
+## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
+
+As seções abaixo estão em ordem mista: v0.9.x/0.8.x no topo; **v0.9.9 → v0.12.6 ficam no FIM do arquivo**.
+
+**Estado atual (v0.12.6):** quase tudo estável e aprovado pelo Kenidy: redesign, transições, seleção em lote com arrasto e toque longo, miniaturas guardadas na gravação, gestos de borda (voltar/avançar), player fecha arrastando para baixo, 4K seguro (30 fps, recuperação do encoder), "clip" solto liga e desliga por voz, barra do topo mais baixa, bipe com volume fixo bom.
+
+**Problemas abertos (por prioridade):**
+
+1. **Microfone da câmera nasce mudo (pico 0.0000) com frequência ao abrir a câmera** (e ao voltar da Galeria depois de ver um clipe). O app o reinicia sozinho após ~3 s (`camera.ts`, "microfone mudo … reabrindo"), mas a voz fica esperando um toque na tela. **Causa raiz desconhecida.** Já descartado: `setAudioSession('play-and-record')`, recarregar a página ao fechar o player (não evita e pisca), `AudioContext` 'playback'. Próximos experimentos propostos: (a) câmera primeiro e voz logo depois no mesmo toque (hoje a voz abre o microfone antes); (b) pedir o ultra-angular já no 1º `getUserMedia` para evitar o reinício por troca de lente ("start #2"); (c) reutilizar a faixa de áudio viva nos reinícios só de vídeo. Um por vez, comparando o Diagnóstico.
+2. **Bipe do alto-falante chia ao vivo** (o vídeo gravado sai limpo). Com o comando de voz **desligado** o chiado some → o reconhecimento de voz aberto interfere. `pauseVoiceFor` (voz pausa no bipe) existe desde a v0.10.6, o bipe toca 200 ms depois (`BEEP_LEAD_SEC`); o chiado **continuou**. Ideias: pausar a voz por mais tempo antes do bipe, ou trocar o bipe do alto-falante por vibração/aviso visual.
+3. **Voz ainda um pouco surda** (precisa falar alto): o iOS reconhece pouco; já afrouxamos as variações aceitas (v0.12.0). O iOS ignora `autoGainControl`.
+4. Volume do clipe na Galeria baixo (sessão de áudio do iOS); contorno possível: compartilhar/salvar no Rolo da Câmera.
+
+**Como o Kenidy trabalha:** testa no iPhone e cola o **Diagnóstico** (botão "i" → Copiar, de preferência pela tela da câmera) e prints. Prefere explicações curtas em português, "você", tabelas curtas. Fluxo: `npm run check` + `npm run e2e` verdes → push direto na `main` → avisar versão e o que testar.
 
 ## v0.9.8 — chiado do bipe de parar, microfone após a Galeria, faixas ao voltar do app
 

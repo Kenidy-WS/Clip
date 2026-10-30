@@ -78,6 +78,9 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Bipe (v0.9.0):** gerado por `core/beep-wave.ts` e tocado como `AudioBuffer`; com `beepInClip` as mesmas amostras são somadas ao bloco de áudio em `audio.ts` (`mixBeepInto`). O microfone fica mudo durante o bipe do alto-falante para não captá-lo em dobro.
 - **Qualidade (v0.9.0):** resolução, fps e taxa vêm de `cfg` e de `core/video-profile.ts` (tabelas de taxa, nível H.264, duração máxima do clipe). Não usar mais constantes `FPS`/`VIDEO_*` em `config.ts`.
 - **Sessão de áudio (v0.9.8):** tocar clipe com som na Galeria pode deixar o microfone mudo ao voltar para a câmera. `setAudioSession` (`media/audio-session.ts`) troca a categoria e o `AudioContext` é fechado ao sair da câmera. Montar o MP4 trava a página: não fazer isso enquanto o bipe de parar toca (`stopRec` espera).
+- **Miniaturas (v0.10.10):** nunca gerar miniatura decodificando clipes grandes (50–160 MB) no iPhone: um `<video>` por clipe derruba a Galeria e um `<video>` solto fora da página não decodifica. A miniatura (JPEG 240×320) é tirada do `S.canvas` ao parar a gravação e vai em `ClipRecord.thumb`.
+- **Voz × bipe × microfone (v0.10.x):** o reconhecimento de voz aberto faz o bipe do alto-falante chiar (some com a voz desligada); abortar a voz no mesmo instante do bipe o deixa **mudo** (por isso `BEEP_LEAD_SEC`). O iOS ignora `autoGainControl`. O microfone da câmera costuma nascer **mudo (pico 0.0000)**: há reinício automático em `camera.ts`; recarregar a página **não** resolve e a voz religada sem toque fica surda.
+- **Reproduzir clipe (v0.12.x):** `setAudioSession('playback')` no player dá volume normal mas pode deixar o microfone mudo depois; sem ele o clipe toca baixo.
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)
