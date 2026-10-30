@@ -18,8 +18,8 @@ gravação com pre-roll funcionando e áudio captado e salvo na galeria. A branc
 
 ## Pendências e perguntas em aberto
 
-- **Pre-roll:** zerar depois de cada clipe (hoje) ou sempre guardar 15/30 s completos mesmo sobrepondo? Sem resposta.
-- Pesquisar se já existe app/marca "Ei Clip" antes de fixar o nome.
+- **Pre-roll:** decidido manter o comportamento atual (zera depois de cada clipe, sem repetir imagens). O Kenidy já tinha tratado a repetição como bug.
+- **Início da Onda 2 (pedido do Kenidy):** pesquisar se já existe app ou marca "Ei Clip" antes de fixar o nome.
 - Áudio a 16 kHz já foi visto uma vez (provável microfone Bluetooth); não confirmado.
 - Pausar a câmera ao assistir clipe apaga o buffer; avaliar `audioSession` na Onda 4 se incomodar.
 
