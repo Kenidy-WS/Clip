@@ -327,6 +327,46 @@ p {
   height: 96px;
   display: block;
 }
+.brand-mark .mk-tri,
+.brand-mark .mk-dot {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.brand-mark.intro #brandTrail {
+  animation: mk-draw 1s ease-out both;
+}
+.brand-mark.intro .mk-tri {
+  animation: mk-pop 0.5s 0.6s ease-out both;
+}
+.brand-mark.intro .mk-dot {
+  animation: mk-dot 0.5s 0.95s cubic-bezier(0.3, 1.6, 0.5, 1) both;
+}
+@keyframes mk-draw {
+  from {
+    stroke-dashoffset: 377;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes mk-pop {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes mk-dot {
+  from {
+    transform: scale(0);
+  }
+  to {
+    transform: scale(1);
+  }
+}
 .brand-logo {
   width: 180px;
   height: auto;
@@ -1056,6 +1096,9 @@ p {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  .brand-mark.intro * {
+    animation: none !important;
+  }
   .screen,
   .sheet-backdrop,
   .sheet,

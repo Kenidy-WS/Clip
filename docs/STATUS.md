@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.16.1 · `estavel` = 0.15.7 (validada no iPhone; avançar para a 0.16.1 só depois da confirmação dele)
 
+## v0.16.2 — abertura animada da marca
+
+- Na Início, a marca (C com rastro, play e ponto vermelho) se desenha uma vez ao abrir o app (~1,5 s); o texto "Ei Clip" fica parado. Depois a marca fica fixa.
+- A marca agora é SVG embutido no `index.html` (precisa ser para animar); só CSS + `src/ui/brand-intro.ts`. Não toca na área protegida. Respeita "reduzir movimento".
+- Decisão do Kenidy: só a marca anima (testadas: letras, os dois, só pingos). Sem animação de repouso.
+- Testar no iPhone: abrir o app e ver a abertura; voltar da Câmera/Galeria para a Início não repete.
+
 ## v0.16.1 — ícone v2a (recorte no ponto vermelho)
 
 O Kenidy escolheu o **v2a**: o mesmo A2, mas com um pequeno recorte preto em volta do ponto vermelho, que fica "encaixado" na ponta do C (antes o ponto encostava no amarelo). Só visual: `public/icon.svg`, PNGs 180/192/512/favicon e `public/brand/mark.svg` (usado na tela de Início). Testadas e **descartadas** por ele (mantém o visual chapado): marcas de tempo, segundo rastro, brilho/reflexo, versões com volume (relevo, extrudado, tubo) e chapadas com sombra/bisel (histórico em `docs/design/rodada5.png` e `rodada6.png`; a F1 "sombra reta" ficou como ideia de reserva). Para ver o ícone novo no iPhone, remover e adicionar de novo o app na tela de início.
