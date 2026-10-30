@@ -16,6 +16,7 @@ import { els } from './ui/dom';
 import { mountIcons } from './ui/icons';
 import { openCamera, showScreen } from './ui/navigation';
 import { setStatus } from './ui/status';
+import { initViewport } from './ui/viewport';
 import type { Facing, Lens, Quality } from './types';
 import { APP_VERSION } from './config';
 
@@ -194,6 +195,7 @@ function bindLifecycle(): void {
 }
 
 export function initApp(): void {
+  initViewport();
   mountIcons();
   loadPrefs();
   onStatus(setStatus);

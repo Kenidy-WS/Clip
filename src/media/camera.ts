@@ -15,6 +15,36 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   channelCount: { ideal: 2 },
 };
 
+/**
+ * Visto no iPhone (v0.8.0): o iOS recusou as restrições de áudio ("OverconstrainedError: Invalid constraint") e a câmera abriu
+ * sem microfone. Por isso o áudio é pedido do mais exigente (sem processamento, estéreo) para o mais simples, e só se passa
+ * ao próximo nível quando o erro é de restrição (nunca para permissão negada, que acabaria pedindo de novo).
+ */
+const AUDIO_LEVELS: (MediaTrackConstraints | true)[] = [
+  AUDIO_CONSTRAINTS,
+  { echoCancellation: false, noiseSuppression: false, autoGainControl: false },
+  true,
+];
+const VIDEO_CONSTRAINT_NAMES = ['deviceId', 'facingMode', 'width', 'height', 'frameRate', 'zoom'];
+
+/** Pede câmera (ou só microfone, com `video: false`) e microfone, simplificando o áudio se o iOS recusar as restrições. */
+async function getMedia(video: MediaTrackConstraints | false): Promise<MediaStream> {
+  let last: unknown;
+  for (const [i, audio] of AUDIO_LEVELS.entries()) {
+    try {
+      return await navigator.mediaDevices.getUserMedia({ video, audio });
+    } catch (e) {
+      const err = e as Error & { constraint?: string };
+      // Só segue para um áudio mais simples quando o problema pode ser o áudio (não o vídeo nem a permissão).
+      if (err.name !== 'OverconstrainedError' || VIDEO_CONSTRAINT_NAMES.includes(err.constraint ?? ''))
+        throw e;
+      logCam(`áudio recusado no nível ${i + 1} (${err.message}); tentando um mais simples`);
+      last = e;
+    }
+  }
+  throw last;
+}
+
 /** Quanto esperar a câmera sair do estado mudo, e o máximo de espera pelo play() do vídeo. */
 const MUTE_WAIT_MS = 2000;
 const PLAY_WAIT_MS = 1500;
@@ -64,7 +94,7 @@ export async function enableMic(): Promise<void> {
   stateChanged();
   try {
     ensureAudioCtx();
-    const ms = await navigator.mediaDevices.getUserMedia({ audio: AUDIO_CONSTRAINTS });
+    const ms = await getMedia(false);
     const tr = ms.getAudioTracks()[0];
     if (!tr) throw new Error(T.noAudioTrack);
     S.stream.addTrack(tr);
@@ -243,7 +273,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   let stream: MediaStream;
   logCam(`pedindo câmera e microfone${wantUltra ? ' (lente 0,5×)' : ''}`);
   const gum = (video: MediaTrackConstraints, audio: boolean): Promise<MediaStream> =>
-    navigator.mediaDevices.getUserMedia({ video, audio: audio ? AUDIO_CONSTRAINTS : false });
+    audio ? getMedia(video) : navigator.mediaDevices.getUserMedia({ video, audio: false });
   try {
     try {
       stream = await gum(videoC, true);

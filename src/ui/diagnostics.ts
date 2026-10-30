@@ -2,6 +2,7 @@ import { APP_NAME } from '../strings';
 import { support } from '../media/support';
 import { APP_VERSION } from '../config';
 import { S } from '../state';
+import { viewportInfo } from './viewport';
 
 /** Texto do painel de diagnóstico (botão "i"). */
 export function diagnosticsText(): string {
@@ -22,6 +23,7 @@ export function diagnosticsText(): string {
     `Relógio áudio−vídeo: ${S.aLastTs && S.lastInTs ? Math.round((S.aLastTs - S.lastInTs) / 1000) + ' ms' : '-'}`,
     `Frames: entrada ${S.framesIn}, saída ${S.framesOut} (${S.outFps.toFixed(1)}/s), descartados ${S.dropped}, fora de ordem ${S.reorders}`,
     `Buffer: ${S.buffer.video.length} frames de vídeo, ${S.buffer.audio.length} blocos de áudio`,
+    viewportInfo(),
     `Lentes: ${S.lensInfo || '-'} · em uso ${S.lensActive}× · ultra ${S.lensId ? 'sim' : 'não'} · zoom mín ${S.lensZoomMin}`,
     `Câmera (início):\n  ${S.camLog.join('\n  ') || '-'}`,
     `Voz: ${S.voice}${S.voiceEnabled ? '' : ' (desligada)'}${S.voiceLog.length ? '\n  ' + S.voiceLog.join('\n  ') : ''}`,

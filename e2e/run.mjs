@@ -105,6 +105,23 @@ const LENS = `
     { kind: 'videoinput', deviceId: 'back-main', label: 'Back Camera' },
     { kind: 'videoinput', deviceId: 'back-ultra', label: 'Back Ultra Wide Camera' },
   ];`;
+// Áudio que o iOS recusa (visto no iPhone: "OverconstrainedError: Invalid constraint"). __rejectLevels: quantos níveis recusar.
+const AUDIO_STRICT = `
+  window.__calls = [];
+  const _as = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = (c) => {
+    const a = c.audio;
+    const level = !a ? 'sem' : a === true ? 'padrao' : 'channelCount' in a ? 'estrito' : 'simples';
+    window.__calls.push(level);
+    const rejected = ['estrito', 'simples'].slice(0, window.__rejectLevels || 0);
+    if (rejected.includes(level)) return Promise.reject(Object.assign(new Error('Invalid constraint'), { name: 'OverconstrainedError' }));
+    return _as(c);
+  };`;
+// Janela instalada do iPhone: a janela informada é menor que a tela (diferença do notch).
+const STANDALONE = `
+  Object.defineProperty(navigator, 'standalone', { get: () => true });
+  Object.defineProperty(screen, 'width', { get: () => 393 });
+  Object.defineProperty(screen, 'height', { get: () => 852 });`;
 const DENY = `navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));`;
 
 let failed = 0;
@@ -487,6 +504,68 @@ try {
         'zoom bloqueado no viewport',
       );
     await page.close();
+  }
+
+  // 1h) Áudio recusado pelo iOS: a câmera tenta restrições mais simples e abre COM microfone (sem o aviso de erro).
+  for (const levels of [1, 2]) {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript(`window.__rejectLevels = ${levels};` + STUBS + AUDIO_STRICT);
+    await page.goto(URL_);
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    const expected = levels === 1 ? 'estrito,simples' : 'estrito,simples,padrao';
+    check(
+      await page.evaluate((e) => window.__calls.join() === e, expected),
+      `áudio recusado (${levels} nível): tenta o próximo mais simples (${expected})`,
+    );
+    check(
+      !(await page.textContent('#status')).toLowerCase().includes('indispon'),
+      `áudio recusado (${levels} nível): sem aviso de microfone indisponível`,
+    );
+    check(!(await page.isVisible('#btnMic')), `áudio recusado (${levels} nível): microfone ligado`);
+    await page.close();
+  }
+
+  // 1i) Janela instalada menor que a tela (defeito do iOS): o app ocupa a tela toda; o viewport é restaurado depois do ajuste.
+  {
+    const page = await (await browser.newContext({ viewport: { width: 393, height: 793 } })).newPage();
+    await page.addInitScript(STUBS + STANDALONE);
+    await page.goto(URL_);
+    await page.waitForTimeout(400);
+    check(
+      (await page.evaluate(() => document.documentElement.style.getPropertyValue('--app-h'))) === '852px',
+      'janela menor que a tela: altura do app vira a da tela (852 px)',
+    );
+    check(
+      (await page.evaluate(() => document.querySelector('.app').getBoundingClientRect().height)) === 852,
+      'janela menor que a tela: o app ocupa a altura toda',
+    );
+    await page.waitForTimeout(1500);
+    check(
+      (await page.getAttribute('meta[name=viewport]', 'content')).includes('viewport-fit=cover'),
+      'viewport restaurado depois do ajuste',
+    );
+    await page.click('#btnSettingsHome');
+    await page.click('#btnInfo');
+    check(
+      (await page.textContent('#info')).includes('Tela: janela 393x793'),
+      'Diagnóstico mostra a linha "Tela" com a janela informada',
+    );
+    await page.close();
+
+    // Fora do modo instalado (Safari comum) o app segue a janela, inclusive ao girar.
+    const page2 = await (await browser.newContext({ viewport: { width: 390, height: 844 } })).newPage();
+    await page2.addInitScript(STUBS);
+    await page2.goto(URL_);
+    await page2.setViewportSize({ width: 844, height: 390 });
+    await page2.waitForTimeout(300);
+    check(
+      (await page2.evaluate(() => document.querySelector('.app').getBoundingClientRect().height)) === 390,
+      'Safari comum: o app acompanha a janela ao girar',
+    );
+    await page2.close();
   }
 
   // 2) Permissão negada: botão "Ligar câmera" e mensagem de erro.

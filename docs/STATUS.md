@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.0 (Onda 3a) · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
 ## Feito
 
@@ -103,6 +103,32 @@ assistir um clipe) também religa a voz no seu toque. Sem a abertura automática
 aparece em religamentos sem toque (voltar de segundo plano). **Não confirmado no iPhone:** se o iOS aceita a escuta de voz
 iniciada junto do pedido de permissão da câmera (pode virar 2 pedidos em sequência, ou conflito). Se der conflito: iniciar a voz
 logo que a câmera entregar o primeiro quadro, ainda no mesmo gesto, ou voltar ao toque pós-permissão.
+
+## Teste da v0.8.0 e correções (v0.8.1)
+
+Kenidy testou a `v0.8.0` no iPhone (app instalado): interface aprovada ("já tem cara de app profissional"), **comando de voz e
+gravação funcionaram**. Problemas relatados (com print):
+
+1. **Faixa preta fixa embaixo** (~58 px) e, às vezes, **faixas pretas em volta da imagem ao sair e voltar do app**. No print, a
+   caixa do app termina 59 px acima do fim da tela (= a altura do notch): o iOS informa uma janela menor que a tela em modo
+   instalado. Na `v0.8.1` (`src/ui/viewport.ts`): o tamanho do app vem das variáveis `--app-w/--app-h`, recalculadas na abertura,
+   ao girar, ao voltar do segundo plano e com atrasos de 250/900 ms; em modo instalado usa a tela inteira quando a janela é até
+   100 px menor; se ainda houver diferença aos 900 ms, "cutuca" o viewport (`viewport-fit` sai e volta, no máx. 2×). **Hipótese não
+   confirmada**: se o WebKit recorta o que passa da janela, só o "cutucão" resolve. O Diagnóstico ganhou a linha **"Tela"**
+   (janela, screen, visual, margens, tamanho do app e do preview, e os ajustes feitos). Se a faixa continuar: Ajustes → Diagnóstico → print.
+2. **Topo colado no notch e indicador "cortado":** margem do topo da câmera de 8 → 22 px acima das margens seguras; o indicador de
+   buffer perdeu o preenchimento parcial (parecia cortado) e agora tem uma linha fina de progresso; desfoque menor.
+3. **"Microfone indisponível (OverconstrainedError: Invalid constraint)"** ao voltar para o app (câmera abriu sem microfone). Causa
+   provável: o iOS recusa as restrições de áudio (sem processamento, estéreo). Agora o áudio é pedido em 3 níveis (estrito →
+   sem `channelCount` → padrão do iOS), só descendo quando o erro é de restrição; a escolha aparece em "Câmera (início)" no Diagnóstico.
+   Se cair no nível padrão, o iOS aplica cancelamento de eco/ruído e o som do clipe pode ficar mais "tratado".
+
+### O que o Kenidy precisa testar no iPhone (`v0.8.1`)
+
+0. Abrir o app instalado: **sumiu a faixa preta de baixo**? A câmera ocupa a tela toda, em pé e deitado?
+1. Sair do app (Início do iPhone, outro app) e voltar várias vezes: aparecem faixas em volta? (print do Diagnóstico se aparecer)
+2. O topo está confortável (afastado do notch)? O indicador `10/15 s` ficou limpo?
+3. Voltar ao app e olhar o microfone: ainda aparece o erro de microfone? Se aparecer, print do Diagnóstico (seção "Câmera (início)").
 
 ## Onda 3a: três telas e visual novo (v0.8.0)
 
@@ -264,5 +290,5 @@ para rodar junto do encoder de vídeo: precisaria de teste de viabilidade (Onda 
 
 ## Próximo passo
 
-Kenidy testa a `v0.8.0` (lista acima). Com o resultado, abrir chat novo para a Onda 3b (ajustes do visual, ícone e marca):
+Kenidy testa a `v0.8.1` (lista acima). Com o resultado, abrir chat novo para a Onda 3b (ajustes do visual, ícone e marca):
 pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
