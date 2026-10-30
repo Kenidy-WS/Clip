@@ -15,6 +15,10 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   channelCount: { ideal: 2 },
 };
 
+/** Quanto esperar a câmera sair do estado mudo, e o máximo de espera pelo play() do vídeo. */
+const MUTE_WAIT_MS = 2000;
+const PLAY_WAIT_MS = 1500;
+
 let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
 
 /** Registro curto das etapas de início da câmera, mostrado no painel de diagnóstico (botão "i"). */
@@ -67,7 +71,23 @@ export async function enableMic(): Promise<void> {
   }
 }
 
-export async function start(): Promise<void> {
+/** Espera a faixa sair do estado "mudo" (o iOS a silencia por instantes ao abrir). Falso se não liberar a tempo. */
+function waitUnmute(track: MediaStreamTrack, ms: number): Promise<boolean> {
+  if (!track.muted) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const done = (freed: boolean): void => {
+      track.removeEventListener('unmute', onUnmute);
+      clearTimeout(timer);
+      resolve(freed);
+    };
+    const onUnmute = (): void => done(true);
+    const timer = window.setTimeout(() => done(false), ms);
+    track.addEventListener('unmute', onUnmute);
+  });
+}
+
+/** `isRetry`: segunda tentativa automática depois de a câmera ficar muda (não repete mais de uma vez). */
+export async function start(isRetry = false): Promise<void> {
   const my = ++startSeq;
   logCam(`start #${my}`);
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
@@ -123,11 +143,24 @@ export async function start(): Promise<void> {
     t.addEventListener('unmute', () => logCam(`${t.kind}: unmute`));
   }
   els.video.srcObject = S.stream;
-  try {
-    await els.video.play();
-  } catch {
-    /* autoplay mudo costuma funcionar */
+  const vt = stream.getVideoTracks()[0];
+  // Se a câmera liberar depois (saindo do estado mudo), o vídeo precisa voltar a tocar sozinho.
+  vt?.addEventListener('unmute', () => void els.video.play().catch(() => {}));
+  const playing = els.video.play().catch(() => {}); // autoplay mudo costuma funcionar
+
+  // Visto no iPhone: logo após o "Permitir" a câmera e o microfone ficam mudos e o play() não conclui.
+  // Esperamos liberar; se não liberar, refazemos a captura uma vez (equivale ao toque em "Iniciar câmera").
+  if (vt && vt.muted) {
+    logCam('câmera muda; aguardando liberar');
+    const freed = await waitUnmute(vt, MUTE_WAIT_MS);
+    if (my !== startSeq) return; // uma chamada mais nova de start() assumiu (e já encerrou esta captura)
+    if (!freed && !isRetry) {
+      logCam('câmera continua muda; refazendo a captura');
+      return start(true);
+    }
+    logCam(freed ? 'câmera liberada' : 'câmera ainda muda; seguindo mesmo assim');
   }
+  await Promise.race([playing, new Promise((resolve) => setTimeout(resolve, PLAY_WAIT_MS))]);
 
   S.running = true;
   S.framesIn = S.framesOut = S.dropped = 0;

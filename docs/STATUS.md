@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.2 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.3 · aguardando teste no iPhone
 
 ## Feito
 
@@ -41,7 +41,21 @@ A voz passou a funcionar logo depois do toque (confirmado pelo Kenidy). Dois pon
    exigindo "Ei clipe" completo. O painel "i" (linha "Voz") mostra "comando N ms após a 1ª palavra" para medir.
    O pre-roll de 15–30 s já inclui o que veio antes do comando; o fim do clipe inclui a fala do comando (aparar é ideia futura).
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.2`)
+## Causa achada e correção (v0.5.3)
+
+O painel "i" da `v0.5.2` mostrou a causa do "preciso tocar de novo no botão azul": após `stream ok` a câmera (`video: mute`) e o
+microfone (`audio: mute`) ficaram **mudos** e nunca voltaram; `start()` esperava um `play()` que não conclui com a câmera muda,
+então não chegava a "rodando" e a tela ficava em "Iniciar câmera". Correção: `start()` não bloqueia mais no `play()` (máx. 1,5 s);
+espera até 2 s a faixa de vídeo liberar (`unmute`); se não liberar, refaz a captura **uma vez** automaticamente (o que o toque
+no botão azul fazia) e segue mesmo assim; ao liberar, o vídeo volta a tocar sozinho. Dois cenários novos no e2e simulam isso.
+Se a permissão ainda for pedida duas vezes (o refazer chama a câmera de novo), é o bug do WebKit no app instalado.
+
+## O que o Kenidy precisa testar no iPhone (`v0.5.3`)
+
+0. Abrir o app (com permissão já dada e depois fechando e abrindo de novo): a câmera deve iniciar sozinha, sem tocar no botão azul.
+   Se não iniciar, abrir o "i" e mandar print da seção "Câmera (início)".
+
+## Testes anteriores (`v0.5.2`)
 
 0. **Abrir o app, dar as permissões, tocar uma vez em qualquer lugar da tela e dizer "Ei Clip"** — deve funcionar de primeira.
    Se não funcionar, abrir o painel "i" e mandar um print da linha "Voz".

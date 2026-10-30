@@ -58,6 +58,21 @@ const VOICE = `
     r.onresult({ resultIndex: idx, results });
   };
   window.__endRecognizer = () => { const r = window.__cur; window.__cur = null; r && r.onend && r.onend(); };`;
+// Câmera "muda" logo ao abrir (visto no iPhone depois do Permitir). __freeAfter > 0: libera depois desse tempo (ms).
+const MUTED = `
+  window.__gum = 0; window.__muted = true; window.__vt = null;
+  const _gum = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = async (c) => {
+    window.__gum++;
+    const s = await _gum(c);
+    const v = s.getVideoTracks()[0];
+    if (v) {
+      Object.defineProperty(v, 'muted', { get: () => window.__muted });
+      window.__vt = v;
+      if (window.__freeAfter) setTimeout(() => { window.__muted = false; v.dispatchEvent(new Event('unmute')); }, window.__freeAfter);
+    }
+    return s;
+  };`;
 const DENY = `navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));`;
 
 let failed = 0;
@@ -179,6 +194,33 @@ try {
     ok('voz: botão desliga a escuta');
     check(errs.length === 0, 'voz: sem erros de JavaScript ' + errs.join(';'));
     await page.close();
+  }
+
+  // 1c) Câmera muda ao abrir: se liberar logo, segue com uma só captura; se nunca liberar, refaz uma vez e segue.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript('window.__freeAfter = 600;' + STUBS + MUTED);
+    await page.goto(URL_);
+    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 8000,
+    });
+    check(
+      (await page.evaluate(() => window.__gum)) === 1,
+      'câmera muda que libera sozinha: sem refazer a captura',
+    );
+    await page.close();
+
+    const page2 = await (await browser.newContext()).newPage();
+    await page2.addInitScript('window.__freeAfter = 0;' + STUBS + MUTED);
+    await page2.goto(URL_);
+    await page2.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 10000,
+    });
+    check(
+      (await page2.evaluate(() => window.__gum)) === 2,
+      'câmera muda que não libera: refaz uma vez e inicia',
+    );
+    await page2.close();
   }
 
   // 2) Permissão negada: botão "Iniciar câmera" e mensagem de erro.
