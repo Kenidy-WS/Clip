@@ -650,6 +650,11 @@ try {
       'ao abrir a Galeria a captura é desligada (áudio de reprodução no iOS)',
     );
     check((await page.locator('#clips .tile').count()) === 3, 'Galeria mostra os clipes guardados');
+    check(
+      (await page.locator('#clips .tile img').count()) === 3 &&
+        (await page.locator('#clips .tile video').count()) === 0,
+      'miniaturas da Galeria são imagens leves (sem um <video> por clipe)',
+    );
     await page.click('#clips .tile');
     check(await page.isVisible('#player'), 'tocar no clipe abre o player');
     check(
@@ -717,6 +722,17 @@ try {
     await page.mouse.up();
     check((await page.locator('#clips .tile.sel').count()) === 3, 'arrastar sobre os clipes marca todos');
     check(!(await page.isVisible('#player')), 'o fim do arrasto não abre o player nem desfaz a seleção');
+    // Saltando direto do primeiro ao último, o do meio também fica marcado (ordem de leitura).
+    await page.click('#btnSelectAll'); // tudo marcado -> "Nenhum"
+    await page.mouse.move(p0.x, p0.y);
+    await page.mouse.down();
+    await page.mouse.move(p0.x + 20, p0.y, { steps: 2 });
+    await page.mouse.move(p2.x, p2.y, { steps: 1 });
+    await page.mouse.up();
+    check(
+      (await page.locator('#clips .tile.sel').count()) === 3,
+      'arrastar do 1º ao último marca também o do meio',
+    );
     // Arrastar de novo a partir de um clipe marcado desmarca.
     await page.mouse.move(p2.x, p2.y);
     await page.mouse.down();

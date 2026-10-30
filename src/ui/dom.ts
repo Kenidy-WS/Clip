@@ -56,7 +56,7 @@ export const els = {
   lensWide: byId<HTMLButtonElement>('lensWide'),
   lensMain: byId<HTMLButtonElement>('lensMain'),
   btnGallery: byId<HTMLButtonElement>('btnGallery'),
-  camThumb: byId<HTMLVideoElement>('camThumb'),
+  camThumb: byId<HTMLImageElement>('camThumb'),
   btnRec: byId<HTMLButtonElement>('btnRec'),
   btnFlip: byId<HTMLButtonElement>('btnFlip'),
 

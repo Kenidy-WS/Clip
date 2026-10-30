@@ -8,6 +8,7 @@ import type { Clip } from '../types';
 import { els } from './dom';
 import { icon } from './icons';
 import { hideAnimated, showAnimated } from './transitions';
+import { thumbUrl } from './thumbs';
 
 /** Quantos clipes aparecem no Início. */
 const RECENT_COUNT = 4;
@@ -50,20 +51,17 @@ function tile(c: Clip, selectable = false): HTMLElement {
   b.className = 'tile';
   b.setAttribute('aria-label', T.clipOpen(whenText(c)));
 
-  const v = document.createElement('video');
-  v.src = c.url;
-  v.muted = true;
-  v.playsInline = true;
-  v.preload = 'metadata';
-  // Sem isso o Safari mostra a miniatura preta até o vídeo tocar.
-  v.addEventListener('loadedmetadata', () => {
-    v.currentTime = Math.min(0.1, (v.duration || 0.2) / 2);
+  const img = document.createElement('img');
+  img.alt = '';
+  img.decoding = 'async';
+  void thumbUrl(c).then((u) => {
+    if (u) img.src = u;
   });
 
   const dur = document.createElement('span');
   dur.className = 'dur';
   dur.textContent = formatDuration(c.durSec);
-  b.append(v, dur);
+  b.append(img, dur);
 
   if (!c.withAudio) {
     const na = document.createElement('span');
@@ -160,16 +158,32 @@ function bindDragSelect(): void {
   let last = { x: 0, y: 0 };
   let raf = 0;
 
+  // Como na galeria do iPhone: marca tudo, em ordem de leitura, do clipe onde o dedo desceu até o clipe sob o dedo
+  // (descer uma fileira marca o resto da fileira de cima; voltar desmarca).
+  let anchor = -1;
+  let base = new Set<Clip>();
   const apply = (x: number, y: number): void => {
+    const tiles = [...grid.querySelectorAll<HTMLElement>('.tile')];
     // Percorre o caminho desde o último ponto (dedo rápido pode pular clipes).
     const steps = Math.max(1, Math.ceil(Math.hypot(x - last.x, y - last.y) / 24));
     for (let i = 1; i <= steps; i++) {
       const t = tileAt(last.x + ((x - last.x) * i) / steps, last.y + ((y - last.y) * i) / steps);
-      if (t) setSelected(t, mode);
+      if (t) cur = tiles.indexOf(t);
     }
     last = { x, y };
+    if (anchor < 0) anchor = cur;
+    if (cur >= 0 && anchor >= 0) {
+      const lo = Math.min(anchor, cur);
+      const hi = Math.max(anchor, cur);
+      tiles.forEach((t, i) => {
+        const c = clipOf.get(t);
+        if (!c) return;
+        setSelected(t, i >= lo && i <= hi ? mode : base.has(c));
+      });
+    }
     paintSelection();
   };
+  let cur = -1;
   const autoScroll = (): void => {
     const r = grid.getBoundingClientRect();
     const dy = last.y < r.top + EDGE ? -10 : last.y > r.bottom - EDGE ? 10 : 0;
@@ -202,6 +216,10 @@ function bindDragSelect(): void {
         if (Math.abs(dx) < SLOP || Math.abs(dx) < Math.abs(dy) * 1.2) return;
         dragging = true;
         mode = down.tile ? !selected.has(clipOf.get(down.tile)!) : true;
+        base = new Set(selected);
+        const all = [...grid.querySelectorAll<HTMLElement>('.tile')];
+        anchor = down.tile ? all.indexOf(down.tile) : -1;
+        cur = anchor;
         last = { x: down.x, y: down.y };
         if (!raf) raf = requestAnimationFrame(autoScroll);
       }
@@ -291,10 +309,9 @@ export function renderClips(): void {
   if (last) {
     if (els.camThumb.dataset.url !== last.url) {
       els.camThumb.dataset.url = last.url;
-      els.camThumb.src = last.url;
-      els.camThumb.onloadedmetadata = () => {
-        els.camThumb.currentTime = Math.min(0.1, (els.camThumb.duration || 0.2) / 2);
-      };
+      void thumbUrl(last).then((u) => {
+        if (u && els.camThumb.dataset.url === last.url) els.camThumb.src = u;
+      });
     }
     els.btnGallery.classList.add('has');
   } else {

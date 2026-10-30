@@ -249,7 +249,8 @@ p {
   overflow: hidden;
   background: var(--surface);
 }
-.tile video {
+.tile video,
+.tile img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -489,7 +490,8 @@ p {
   background: var(--glass);
   border: 1.5px solid rgba(255, 255, 255, 0.5);
 }
-.thumb-btn video {
+.thumb-btn video,
+.thumb-btn img {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -498,7 +500,8 @@ p {
   pointer-events: none;
   display: none;
 }
-.thumb-btn.has video {
+.thumb-btn.has video,
+.thumb-btn.has img {
   display: block;
 }
 .thumb-btn.has > [data-icon] {
@@ -675,7 +678,8 @@ p {
 .tile.sel .check svg {
   opacity: 1;
 }
-.tile.sel video {
+.tile.sel video,
+.tile.sel img {
   opacity: 0.6;
 }
 

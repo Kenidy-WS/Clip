@@ -452,3 +452,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Microfone sem sinal ao abrir (permissões recém-dadas): ainda cai no reinício automático (~3 s) com a voz esperando um toque.
 
 **Testar:** bipes ao vivo (tocam e sem chiado?); voz sem precisar falar alto; áudio do clipe (mais alto? chiado?).
+
+## v0.10.8 — Galeria leve e seleção em ordem de leitura
+
+- Relato (v0.10.7): com muitos clipes a Galeria desmontava o layout e não mostrava os últimos vídeos. Causa provável: cada miniatura era um `<video>` de clipe inteiro (50 MB, 45 Mbps); o iOS esgota decodificadores/memória. Agora `ui/thumbs.ts` gera uma imagem JPEG 240×320 por clipe, em fila (um clipe por vez, com o decodificador solto em seguida), e a Galeria, o Início e o botão da câmera usam `<img>`.
+- Seleção por arrasto: marca do clipe onde o dedo desceu até o clipe sob o dedo, em ordem de leitura (descer uma fileira marca o resto da fileira de cima; voltar desmarca).
+- Diagnóstico v0.10.7: o iOS ignora `autoGainControl: true` (continua "ganho não"); o teste de ganho não surtiu efeito. Bipe segue chiando mesmo com a escuta pausada — investigar depois (a pausa pode não estar chegando antes do bipe, ou o chiado vem de outro ponto).
+
+**Testar:** Galeria com muitos clipes (layout, últimos vídeos, velocidade das miniaturas); arrastar descendo fileiras.
