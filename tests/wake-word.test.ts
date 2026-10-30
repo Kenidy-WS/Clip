@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { WakeGate, isEarlyWakePhrase, isWakePhrase, normalize } from '../src/core/wake-word';
+import {
+  WakeGate,
+  isEarlyWakePhrase,
+  isLooseWakeStart,
+  isWakePhrase,
+  normalize,
+} from '../src/core/wake-word';
 
 describe('normalize', () => {
   it('remove acentos, pontuação e caixa alta', () => {
@@ -18,6 +24,10 @@ describe('isWakePhrase', () => {
     'ei, clip!',
     'Ei clipe ei clipe',
     'hey click',
+    'eiclip',
+    'e clipe',
+    'Eclipse',
+    'a clip',
   ])('reconhece "%s"', (text) => expect(isWakePhrase(text)).toBe(true));
 
   it.each(['Ei Felipe', 'Ei', 'clipe', 'o clipe do vídeo', 'Ei cli', '', 'oi tudo bem'])(
@@ -28,6 +38,15 @@ describe('isWakePhrase', () => {
   it('reconhece no meio de uma frase maior', () => {
     expect(isWakePhrase('bora lá ei clipe grava isso')).toBe(true);
   });
+});
+
+describe('isLooseWakeStart', () => {
+  it.each(['clip', 'Clipe', 'bora clipe', 'ei clipe'])('começa com "%s"', (text) =>
+    expect(isLooseWakeStart(text)).toBe(true),
+  );
+  it.each(['Felipe', 'clipes do dia', 'oi tudo bem', ''])('ignora "%s"', (text) =>
+    expect(isLooseWakeStart(text)).toBe(false),
+  );
 });
 
 describe('WakeGate', () => {

@@ -314,9 +314,81 @@ function bindSelection(): void {
   });
 }
 
+/**
+ * Arrastar o player para baixo fecha (como no Fotos do iPhone): a tela acompanha o dedo, encolhe e esmaece; soltando depois
+ * de ~130 px (ou num arremesso rápido) fecha, senão volta ao lugar. Não vale a partir da barra de controles do vídeo
+ * (parte de baixo) nem dos botões, para não atrapalhar a barra de tempo.
+ */
+function bindPlayerSwipeDown(): void {
+  const box = els.player;
+  let t0: { x: number; y: number; at: number } | null = null;
+  let dy = 0;
+  let active = false;
+  const reset = (animate: boolean): void => {
+    box.style.transition = animate ? 'transform 220ms var(--ease-out), opacity 220ms ease' : '';
+    box.style.transform = '';
+    box.style.opacity = '';
+  };
+  box.addEventListener(
+    'touchstart',
+    (e) => {
+      const el = e.target as HTMLElement;
+      const r = els.playerVideo.getBoundingClientRect();
+      const t = e.touches[0];
+      const onControls = t.clientY > r.bottom - 72; // barra de controles nativa do vídeo
+      if (e.touches.length !== 1 || el.closest('button') || onControls) return void (t0 = null);
+      t0 = { x: t.clientX, y: t.clientY, at: performance.now() };
+      dy = 0;
+      active = false;
+      box.style.transition = '';
+    },
+    { passive: true },
+  );
+  box.addEventListener(
+    'touchmove',
+    (e) => {
+      if (!t0) return;
+      const t = e.touches[0];
+      const mx = t.clientX - t0.x;
+      const my = t.clientY - t0.y;
+      if (!active) {
+        if (my < 12 || Math.abs(my) < Math.abs(mx) * 1.2) return; // só vertical, para baixo
+        active = true;
+      }
+      e.preventDefault();
+      dy = Math.max(0, my);
+      const k = Math.min(1, dy / 500);
+      box.style.transform = `translateY(${dy}px) scale(${1 - k * 0.12})`;
+      box.style.opacity = String(1 - k * 0.7);
+    },
+    { passive: false },
+  );
+  const finish = (): void => {
+    if (!t0) return;
+    const fast = dy / Math.max(1, performance.now() - t0.at) > 0.6; // px/ms
+    const close = active && (dy > 130 || (fast && dy > 50));
+    t0 = null;
+    if (!active) return;
+    active = false;
+    if (close) {
+      reset(false);
+      closePlayer();
+    } else reset(true);
+  };
+  box.addEventListener('touchend', finish);
+  box.addEventListener('touchcancel', () => {
+    t0 = null;
+    if (active) {
+      active = false;
+      reset(true);
+    }
+  });
+}
+
 /** Liga os botões do player (chamar uma vez). */
 export function bindPlayer(): void {
   bindSelection();
+  bindPlayerSwipeDown();
   els.btnPlayerClose.addEventListener('click', closePlayer);
   els.btnShare.addEventListener('click', () => current && void shareClips([current]));
   els.btnDelete.addEventListener('click', () => {

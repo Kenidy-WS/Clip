@@ -1,4 +1,4 @@
-import { WakeGate, isEarlyWakePhrase, isWakePhrase } from '../core/wake-word';
+import { WakeGate, isEarlyWakePhrase, isLooseWakeStart, isWakePhrase } from '../core/wake-word';
 import { notify, stateChanged, voiceCommand } from '../events';
 import { S } from '../state';
 import { T } from '../strings';
@@ -126,7 +126,11 @@ function onResult(ev: SpeechEventLike, id: number): void {
     const alternatives = Array.from({ length: result.length }, (_, k) => result[k].transcript);
     const full = alternatives.some(isWakePhrase);
     // "Ei cli" já inicia a gravação (parar exige a frase completa).
-    const early = !full && !S.rec && !S.finalizing && alternatives.some(isEarlyWakePhrase);
+    const early =
+      !full &&
+      !S.rec &&
+      !S.finalizing &&
+      alternatives.some((a) => isEarlyWakePhrase(a) || isLooseWakeStart(a));
     logVoice(`texto "${alternatives[0] ?? ''}"${full ? ' ✓' : early ? ' ⚡' : ''}`);
     if (!full && !early) continue;
     if (gate.accept(key, now)) {
@@ -144,7 +148,7 @@ function begin(fromTap: boolean): void {
   r.lang = 'pt-BR';
   r.continuous = true;
   r.interimResults = true; // o texto parcial chega ~1 s antes do final: o comando responde mais rápido
-  r.maxAlternatives = 3;
+  r.maxAlternatives = 5; // mais hipóteses por fala: o "Ei Clip" costuma vir escrito de outro jeito
   r.onstart = () => {
     if (id === session) logVoice('start');
   };

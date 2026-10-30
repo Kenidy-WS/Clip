@@ -489,3 +489,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Barra do Início e da Galeria desceu 14 px (altura 56 → 70 px, 14 px de respiro em cima) para sair de perto do notch; avisos acompanham (+14 px).
 - A tela da câmera tem espaçamento próprio (não mudou).
 - Atualização: o app verifica ao abrir, ao voltar ao primeiro plano e a cada 5 min; o publicar leva ~40 s. Se o aviso não vier, minimizar e voltar depois de um minuto.
+
+## v0.12.0 — Fechar o player arrastando para baixo; "Ei Clip" mais fácil de reconhecer
+
+- Player: arrastar para baixo (fora da barra de controles do vídeo e dos botões) faz a tela acompanhar o dedo, encolher e esmaecer; soltando após ~130 px (ou arremesso rápido) fecha, senão volta. Segue valendo o recarregamento ao fechar (microfone).
+- Voz ainda "surda" (relato do Kenidy). Sem dado novo do aparelho, afrouxei o que **conta** como o comando: saudações extras ("e", "a", "ae", "eu"), junto ("eiclip", "eclipse"), 5 alternativas por fala (antes 3) e **"clip"/"clipe" solto começa** a gravação (só começa; parar continua exigindo a frase completa). Risco: gravação começar sem querer ao falar "clipe".
+- Para investigar melhor: Diagnóstico → Comando de voz mostra "texto …" de cada fala; mandar o texto de uma tentativa que falhou mostra se o problema é o iOS não ouvir (nenhuma linha "texto") ou o app não entender (linha sem ✓).
+
+**Testar:** arrastar o player; falar "Ei Clip" normalmente, sem gritar; se falhar, mandar o Diagnóstico logo depois.
