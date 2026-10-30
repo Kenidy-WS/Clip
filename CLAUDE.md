@@ -27,6 +27,8 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Versão:** ao publicar uma mudança, suba `version` em `package.json` (aparece no rodapé; o `sw.js` ganha hash do
   conteúdo e dispara o aviso "Nova versão disponível" sozinho).
 - **Publicação:** push na `main` roda `.github/workflows/deploy.yml` (checks + GitHub Pages). Base de caminhos é `./`.
+- **Fluxo de entrega (pedido do Kenidy):** quando uma feature estiver pronta e `npm run check` + `npm run e2e` passarem,
+  suba direto na `main` (sem esperar aprovação do merge) para ele validar no iPhone. Avise a versão publicada e o que testar.
 - Commits: mensagens em português, curtas, no formato "vX.Y.Z: o que mudou".
 - Trabalho em **ondas** (ver roadmap): uma onda por chat, o Kenidy testa no iPhone e aprova antes da próxima.
 
