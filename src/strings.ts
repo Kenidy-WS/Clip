@@ -18,7 +18,7 @@ export const T = {
   micEnabled: 'Microfone ativado.',
   micNoSignal: (ctxState: string) =>
     `Microfone sem sinal (AudioContext: ${ctxState}). Toque na tela ou reinicie a câmera.`,
-  needTap: 'Toque na tela uma vez para ativar o áudio.',
+  needTap: 'Toque na tela uma vez para ativar o áudio e o comando de voz.',
   videoOnly: 'Este navegador não suporta AudioEncoder: clipes só com vídeo.',
   h264Unsupported: (w: number, h: number) => `Nenhuma configuração H.264 suportada para ${w}x${h}.`,
   videoEncoderError: (msg: string) => `Erro no encoder de vídeo: ${msg}`,

@@ -125,27 +125,23 @@ try {
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 8000,
     });
+    // Sem toque a escuta não começa (o iOS a deixaria surda): fica aguardando, com aviso, e liga no primeiro toque.
+    await page.waitForTimeout(800);
+    check(
+      (await page.evaluate(() => window.__starts)) === 0,
+      'voz: não inicia a escuta sem toque do usuário',
+    );
+    check((await page.textContent('#status')).includes('comando de voz'), 'voz: avisa para tocar na tela');
+    await page.mouse.click(5, 5);
     await page.waitForFunction(
       () => document.querySelector('#btnVoice').classList.contains('listening'),
       null,
-      {
-        timeout: 3000,
-      },
+      { timeout: 3000 },
     );
-    ok('voz: escutando (verde) só depois do áudio da escuta abrir');
-
-    // Escuta iniciada na abertura (sem toque) é reiniciada no primeiro toque na tela, e só nele.
-    const before = await page.evaluate(() => window.__starts);
+    ok('voz: liga no primeiro toque (verde só depois do áudio da escuta abrir)');
+    check((await page.evaluate(() => window.__starts)) === 1, 'voz: uma única instância iniciada pelo toque');
     await page.mouse.click(5, 5);
-    check(
-      (await page.evaluate(() => window.__starts)) === before + 1,
-      'voz: primeiro toque reinicia a escuta',
-    );
-    await page.mouse.click(5, 5);
-    check(
-      (await page.evaluate(() => window.__starts)) === before + 1,
-      'voz: toques seguintes não reiniciam de novo',
-    );
+    check((await page.evaluate(() => window.__starts)) === 1, 'voz: toques seguintes não reiniciam de novo');
 
     await page.evaluate(() => window.__say('Ei Felipe'));
     check(

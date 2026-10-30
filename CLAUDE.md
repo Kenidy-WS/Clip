@@ -54,7 +54,8 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   `src/core/wake-word.ts`. O iOS encerra a escuta sozinho de tempos em tempos (religamos em `onend`) e pode recusar iniciar sem
   um toque. **Escuta iniciada sem toque (abertura do app, religamento automático) pode ficar muda sem dar erro** (visto no iPhone
   na v0.5.0: ícone verde e nenhum comando reconhecido até desligar/ligar o botão). Por isso o indicador só fica verde depois de
-  `onaudiostart`/resultado, e o primeiro toque na tela reinicia a escuta dentro do gesto (`voiceTap`). Eventos da escuta ficam no
+  `onaudiostart`/resultado. **A escuta só começa dentro de um toque** (`voiceTap`; sem toque ela fica surda, confirmado de novo na v0.5.6):
+  `startVoice()` sem toque só marca "aguardando toque" (ícone âmbar + aviso). Eventos da escuta ficam no
   painel "i" (linha "Voz").
 - **Dois pedidos de permissão:** o iOS pede (1) "Câmera e Microfone" (`getUserMedia`) e, quando a escuta de voz inicia, (2) "Microfone"
   de novo, só para o reconhecimento de voz (Web Speech). Não há como juntar os dois em código. No Safari, "aA → Ajustes do Site →

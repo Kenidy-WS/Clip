@@ -55,6 +55,7 @@ let startedAt = 0;
 let fatal = false; // erro de permissão: não adianta insistir
 let inGesture = false; // a instância atual foi iniciada dentro de um toque do usuário
 let retries = 0;
+let awaitingTap = false; // a escuta só começa dentro de um toque do usuário (sem toque o iOS a deixa surda, sem dar erro)
 
 /** Registro curto dos eventos da escuta, mostrado no painel de diagnóstico (botão "i"). */
 function logVoice(msg: string): void {
@@ -197,12 +198,22 @@ export function startVoice(fromTap = false): void {
   gate.reset();
   S.voiceLog.length = 0;
   setVoice('starting');
-  if (!rec && !restartTimer) attempt(fromTap);
+  if (rec || restartTimer) return;
+  if (fromTap) attempt(true);
+  else waitForTap();
+}
+
+/** Segura o início da escuta até o próximo toque na tela e avisa o usuário (o ícone fica âmbar enquanto isso). */
+function waitForTap(): void {
+  awaitingTap = true;
+  logVoice('aguardando toque na tela');
+  notify(T.needTap, 'warn');
 }
 
 /** Para a escuta (câmera desligada, clipe sendo assistido ou usuário desligou o comando de voz). */
 export function stopVoice(): void {
   wanted = false;
+  awaitingTap = false;
   clearTimeout(restartTimer);
   restartTimer = 0;
   session++; // descarta eventos atrasados da instância antiga
@@ -221,13 +232,19 @@ export function stopVoice(): void {
  */
 export function voiceTap(): void {
   if (!wanted || fatal) return;
+  if (awaitingTap) {
+    awaitingTap = false;
+    if (!rec) attempt(true);
+    notify(S.note, S.note ? 'warn' : ''); // tira o aviso "Toque na tela…"
+    return;
+  }
   if (!rec) attempt(true);
   else if (!inGesture) restartNow();
 }
 
 /** Voltou para o app: se a escuta caiu enquanto estava fora, tenta religar. */
 export function resumeVoice(): void {
-  if (wanted && !fatal && !rec && !restartTimer) attempt(false);
+  if (wanted && !fatal && !rec && !restartTimer && !awaitingTap) waitForTap();
 }
 
 /** Botão 🎙️ com a escuta ligada mas ainda sem áudio: reinicia em vez de desligar. */

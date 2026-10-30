@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.6 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.7 · aguardando teste no iPhone
 
 ## Feito
 
@@ -80,7 +80,23 @@ nenhuma captura está ativa (= 2º pedido). Na `v0.5.6`: em nova tentativa a cap
 com captura ativa), **não confirmada no iPhone**. Se ainda pedir 2x: o único jeito de evitar a captura muda inicial seria descobrir
 por que ela vem muda (ideia: esperar mais que 2 s o `unmute`; ver o "i": linhas mute/unmute com horário).
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.6`)
+## Um pedido só; voz surda sem toque (v0.5.7)
+
+Teste da `v0.5.6` (print do "i"): **1 pedido de permissão** (ok), câmera com imagem ("vídeo ok" aos 3,0 s; às vezes ainda tela
+preta), mas a voz não funciona: o reconhecedor iniciou sozinho (`start`/`audiostart` aos 0,3 s) e **não recebeu nenhum texto** até
+um toque na tela (`reiniciando por toque`). Mesmo comportamento da `v0.5.0`: **no iOS a escuta iniciada sem toque fica surda, sem
+erro**. Na `v0.5.7` a escuta **não começa sozinha**: fica aguardando o primeiro toque na tela (ícone âmbar, aviso "Toque na tela
+uma vez para ativar o áudio e o comando de voz.") e liga dentro do toque, quando então fica verde. O toque já era necessário para
+o áudio da gravação (AudioContext), então é um toque só para tudo. Religamentos automáticos (`onend`) continuam sem toque. Se a
+voz ainda não responder depois do toque: print do "i" (linha "Voz": deve aparecer "texto ..." quando falar) e dizer se o ícone
+estava verde.
+
+## O que o Kenidy precisa testar no iPhone (`v0.5.7`)
+
+0. Fechar e abrir o app, dar a permissão, **tocar uma vez em qualquer lugar da tela** (ícone 🎙️ deve ficar verde) e dizer "Ei Clip".
+   Depois de 2–3 gravações por voz, conferir se continua respondendo. Print do "i" se falhar.
+
+## Anterior (`v0.5.6`)
 
 0. Fechar e abrir o app: aparece só 1 pedido de Câmera e Microfone (depois o do microfone da voz)? A tela preta passa de ~2–3 s
    e a imagem aparece sozinha? Se ainda vier o 2º pedido igual, print do "i" (seção "Câmera (início)").
