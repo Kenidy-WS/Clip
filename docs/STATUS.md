@@ -1,10 +1,14 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.6 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.7 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.15.7 — "Sons no vídeo"
+
+Kenidy não gostou de "Marcar no vídeo": o ajuste agora se chama **Sons no vídeo**. Ele aprovou a revisão de textos da v0.15.6 e não vê outros pontos; a frase do Início "Câmera de ação com comando de voz." fica como **slogan oficial** do app.
 
 ## v0.15.6 — revisão de textos (1ª rodada)
 
-Ajustes: "Sons de gravação" (volta o nome) e "Marcar no vídeo" (o bipe também é gravado no clipe, para achar o momento na edição; antes "Bipe no vídeo gravado"). Avisos sem jargão e sem mensagens técnicas do navegador (`strings.ts`): erros de vídeo, áudio e de salvar agora dizem só o que fazer; o detalhe técnico fica no Diagnóstico. Aviso de download: "Arquivo pronto. Abra-o e escolha “Salvar vídeo”…". "Grave até o fim" → "Termine a gravação".
+Ajustes: "Sons de gravação" (volta o nome) e "Sons no vídeo" (o bipe também é gravado no clipe, para achar o momento na edição; antes "Bipe no vídeo gravado"). Avisos sem jargão e sem mensagens técnicas do navegador (`strings.ts`): erros de vídeo, áudio e de salvar agora dizem só o que fazer; o detalhe técnico fica no Diagnóstico. Aviso de download: "Arquivo pronto. Abra-o e escolha “Salvar vídeo”…". "Grave até o fim" → "Termine a gravação".
 **Testar:** ver os avisos no uso normal; dizer quais ainda soam estranhos. **Falta:** telas do Início/Galeria (tagline, dicas), 2ª rodada com o que o Kenidy apontar.
 
 ## v0.15.5 — nomes dos Ajustes (início da revisão de textos)
