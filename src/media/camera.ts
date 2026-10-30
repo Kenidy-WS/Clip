@@ -86,8 +86,8 @@ export function cancelStart(): void {
 }
 
 /** A captura foi desligada de verdade: guarda a hora para a próxima abertura esperar o iOS liberar o microfone. */
-function markCameraLeft(): void {
-  leftCameraAt = performance.now();
+function markCameraLeft(at = performance.now()): void {
+  leftCameraAt = at;
   logCam('saiu da câmera');
 }
 
@@ -97,7 +97,7 @@ function markCameraLeft(): void {
  * microfone mudo). Ela é desligada de verdade quando o prazo acaba ou quando o usuário toca num clipe (com a captura ligada o
  * iOS silencia o vídeo do player).
  */
-const PARK_MS = 15000;
+const PARK_MS = 60000;
 let parked = false;
 let parkTimer = 0;
 
@@ -137,10 +137,10 @@ export function resumeParked(): boolean {
 }
 
 /** Desliga a captura (câmera, microfone, voz) e fecha o áudio: sair para o Início, abrir um clipe ou fim do prazo da Galeria. */
-export async function releaseCamera(): Promise<void> {
+export async function releaseCamera(leftAt = performance.now()): Promise<void> {
   clearTimeout(parkTimer);
   parked = false;
-  markCameraLeft();
+  markCameraLeft(leftAt); // `leftAt`: quando a captura realmente parou (o iOS a encerra em segundo plano antes de o app saber)
   await stopAll();
   try {
     // Libera a sessão de áudio de vez (fecha o contexto): com a captura ligada o iOS deixa o som de qualquer <video> mudo ou

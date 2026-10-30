@@ -68,6 +68,8 @@ export interface AppState {
   startedAt: number;
   audioWarned: boolean;
   needTap: boolean;
+  /** O iOS encerrou a captura em segundo plano: a câmera espera um toque para retomar (câmera, microfone e voz juntos). */
+  needResume: boolean;
   muteUntil: number;
   soundOn: boolean;
   beepVol: BeepVol;
@@ -155,6 +157,7 @@ export const S: AppState = {
   startedAt: 0,
   audioWarned: false,
   needTap: false,
+  needResume: false,
   muteUntil: 0,
   soundOn: true,
   beepVol: 'max',

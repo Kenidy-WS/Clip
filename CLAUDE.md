@@ -20,7 +20,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 
 ## Regras do projeto
 
-- **Telas:** Início, Câmera e Galeria (`S.view`), sem rolagem da página. Ao sair da câmera (Início ou Galeria) a captura (câmera, microfone, voz) fica **estacionada** 15 s (`parkCamera`/`resumeParked`/`releaseCamera` em `camera.ts`); voltar nesse prazo não reabre nada. Desliga ao tocar num clipe, ao fim do prazo ou ao mudar um ajuste de vídeo (`applyCaptureSettings`). Cores só por tokens
+- **Telas:** Início, Câmera e Galeria (`S.view`), sem rolagem da página. Ao sair da câmera (Início ou Galeria) a captura (câmera, microfone, voz) fica **estacionada** 60 s (`parkCamera`/`resumeParked`/`releaseCamera` em `camera.ts`); voltar nesse prazo não reabre nada. Desliga ao tocar num clipe, ao fim do prazo ou ao mudar um ajuste de vídeo (`applyCaptureSettings`). Cores só por tokens
   `:root` em `styles.css` (amarelo = ativo, vermelho = gravar, verde = escutando); ícones só em `src/ui/icons.ts`.
 - **Textos:** toda frase exibida ao usuário fica em `src/strings.ts` (rótulos fixos de botões/ajustes ficam no `index.html`). Tom simples, formal e profissional; telas limpas, sem
   informação técnica para o usuário final (diagnóstico é só para desenvolvimento).
@@ -81,7 +81,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Miniaturas (v0.10.10):** nunca gerar miniatura decodificando clipes grandes (50–160 MB) no iPhone: um `<video>` por clipe derruba a Galeria e um `<video>` solto fora da página não decodifica. A miniatura (JPEG 240×320) é tirada do `S.canvas` ao parar a gravação e vai em `ClipRecord.thumb`.
 - **Voz × bipe × microfone (v0.10.x):** o reconhecimento de voz aberto faz o bipe do alto-falante chiar (some com a voz desligada); abortar a voz no mesmo instante do bipe o deixa **mudo** (por isso `BEEP_LEAD_SEC`). O iOS ignora `autoGainControl`. O microfone da câmera costuma nascer **mudo (pico 0.0000)**: há reinício automático em `camera.ts`; recarregar a página **não** resolve e a voz religada sem toque fica surda. **Na recuperação do microfone mudo a voz tem de parar e esperar um toque** (e se a 2ª captura também nascer muda, a voz fica surda mesmo após o toque) (`stopVoice()` em `camera.ts`): religar sem toque (v0.12.4) ou manter viva (v0.12.7) deixa o ícone verde com a escuta surda e sem aviso. Para eliminar o toque é preciso evitar o microfone mudo, não contornar a recuperação. **Voltar à câmera logo depois de sair faz o microfone nascer mudo** (o iOS demora a liberar a sessão de áudio; esperando alguns segundos funciona): a 1ª abertura após sair espera `MIN_REOPEN_MS` antes do `getUserMedia` (v0.12.9).
 - **Reproduzir clipe (v0.12.x):** `setAudioSession('playback')` no player dá volume normal mas pode deixar o microfone mudo depois; sem ele o clipe toca baixo.
-- O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
+- O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera e, passados alguns segundos, **encerra as faixas** (não há como manter a captura viva minimizado). Voltar rápido: as faixas só estavam mudas e `returnFromBackground` retoma sem toque. Voltar com as faixas encerradas: **não reabrir sozinho** (microfone nasce mudo e a voz fica surda); `pauseUntilTap` (`app.ts`) desliga a captura, mostra "Toque na tela para retomar" (`S.needResume`) e um toque fora dos botões chama `openCamera` dentro do gesto (v0.12.13).
 
 ## Ambiente de desenvolvimento (Claude)
 

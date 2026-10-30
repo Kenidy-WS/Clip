@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.12 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.12 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.13 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.13 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -600,3 +600,14 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Diagnóstico, "Câmera: início": `fora da câmera: captura mantida ligada por 15 s`, `câmera retomada (captura estacionada, sem reabrir)`, `fora da câmera há muito tempo: desligando a captura`.
 - e2e: voltar ao Início deixa a câmera e a voz ligadas; abrir logo depois não chama `getUserMedia` nem a voz de novo; ajuste de vídeo no Início desliga a captura; passado o prazo desliga câmera e voz.
 - Testar: (1) câmera → Início → "Abrir câmera" **logo**: volta na hora, microfone e voz funcionando; (2) câmera → Início, esperar mais de 15 s, "Abrir câmera": reabre normal (~3 s de espera se for logo depois dos 15 s); (3) mudar a qualidade nos Ajustes do Início e abrir a câmera: usa o ajuste novo; (4) indicador de câmera/microfone do iOS aceso até 15 s no Início (bateria).
+
+## v0.12.13 — Retomar com um toque ao voltar do segundo plano; câmera estacionada por 60 s
+
+- Resultado da v0.12.12 (Kenidy): Início → câmera funcionou. Mas **minimizar o app e voltar depois de alguns segundos** repetia o problema (microfone mudo, voz pedindo toque). Voltar rápido já funcionava (o iOS só silencia as faixas).
+- Limite da plataforma: minimizado, o iOS suspende câmera, microfone e escuta de voz da página e, passados alguns segundos, **encerra as faixas**; não há como mantê-las vivas. O app reabria sozinho (`start()` sem toque), o que dava microfone mudo e voz esperando toque.
+- Mudança 1 — **Retomar com um toque** (`pauseUntilTap` em `app.ts`): ao voltar com faixas encerradas (ou sem imagem nova em 2,5 s), a captura é desligada de vez (`releaseCamera(leftAt)`, com a espera mínima contada desde a saída do app), a tela da câmera mostra "Toque na tela para retomar a câmera." e o botão "Ligar câmera" na hora (`S.needResume`); um toque fora dos botões (ou no botão) chama `openCamera()` **dentro do gesto**: voz primeiro, câmera, microfone. Se o app voltou no Início/Galeria com a captura estacionada encerrada, ela só é desligada (o "Abrir câmera" abre normal).
+- Mudança 2 — volta rápida inalterada: faixas vivas → `refreshPreview()` sem toque.
+- Mudança 3 — **`PARK_MS` = 60 s** (antes 15 s). Racional: cobre olhar a Galeria, passar pelos Ajustes e pequenas pausas; mais que isso a câmera ficaria gravando buffer à toa (codificação contínua de vídeo+áudio: bateria e calor) e com o indicador de câmera/microfone do iOS aceso. Ajustável pela constante; se esquentar ou gastar bateria, reduzir.
+- Diagnóstico, "Câmera: início": `voltou (Ns fora); faixas …` e `captura encerrada em segundo plano; aguardando toque para retomar`. Copie depois de alguns testes para ver a partir de quantos segundos fora o iOS encerra as faixas.
+- e2e: novo teste de voltar do segundo plano com faixas encerradas (pede toque; um toque retoma câmera e voz).
+- Testar: (1) minimizar 2 s e voltar: segue sem toque; (2) minimizar 20–30 s e voltar: aparece "Toque na tela para retomar a câmera."; um toque fora dos botões religa câmera, microfone e voz, e "Ei Clip" funciona; (3) câmera → Início/Galeria por ~30 s e voltar: instantâneo (prazo de 60 s); (4) acompanhar bateria/calor em uso longo.

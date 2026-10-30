@@ -79,8 +79,7 @@ export function tick(): void {
     S.view === 'camera' &&
     !S.running &&
     !S.opening &&
-    notRunningSince > 0 &&
-    now - notRunningSince > RETRY_DELAY_MS
+    (S.needResume || (notRunningSince > 0 && now - notRunningSince > RETRY_DELAY_MS))
   );
 
   if (els.update.classList.contains('show') && !els.btnUpdate.dataset.updating) {

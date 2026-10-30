@@ -429,9 +429,9 @@ try {
   {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS + VOICE);
-    // O prazo de 15 s da câmera estacionada (PARK_MS) vira 3 s nesta página, para o teste não esperar.
+    // O prazo de 60 s da câmera estacionada (PARK_MS) vira 3 s nesta página, para o teste não esperar.
     await page.addInitScript(
-      `{ const st = window.setTimeout.bind(window); window.setTimeout = (f, ms, ...a) => st(f, ms === 15000 ? 3000 : ms, ...a); }`,
+      `{ const st = window.setTimeout.bind(window); window.setTimeout = (f, ms, ...a) => st(f, ms === 60000 ? 3000 : ms, ...a); }`,
     );
     await page.goto(URL_);
     await page.click('#btnOpen');
@@ -495,6 +495,55 @@ try {
       'sair durante a abertura: continua desligada',
     );
     await page2.close();
+  }
+
+  // 1f) O iOS encerra a captura em segundo plano: ao voltar a câmera não reabre sozinha (sem toque o microfone nasce mudo);
+  // um toque fora dos botões a retoma, com câmera e voz juntas.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript(STUBS + VOICE);
+    await page.addInitScript(`{
+      const g = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async (c) => { const s = await g(c); window.__lastStream = s; return s; };
+    }`);
+    await page.goto(URL_);
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    const visibility = (state) =>
+      page.evaluate((st) => {
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => st });
+        document.dispatchEvent(new Event('visibilitychange'));
+      }, state);
+    await visibility('hidden');
+    await page.evaluate(() => window.__lastStream.getTracks().forEach((t) => t.stop())); // o iOS encerrou as faixas
+    await visibility('visible');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'idle', null, {
+      timeout: 4000,
+    });
+    check(
+      (await page.textContent('#status')).toLowerCase().includes('retomar'),
+      'voltou com a captura encerrada: pede um toque para retomar (não reabre sozinho)',
+    );
+    check(
+      await page.waitForSelector('#btnRetry', { state: 'visible', timeout: 3000 }).then(
+        () => true,
+        () => false,
+      ),
+      'voltou com a captura encerrada: o botão para ligar a câmera aparece',
+    );
+    const calls = await page.evaluate(() => window.__ord.length);
+    await page.click('#screenCamera', { position: { x: 200, y: 300 } });
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 9000,
+    });
+    check(
+      (await page.evaluate((n) => window.__ord.slice(n).join(), calls)).includes('voice') &&
+        (await page.evaluate((n) => window.__ord.slice(n).join(), calls)).includes('gum'),
+      'um toque fora dos botões retoma a câmera e a voz juntas',
+    );
+    await page.close();
   }
 
   // 1g) Layout em pé e deitado: sem rolagem da página, imagem em tela cheia, controles dentro da tela, zoom bloqueado.
@@ -633,9 +682,9 @@ try {
   {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS);
-    // O prazo de 15 s da câmera estacionada na Galeria (PARK_MS) vira 3 s nesta página, para o teste não esperar.
+    // O prazo de 60 s da câmera estacionada na Galeria (PARK_MS) vira 3 s nesta página, para o teste não esperar.
     await page.addInitScript(
-      `{ const st = window.setTimeout.bind(window); window.setTimeout = (f, ms, ...a) => st(f, ms === 15000 ? 3000 : ms, ...a); }`,
+      `{ const st = window.setTimeout.bind(window); window.setTimeout = (f, ms, ...a) => st(f, ms === 60000 ? 3000 : ms, ...a); }`,
     );
     await page.goto(URL_);
     await page.evaluate(

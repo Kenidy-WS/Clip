@@ -30,7 +30,7 @@ export const T = {
   audioNeedsTap: 'toque na tela para ativar o áudio',
   noAudioContext: 'sem AudioContext',
   noAudioTrack: 'sem faixa de áudio',
-  restarting: 'Voltando ao app: reiniciando a câmera…',
+  resumeTap: 'Toque na tela para retomar a câmera.',
   cameraNoImage: 'A câmera não enviou imagem. Toque na tela para reiniciar.',
 
   // Comando de voz

@@ -196,14 +196,28 @@ function onVoice(): void {
  * silenciar as faixas em segundo plano e religá-las ao voltar.
  */
 const RESUME_WAIT_MS = 2500;
+
+/**
+ * O iOS encerrou (ou congelou) a captura em segundo plano. Reabrir sozinho, sem toque, deixava o microfone mudo e a voz surda;
+ * por isso a captura é desligada de vez e a câmera espera um toque, que a religa dentro do gesto (como "Abrir câmera").
+ * `awayMs`: há quanto tempo o app saiu (a espera mínima antes de reabrir o microfone conta a partir daí).
+ */
+async function pauseUntilTap(awayMs: number): Promise<void> {
+  const onCamera = S.view === 'camera';
+  logCam(`captura encerrada em segundo plano; ${onCamera ? 'aguardando toque para retomar' : 'desligada'}`);
+  if (onCamera) S.needResume = true;
+  await releaseCamera(performance.now() - awayMs);
+  if (S.view === 'camera') notify(T.resumeTap, 'warn');
+  updateUI();
+}
+
 function returnFromBackground(awayMs: number): void {
   const tracks = S.stream?.getTracks() ?? [];
   const state = tracks.map((t) => `${t.kind[0]}:${t.readyState}${t.muted ? '/mudo' : ''}`).join(' ');
   logCam(`voltou (${Math.round(awayMs / 1000)}s fora); faixas ${state || '-'}`);
   const live = tracks.length > 0 && tracks.every((t) => t.readyState === 'live');
   if (!live) {
-    setStatus(T.restarting, 'warn');
-    void start();
+    void pauseUntilTap(awayMs);
     return;
   }
   refreshPreview();
@@ -214,9 +228,8 @@ function returnFromBackground(awayMs: number): void {
   setTimeout(() => {
     if (!S.running || S.rec || S.stream !== mine || document.visibilityState !== 'visible') return;
     if (S.framesIn > framesBefore) return logCam('voltou: imagem seguiu sem refazer a captura');
-    logCam('voltou: sem imagem nova; refazendo a captura');
-    setStatus(T.restarting, 'warn');
-    void start();
+    logCam('voltou: sem imagem nova');
+    void pauseUntilTap(awayMs + RESUME_WAIT_MS);
   }, RESUME_WAIT_MS);
 }
 
@@ -237,7 +250,16 @@ function bindLifecycle(): void {
   });
 
   // Qualquer toque reinicia uma escuta de voz que tenha começado sem gesto do usuário (ver voiceTap).
-  document.addEventListener('click', () => {
+  document.addEventListener('click', (e) => {
+    // Captura encerrada pelo iOS em segundo plano: um toque fora dos botões retoma câmera, microfone e voz dentro do gesto.
+    if (
+      S.needResume &&
+      S.view === 'camera' &&
+      !S.running &&
+      !S.opening &&
+      !(e.target as HTMLElement | null)?.closest('button')
+    )
+      void openCamera();
     tapRecover(); // câmera sem imagem: o toque reinicia a captura
     voiceTap();
   });

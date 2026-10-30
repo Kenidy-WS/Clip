@@ -16,6 +16,7 @@ let galleryFrom: 'home' | 'camera' = 'home';
  */
 export async function openCamera(): Promise<void> {
   if (S.opening && S.view === 'camera') return;
+  S.needResume = false;
   if (isParked()) {
     // Voltou da Galeria com a câmera ainda ligada (ver `parkCamera`): não há nada a reabrir.
     S.view = 'camera';
@@ -50,6 +51,7 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
     return;
   }
   const leavingCamera = S.view === 'camera';
+  S.needResume = false;
   if (view === 'gallery') galleryFrom = leavingCamera ? 'camera' : 'home';
   const park = leavingCamera && S.running; // captura viva: segue ligada alguns segundos fora da câmera (Início ou Galeria)
   S.view = view;
