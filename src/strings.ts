@@ -10,7 +10,7 @@ export const T = {
   cameraOpenFail: (_name: string) =>
     'Não foi possível abrir a câmera. Permita câmera e microfone nos ajustes do Safari.',
   micDenied: (_n: string) =>
-    `Microfone sem permissão. Toque em “Ativar microfone” e permita. Se o pedido não aparecer: aA → Ajustes do Site → Microfone → Permitir, e recarregue.`,
+    `Microfone sem permissão. Toque em “Ativar microfone” e permita. Se o pedido não aparecer, libere o microfone nos ajustes do Safari.`,
   micBusy: (_n: string) =>
     `Microfone ocupado por outro app ou ligação. Feche o outro app e toque em “Ativar microfone”.`,
   micUnavailable: (_n: string, _msg?: string) =>
@@ -18,17 +18,17 @@ export const T = {
   micEnabled: 'Microfone ativado.',
   micNoSignal: (_ctxState: string) => 'Microfone sem sinal. Toque na tela ou reinicie a câmera.',
   needTap: 'Toque na tela para ativar o áudio.',
-  videoOnly: 'Este navegador não grava áudio: os clipes serão só com vídeo.',
+  videoOnly: 'Este aparelho não grava áudio. Os clipes ficarão sem som.',
   h264Unsupported: (w: number, h: number) => `Este aparelho não grava em ${w}x${h}. Escolha outra resolução.`,
-  encoderFallback: 'A câmera foi ajustada para Full HD a 30 quadros para manter a gravação estável.',
-  videoEncoderError: (msg: string) => `Erro ao codificar o vídeo: ${msg}`,
-  aacUnsupported: 'Áudio não compatível neste navegador: os clipes serão só com vídeo.',
-  audioUnavailable: (msg: string) => `Áudio indisponível: ${msg}`,
-  audioError: (msg: string) => `Erro no áudio: ${msg}`,
-  audioNote: (msg: string) => `Áudio: ${msg}`,
+  encoderFallback: 'A gravação foi ajustada para Full HD a 30 fps, para ficar estável.',
+  videoEncoderError: (_msg: string) => 'Não foi possível gravar o vídeo. Tente novamente.',
+  aacUnsupported: 'Áudio não compatível neste aparelho. Os clipes ficarão sem som.',
+  audioUnavailable: (_msg: string) => 'Áudio indisponível. O clipe será gravado sem som.',
+  audioError: (_msg: string) => 'Falha no áudio. Reinicie a câmera.',
+  audioNote: (_msg: string) => 'Áudio com problema. Toque na tela para tentar de novo.',
   audioNeedsTap: 'toque na tela para ativar o áudio',
-  noAudioContext: 'sem AudioContext',
-  noAudioTrack: 'sem faixa de áudio',
+  noAudioContext: 'áudio indisponível',
+  noAudioTrack: 'microfone indisponível',
   resumeTap: 'Toque na tela para retomar a câmera.',
   cameraNoImage: 'A câmera não enviou imagem. Toque na tela para reiniciar.',
 
@@ -52,8 +52,8 @@ export const T = {
   storageLow: 'Pouco espaço livre. Gravação encerrada e salva.',
   diskFailed: 'Falha ao gravar no armazenamento. O trecho gravado foi salvo.',
   clipSavedPartial: 'Gravação interrompida. O trecho gravado foi salvo.',
-  mp4Failed: (msg: string) => `Não foi possível gerar o vídeo: ${msg}`,
-  noVideoData: 'sem dados de vídeo',
+  mp4Failed: (_msg: string) => 'Não foi possível salvar o clipe. Tente novamente.',
+  noVideoData: 'nenhuma imagem gravada',
   finishRecordingFirst: 'Termine a gravação primeiro.',
 
   // Clipes
@@ -73,7 +73,7 @@ export const T = {
   clipMeta: (c: { when: string; durText: string; mb: number; withAudio: boolean }) =>
     `${c.when} · ${c.durText} · ${c.mb.toFixed(1)} MB${c.withAudio ? '' : ' · sem áudio'}`,
   removeConfirm: 'Excluir este clipe? Se ainda não salvou no Rolo da Câmera, ele será perdido.',
-  downloadStarted: 'Download iniciado. Abra o arquivo e escolha “Salvar vídeo”.',
+  downloadStarted: 'Arquivo pronto. Abra-o e escolha “Salvar vídeo” para guardar no Rolo da Câmera.',
   shareFallback: 'O compartilhamento não abriu. O arquivo foi baixado.',
   storage: (usedMb: number, quotaMb: number, persisted: boolean) =>
     `${usedMb.toFixed(0)} MB de ~${quotaMb.toFixed(0)} MB${persisted ? ' · protegido' : ''}`,
@@ -94,5 +94,5 @@ export const T = {
   // Atualização do app
   updateBtn: 'Atualizar',
   updating: 'Atualizando…',
-  updateWait: 'Grave até o fim',
+  updateWait: 'Termine a gravação',
 } as const;
