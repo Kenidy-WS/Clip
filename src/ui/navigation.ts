@@ -67,8 +67,22 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   if (leavingCamera) await releaseCamera();
 }
 
+/**
+ * Volta para a câmera vindo da Galeria. Se o som de um clipe foi ligado (a captura foi desligada e o iOS ainda segura o
+ * áudio), a câmera não abre sozinha: mostra "Ligar câmera" e um toque refaz tudo (voz primeiro, depois câmera).
+ */
+export function backToCamera(): void {
+  if (S.needResume && !S.running && !S.opening) {
+    S.view = 'camera';
+    notify(T.resumeTap, 'warn');
+    updateUI();
+    return;
+  }
+  void openCamera();
+}
+
 /** Voltar na Galeria: para a tela de onde veio (câmera ou Início). Chamar de dentro do toque (a câmera e a voz dependem disso). */
 export function leaveGallery(): void {
-  if (galleryFrom === 'camera') void openCamera();
+  if (galleryFrom === 'camera') backToCamera();
   else void showScreen('home');
 }

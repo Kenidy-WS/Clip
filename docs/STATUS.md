@@ -2,6 +2,14 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.14 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.14 no FIM do arquivo)
 
+## v0.13.0 — clipe abre mudo; som liga só por escolha
+
+- O player abre o clipe **mudo**, sem trocar o modo de áudio e sem desligar a câmera estacionada (voltar instantâneo, voz segue).
+- Ao ligar o som no controle do vídeo: a captura (câmera e voz) é desligada, o áudio vai para `playback`, e o vídeo é pausado/retomado após 0,5 s para o iOS liberar o som.
+- Depois de usar som, voltar à câmera **não reabre sozinho**: mostra "Ligar câmera" (`backToCamera`); o toque refaz o fluxo normal.
+- Voltar atrás: `git revert` do commit da v0.13.0 (o branch `estavel` segue na v0.12.14).
+- **Testar no iPhone:** (1) abrir clipe na Galeria e voltar: voz continua sem toque; (2) o controle do vídeo mostra o alto-falante e o som liga; (3) com som: ao voltar aparece "Ligar câmera"; o toque religa a voz?; (4) se o alto-falante não aparecer ou o som não sair, avisar (plano B: botão próprio "Ativar som").
+
 ## Ponto de retorno e prévia encolhida (sem mudança de código)
 
 - Kenidy validou a v0.12.14: voltar do segundo plano mostra o botão, um toque e câmera + voz funcionam.

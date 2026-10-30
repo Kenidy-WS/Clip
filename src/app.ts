@@ -23,7 +23,7 @@ import { tick, updateUI } from './ui/controls';
 import { bindDiagnostics } from './ui/diag-view';
 import { els } from './ui/dom';
 import { mountIcons } from './ui/icons';
-import { leaveGallery, openCamera, showScreen } from './ui/navigation';
+import { backToCamera, leaveGallery, openCamera, showScreen } from './ui/navigation';
 import { setStatus } from './ui/status';
 import { initLifecycleLog } from './ui/lifecycle-log';
 import { hideAnimated, showAnimated } from './ui/transitions';
@@ -90,7 +90,7 @@ function bindSegment(group: HTMLElement, onPick: (value: string) => void): void 
 function bindNavigation(): void {
   els.btnOpen.addEventListener('click', () => void openCamera());
   els.btnRetry.addEventListener('click', () => void openCamera());
-  els.btnGalleryCam.addEventListener('click', () => void openCamera());
+  els.btnGalleryCam.addEventListener('click', backToCamera);
   els.btnBack.addEventListener('click', () => void showScreen('home'));
   els.btnGallery.addEventListener('click', () => void showScreen('gallery'));
   els.btnGalleryBack.addEventListener('click', leaveGallery);

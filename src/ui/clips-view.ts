@@ -1,6 +1,6 @@
 import { removeClip, removeClips } from '../clips';
 import { setAudioSession } from '../media/audio-session';
-import { isParked, releaseCamera } from '../media/camera';
+import { releaseCamera } from '../media/camera';
 import { formatDuration } from '../core/format';
 import { notify } from '../events';
 import { S } from '../state';
@@ -93,13 +93,18 @@ function tile(c: Clip, selectable = false): HTMLElement {
   return b;
 }
 
+/** O som do clipe foi ligado nesta abertura do player (só então o iOS troca o modo de áudio e a captura é desligada). */
+let soundOn = false;
+
+/**
+ * O clipe abre **mudo** (v0.13.0): tocar com som troca o modo de áudio do iOS e o microfone da câmera passava a nascer mudo
+ * (a voz ficava surda). Mudo, nada disso acontece e a câmera estacionada segue ligada: voltar é instantâneo.
+ */
 export function openPlayer(c: Clip): void {
-  // Com a captura ligada o iOS silencia o vídeo do player: desliga a câmera estacionada antes de tocar (parte síncrona do
-  // desligamento roda já aqui, dentro do toque).
-  if (isParked()) void releaseCamera();
   current = c;
+  soundOn = false;
   els.playerVideo.src = c.url;
-  els.playerVideo.muted = false;
+  els.playerVideo.muted = true;
   els.playerVideo.volume = 1;
   els.playerMeta.textContent = T.clipMeta({
     when: whenText(c),
@@ -107,12 +112,31 @@ export function openPlayer(c: Clip): void {
     mb: c.blob.size / 1048576,
     withAudio: c.withAudio,
   });
-  setAudioSession('playback');
-  setTimeout(() => setAudioSession('playback'), 300); // o iOS pode ter reposto a categoria de captura
   showAnimated(els.player);
   void els.playerVideo.play().catch(() => {
     /* se o iOS exigir, é só tocar em play */
   });
+}
+
+/**
+ * O usuário ligou o som no controle do vídeo: com a captura ligada o iOS silencia o player, então a câmera (e a voz) é
+ * desligada e o áudio vai para o modo de reprodução. Ao voltar, a câmera só liga com um toque (`backToCamera`).
+ */
+function onPlayerVolume(): void {
+  const v = els.playerVideo;
+  if (!current || soundOn || v.muted || v.volume === 0) return;
+  soundOn = true;
+  S.needResume = true;
+  void releaseCamera();
+  setAudioSession('playback');
+  setTimeout(() => setAudioSession('playback'), 300); // o iOS pode ter reposto a categoria de captura
+  setTimeout(() => {
+    // O iOS pode ter mantido o vídeo silenciado até a captura cair: recomeça a reprodução já com o som liberado.
+    if (current && soundOn && !v.paused) {
+      v.pause();
+      void v.play().catch(() => {});
+    }
+  }, 500);
 }
 
 export function closePlayer(immediate = false): void {
@@ -123,7 +147,8 @@ export function closePlayer(immediate = false): void {
     els.player.hidden = true;
     els.player.classList.remove('closing');
   } else hideAnimated(els.player);
-  setAudioSession('auto');
+  if (soundOn) setAudioSession('auto');
+  soundOn = false;
   current = null;
 }
 
@@ -384,6 +409,7 @@ function bindPlayerSwipeDown(): void {
 export function bindPlayer(): void {
   bindSelection();
   bindPlayerSwipeDown();
+  els.playerVideo.addEventListener('volumechange', onPlayerVolume);
   els.btnPlayerClose.addEventListener('click', () => closePlayer());
   els.btnShare.addEventListener('click', () => current && void shareClips([current]));
   els.btnDelete.addEventListener('click', () => {

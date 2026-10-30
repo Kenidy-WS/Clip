@@ -794,13 +794,38 @@ try {
     await page.click('#clips .tile');
     check(await page.isVisible('#player'), 'tocar no clipe abre o player');
     check(
-      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
-      'tocar num clipe desliga a câmera estacionada (áudio de reprodução no iOS)',
+      (await page.getAttribute('#btnRec', 'data-state')) === 'ready',
+      'tocar num clipe (mudo) mantém a câmera estacionada ligada',
+    );
+    check(
+      (await page.evaluate(() => document.querySelector('#playerVideo').muted)) === true,
+      'o clipe abre mudo',
     );
     check(
       (await page.evaluate(() => !!document.querySelector('#playerVideo').getAttribute('src'))) === true,
       'player carrega o vídeo',
     );
+    // Ligar o som: desliga a captura; ao voltar, a câmera espera um toque em "Ligar câmera".
+    await page.evaluate(() => (document.querySelector('#playerVideo').muted = false));
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'idle', null, {
+      timeout: 5000,
+    });
+    ok('ligar o som do clipe desliga a câmera estacionada (áudio de reprodução no iOS)');
+    await page.click('#btnPlayerClose');
+    await page.click('#btnGalleryBack');
+    check(await page.isVisible('#screenCamera'), 'voltar depois de ouvir o clipe mostra a câmera');
+    await page.waitForSelector('#btnRetry:not([hidden])', { timeout: 3000 });
+    check(
+      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
+      'depois do som a câmera não abre sozinha (espera o toque)',
+    );
+    await page.click('#btnRetry');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    ok('o toque em "Ligar câmera" religa câmera e voz depois do som');
+    await page.click('#btnGallery');
+    await page.click('#clips .tile');
     await page.click('#btnPlayerClose');
     check(!(await page.isVisible('#player')), 'fechar volta para a Galeria');
     const swipe = (fromX, toX) =>
