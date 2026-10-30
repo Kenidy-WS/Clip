@@ -34,6 +34,16 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - Commits: mensagens em português, curtas, no formato "vX.Y.Z: o que mudou".
 - Trabalho em **ondas** (ver roadmap): uma onda por chat, o Kenidy testa no iPhone e aprova antes da próxima.
 
+## Proteção contra regressão (pedido do Kenidy: a voz demorou para ficar funcional)
+
+- **Ponto de retorno:** o branch `estavel` guarda a última versão validada no iPhone (hoje v0.12.14). Tags não sobem por aqui, por isso é branch.
+  Só avance o `estavel` (`git push origin <hash>:refs/heads/estavel`) depois que o Kenidy confirmar que a versão nova funciona.
+- **Voltar atrás:** cada versão é um commit só. Para desfazer: `git revert <hash>` (ou `git revert --no-edit estavel..main`), subir versão nova e publicar.
+  Nunca reescreva o histórico da `main`.
+- **Área protegida (voz e microfone):** `src/media/voice.ts`, `src/core/wake-word.ts`, a recuperação de microfone mudo e o estacionamento em `camera.ts`,
+  e `returnFromBackground`/`pauseUntilTap` em `app.ts`. Mudança aí vai **sozinha numa versão**, sem misturar com outro ajuste, e só depois de `check` + `e2e`.
+- **Ajuste visual (prévia, CSS, miniaturas)** não deve tocar na área protegida. Se precisar, é versão separada.
+
 ## Armadilhas do iOS/Safari já descobertas (não repita)
 
 - **Nunca chamar `encoder.flush()` ao parar** a gravação: reinicia o estado do AAC e gera timestamps fora de ordem.

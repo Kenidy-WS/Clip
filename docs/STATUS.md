@@ -2,6 +2,14 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.14 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.14 no FIM do arquivo)
 
+## Ponto de retorno e prévia encolhida (sem mudança de código)
+
+- Kenidy validou a v0.12.14: voltar do segundo plano mostra o botão, um toque e câmera + voz funcionam.
+- Criado o branch `estavel` (= v0.12.14). Regras de proteção em `CLAUDE.md` ("Proteção contra regressão").
+- Aberto: às vezes, ao minimizar e voltar, a prévia aparece menor que a tela (faixas pretas; print de 30/10). Não mexer na voz para isso.
+  Próximo passo: na próxima ocorrência, abrir o "i" e copiar o Diagnóstico (linha "Prévia da câmera" diz se o elemento está pequeno ou só a imagem).
+  Se for só a imagem, refazer a prévia mais uma vez depois da janela assentar (~1 s), isolado numa versão própria.
+
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
 As seções abaixo estão em ordem mista: v0.9.x/0.8.x no topo; **v0.9.9 → v0.12.6 ficam no FIM do arquivo**.
