@@ -509,3 +509,9 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Pedido do Kenidy: parar só com "clip". Agora "clip"/"clipe" solto **também para**, mas só depois de 3,5 s de gravação (`LOOSE_STOP_AFTER_MS` em `voice.ts`), para o "clip" repetido do próprio "Ei clip" que iniciou não parar logo em seguida. A trava de 3 s entre comandos continua.
 - Depois de ver um clipe com som, ao abrir a câmera a página ainda recarrega (microfone), mas agora a câmera abre sozinha ao voltar (`openCamera(true)`); a voz espera um toque na tela (aviso), em vez de exigir "ligar câmera" de novo.
 - Risco: falar "clipe" durante a gravação (depois de 3,5 s) a encerra.
+
+## v0.12.3 — Volta o recarregamento ao fechar o player (câmera abre sozinha), com fade
+
+- Relato (v0.12.2): ao abrir a câmera depois de ver um clipe a voz exigia um toque na tela; antes da v0.12.1 (recarga ao fechar o player) tudo funcionava sozinho. Motivo: recarregar _ao abrir a câmera_ tira o toque do usuário, e a escuta de voz do iOS só liga dentro de um toque.
+- Agora: recarrega de novo **ao fechar o player** (clipe com som), voltando à mesma tela com um fade de entrada (`body.resumed`, 300 ms) para não piscar; o toque seguinte em "abrir câmera" é um gesto e liga câmera, microfone e voz sozinhos. Removida a recarga em `openCamera`.
+- Trade-off: uma recarga curta (fade) ao fechar o player. Se ainda incomodar, a alternativa é dispensar o recarregamento e aceitar o toque extra.

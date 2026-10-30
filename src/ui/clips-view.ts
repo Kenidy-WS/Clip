@@ -113,30 +113,27 @@ export function openPlayer(c: Clip): void {
 
 /**
  * Visto no iPhone (v0.10.1/v0.10.2): depois de tocar um clipe com som, o iOS deixa a sessão de áudio da página em modo de
- * reprodução e o microfone volta mudo mesmo reabrindo a captura; só uma página nova resolve. Recarregar a cada fechamento do
- * player piscava a tela (v0.12.0), então agora o recarregamento só acontece quando o usuário vai abrir a câmera
- * (`audioNeedsReset` em `openCamera`). Fora do iPhone (testes) não recarrega.
+ * reprodução e o microfone volta mudo mesmo reabrindo a captura; só uma página nova resolve. Por isso, ao fechar o player de um
+ * clipe com som a página recarrega e volta à mesma tela (com um fade, `body.resumed`). Assim o toque seguinte em "abrir câmera"
+ * já é um gesto do usuário e câmera, microfone e voz abrem sozinhos (v0.12.1 recarregava só ao abrir a câmera e perdia o gesto).
+ * Fora do iPhone (testes) não recarrega.
  */
 export const RESUME_KEY = 'clip.resumeView';
-let audioDirty = false;
 
-export function audioNeedsReset(): boolean {
-  return audioDirty && !navigator.webdriver;
-}
-
-/** Recarrega a página e volta para `view` (a câmera fica pronta; um toque a liga). */
-export function reloadForAudio(view: 'camera' | 'home' | 'gallery'): boolean {
-  try {
-    sessionStorage.setItem(RESUME_KEY, view);
-    location.reload();
-    return true;
-  } catch {
-    return false;
-  }
+function reloadForAudio(view: string, delayMs: number): void {
+  setTimeout(() => {
+    try {
+      sessionStorage.setItem(RESUME_KEY, view);
+      location.reload();
+    } catch {
+      /* sem sessionStorage: segue sem recarregar */
+    }
+  }, delayMs);
 }
 
 export function closePlayer(immediate = false): void {
-  if (current?.withAudio) audioDirty = true;
+  const reload = !!current?.withAudio && !navigator.webdriver;
+  const view = S.view;
   els.playerVideo.pause();
   els.playerVideo.removeAttribute('src');
   els.playerVideo.load();
@@ -146,6 +143,7 @@ export function closePlayer(immediate = false): void {
   } else hideAnimated(els.player);
   setAudioSession('auto');
   current = null;
+  if (reload) reloadForAudio(view, immediate ? 30 : 230); // depois da animação de fechar
 }
 
 function setSelected(tileEl: HTMLElement, on: boolean): void {
