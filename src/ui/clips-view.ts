@@ -54,14 +54,20 @@ function tile(c: Clip, selectable = false): HTMLElement {
   const img = document.createElement('img');
   img.alt = '';
   img.decoding = 'async';
+  // Sem miniatura (clipe antigo que o iOS não deixou decodificar): um ícone discreto no lugar do quadrado cinza vazio.
+  const ph = document.createElement('span');
+  ph.className = 'ph';
+  ph.innerHTML = icon('camera');
   void thumbUrl(c).then((u) => {
-    if (u) img.src = u;
+    if (!u) return;
+    img.src = u;
+    ph.remove();
   });
 
   const dur = document.createElement('span');
   dur.className = 'dur';
   dur.textContent = formatDuration(c.durSec);
-  b.append(img, dur);
+  b.append(ph, img, dur);
 
   if (!c.withAudio) {
     const na = document.createElement('span');

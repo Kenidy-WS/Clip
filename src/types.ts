@@ -43,6 +43,8 @@ export interface Config {
 export interface ClipRecord {
   name: string;
   blob: Blob;
+  /** Miniatura JPEG tirada do quadro ao vivo na hora da gravação (clipes antigos não têm). */
+  thumb?: Blob;
   durSec: number;
   preSec: number;
   withAudio: boolean;

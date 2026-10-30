@@ -89,6 +89,10 @@ async function render(c: Clip): Promise<string> {
 /** URL da miniatura do clipe ('' se não deu para gerar). Geradas em fila, uma por vez. */
 export function thumbUrl(c: Clip): Promise<string> {
   let p = cache.get(c);
+  if (!p && c.thumb) {
+    p = Promise.resolve(URL.createObjectURL(c.thumb)); // miniatura tirada na gravação: instantânea e confiável
+    cache.set(c, p);
+  }
   if (!p) {
     p = chain.then(() => render(c)).catch(() => '');
     void p.then((u) => {

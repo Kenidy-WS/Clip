@@ -468,3 +468,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - "Todos"/"Nenhum" existem na barra de seleção (botão alterna); conferir se ficou claro.
 
 **Testar:** miniaturas aparecem na Galeria e no Início? Se continuarem vazias, mandar o Diagnóstico.
+
+## v0.10.10 — Miniatura guardada na gravação
+
+- v0.10.9: as miniaturas continuaram cinza; decodificar clipes grandes no iPhone para tirar o 1º quadro não é confiável (antes funcionava às vezes, sumia depois).
+- Agora a miniatura (JPEG 240×320) é tirada do quadro **ao vivo** na hora de parar a gravação (`captureThumb` em `recorder.ts`, a partir de `S.canvas`) e guardada junto do clipe no IndexedDB (`ClipRecord.thumb`). Sem decodificar nada: aparece na hora e não some.
+- Clipes antigos (sem `thumb`) ainda tentam o caminho por vídeo escondido (v0.10.9); se falhar, mostram um ícone discreto de câmera em vez do quadrado cinza vazio.
+
+**Testar:** gravar um clipe novo → miniatura na Galeria, no Início e no botão da câmera, também depois de fechar e abrir o app. Os clipes antigos podem ficar com o ícone.

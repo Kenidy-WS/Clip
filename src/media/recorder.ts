@@ -5,6 +5,30 @@ import { T } from '../strings';
 import { beep, beepMs } from './beep';
 import { buildMp4 } from './mp4';
 
+/** Miniatura do quadro ao vivo (o canvas da captura ainda tem o último quadro): não precisa decodificar o clipe depois. */
+async function captureThumb(): Promise<Blob | undefined> {
+  const src = S.canvas;
+  if (!src || !src.width || !src.height) return undefined;
+  try {
+    const W = 240;
+    const H = 320;
+    const cv = document.createElement('canvas');
+    cv.width = W;
+    cv.height = H;
+    const g = cv.getContext('2d');
+    if (!g) return undefined;
+    const k = Math.max(W / src.width, H / src.height); // "cover"
+    const dw = src.width * k;
+    const dh = src.height * k;
+    g.drawImage(src, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    const blob = await new Promise<Blob | null>((r) => cv.toBlob(r, 'image/jpeg', 0.75));
+    cv.width = cv.height = 0;
+    return blob ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 /** Começa a gravar: pega o buffer a partir do último keyframe antes do corte e continua acumulando. */
 export function startRec(): void {
   S.buffer.windowSec = cfg.bufferSec;
@@ -40,6 +64,7 @@ export async function stopRec(): Promise<void> {
     if (S.beepInClip) stopTs = S.lastInTs;
   }
   await drainEncoders();
+  const thumb = await captureThumb();
   const r = S.rec;
   S.rec = null;
   if (r) {
@@ -50,7 +75,9 @@ export async function stopRec(): Promise<void> {
     S.buffer.discardUntil(stopTs);
     S.lastKeyMs = 0;
     try {
-      addClip(buildMp4(r));
+      const clip = buildMp4(r);
+      if (thumb) clip.thumb = thumb;
+      addClip(clip);
       notify(T.clipSaved, 'ok');
       setTimeout(() => notify(S.note, S.note ? 'warn' : ''), 3000);
     } catch (e) {

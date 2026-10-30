@@ -258,6 +258,19 @@ p {
   object-fit: cover;
   pointer-events: none;
 }
+.tile .ph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--mut);
+  opacity: 0.3;
+  pointer-events: none;
+}
+.tile .ph svg {
+  width: 26px;
+  height: 26px;
+}
 .tile .dur {
   position: absolute;
   left: 7px;

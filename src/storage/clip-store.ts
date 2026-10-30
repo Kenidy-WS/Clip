@@ -32,6 +32,7 @@ export const saveClip = (c: ClipRecord): Promise<IDBValidKey> =>
     s.put({
       name: c.name,
       blob: c.blob,
+      thumb: c.thumb,
       durSec: c.durSec,
       preSec: c.preSec,
       withAudio: c.withAudio,
