@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.4 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.5 · aguardando teste no iPhone
 
 ## Feito
 
@@ -61,7 +61,21 @@ Toque na tela para reiniciar."; **qualquer toque na tela reinicia a câmera quan
 cada tentativa na seção "Câmera (início)". Se continuar: pedir ao Kenidy para fechar todas as outras abas/apps do Ei Clip antes
 de testar e mandar o print do "i" de novo.
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.4`)
+## Três pedidos de permissão e voz muda (v0.5.5)
+
+Relato do Kenidy (Safari e app instalado): pede (1) Câmera e Microfone, (2) Microfone, (3) Câmera e Microfone de novo; a câmera
+grava mas o comando de voz não funciona. Leitura: o pedido (2) é da voz, que ligava junto com a câmera e disputava com a abertura
+(a câmera ficava muda, sem quadros); o watchdog da `v0.5.4` então refazia a captura (`stopAll` para as faixas e o iOS pede
+permissão de novo = pedido 3) e a voz (abortada no meio do pedido) ficava muda. Na `v0.5.5`: **a voz só liga depois do primeiro
+quadro de vídeo** (câmera viva); a recuperação tenta primeiro um **reinício leve** (religa o `<video>` à mesma captura, sem
+permissão) e só depois refaz a captura. Esperado: no máx. 2 pedidos (câmera+mic, depois mic da voz). Hipótese não confirmada.
+
+## O que o Kenidy precisa testar no iPhone (`v0.5.5`)
+
+0. Fechar o app e abrir de novo: quantos pedidos de permissão aparecem e em que ordem? A imagem aparece sozinha? "Ei Clip"
+   funciona depois do 2º pedido? Se algo falhar, print do "i" (seções "Câmera (início)" e "Voz").
+
+## Anterior (`v0.5.4`)
 
 0. Fechar outras abas do site (inclusive `/voz-teste/`), abrir o app e dar a permissão: deve aparecer imagem sozinha, no máx.
    ~8 s (até 2 tentativas automáticas). Se aparecer o aviso "A câmera não enviou imagem", tocar na tela. Mandar print do "i".

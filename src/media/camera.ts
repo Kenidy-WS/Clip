@@ -24,6 +24,9 @@ const FRAME_WAIT_MS = 3500;
 const NO_VIDEO_RETRIES = 2;
 
 let noVideoRetries = 0;
+let softTried = false; // o reinício leve só vale uma vez por início pedido pelo usuário
+let watchdogSoftAt = 0;
+const SOFT_WAIT_MS = 2000;
 let watchdog = 0;
 let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
 
@@ -78,19 +81,51 @@ export async function enableMic(): Promise<void> {
 }
 
 /**
+ * Acompanha o início da câmera. Quando o primeiro quadro chega, a câmera está viva e só então ligamos a escuta de voz
+ * (o pedido de microfone da voz não pode disputar com a abertura da câmera: foi o que gerou um terceiro pedido de permissão).
+ *
  * Visto no iPhone: depois do "Permitir" a câmera pode ficar muda e nunca entregar imagem (0 quadros), sem erro nenhum.
- * Se nenhum quadro chegar a tempo, refazemos a captura (o que o toque em "Iniciar câmera" fazia), até NO_VIDEO_RETRIES vezes.
+ * Se nenhum quadro chegar a tempo, tentamos 1) um reinício LEVE (religa o <video> à mesma captura, sem pedir permissão)
+ * e depois 2) refazer a captura, até NO_VIDEO_RETRIES vezes (o iOS volta a pedir permissão nesse caso).
  */
 function armWatchdog(my: number): void {
   clearTimeout(watchdog);
-  watchdog = window.setTimeout(() => {
+  const t0 = performance.now();
+  let softDone = softTried;
+  const check = (): void => {
     if (my !== startSeq || !S.running) return;
     if (S.framesIn > 0) {
       logCam('vídeo ok');
       noVideoRetries = 0;
+      try {
+        startVoice(); // a escuta de voz nunca pode impedir a câmera de funcionar
+      } catch (e) {
+        logCam(`voz falhou: ${(e as Error).message}`);
+      }
       return;
     }
-    if (document.visibilityState !== 'visible') return armWatchdog(my); // em segundo plano o iOS não entrega imagem
+    if (document.visibilityState !== 'visible') {
+      watchdog = window.setTimeout(check, 500); // em segundo plano o iOS não entrega imagem
+      return;
+    }
+    if (performance.now() - t0 < FRAME_WAIT_MS) {
+      watchdog = window.setTimeout(check, 250);
+      return;
+    }
+    if (!softDone && S.stream) {
+      softDone = softTried = true;
+      logCam('sem quadros de vídeo; religando o vídeo sem pedir permissão');
+      els.video.srcObject = null;
+      els.video.srcObject = S.stream;
+      void els.video.play().catch(() => {});
+      watchdog = window.setTimeout(check, 250);
+      // dá mais 2 s antes de refazer a captura
+      return void (watchdogSoftAt = performance.now());
+    }
+    if (watchdogSoftAt && performance.now() - watchdogSoftAt < SOFT_WAIT_MS) {
+      watchdog = window.setTimeout(check, 250);
+      return;
+    }
     if (noVideoRetries < NO_VIDEO_RETRIES) {
       noVideoRetries++;
       logCam(`sem quadros de vídeo; refazendo a captura (${noVideoRetries}/${NO_VIDEO_RETRIES})`);
@@ -99,7 +134,8 @@ function armWatchdog(my: number): void {
       logCam('sem quadros de vídeo; aguardando toque');
       notify(T.cameraNoImage, 'warn');
     }
-  }, FRAME_WAIT_MS);
+  };
+  watchdog = window.setTimeout(check, 250);
 }
 
 /** Chamar em todo toque na tela: se a câmera está "rodando" mas sem imagem, reinicia (dentro do gesto do usuário). */
@@ -129,7 +165,11 @@ function waitUnmute(track: MediaStreamTrack, ms: number): Promise<boolean> {
 /** `isRetry`: segunda tentativa automática depois de a câmera ficar muda (não repete mais de uma vez). */
 export async function start(isRetry = false): Promise<void> {
   const my = ++startSeq;
-  if (!isRetry) noVideoRetries = 0;
+  if (!isRetry) {
+    noVideoRetries = 0;
+    softTried = false;
+  }
+  watchdogSoftAt = 0;
   logCam(`start #${my}${isRetry ? ' (nova tentativa)' : ''}`);
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
   await stopAll();
@@ -236,12 +276,7 @@ export async function start(isRetry = false): Promise<void> {
   notify(S.note, S.note ? 'warn' : '');
   stateChanged();
   logCam('rodando');
-  armWatchdog(my);
-  try {
-    startVoice(); // a escuta de voz nunca pode impedir a câmera de iniciar
-  } catch (e) {
-    logCam(`voz falhou: ${(e as Error).message}`);
-  }
+  armWatchdog(my); // a escuta de voz só liga quando a câmera entregar o primeiro quadro
 }
 
 export async function stopAll(): Promise<void> {
