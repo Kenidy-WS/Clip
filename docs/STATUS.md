@@ -9,6 +9,9 @@
 - Aberto: às vezes, ao minimizar e voltar, a prévia aparece menor que a tela (faixas pretas; print de 30/10). Não mexer na voz para isso.
   Próximo passo: na próxima ocorrência, abrir o "i" e copiar o Diagnóstico (linha "Prévia da câmera" diz se o elemento está pequeno ou só a imagem).
   Se for só a imagem, refazer a prévia mais uma vez depois da janela assentar (~1 s), isolado numa versão própria.
+- **Adiado por decisão do Kenidy (30/10):** a encolhida dura menos de 1 s e volta sozinha ao abrir o app; não dá para copiar o Diagnóstico a tempo.
+  Diagnóstico copiado depois mostra a prévia correta (393x852 em 0,0), então é só o desenho do iOS. Não mexer agora; retomar só se ficar frequente.
+- Teste pesado (minimizar e abrir várias vezes seguidas): o iOS pediu permissão e toque de novo. É o comportamento previsto (`pauseUntilTap`), não é bug.
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
