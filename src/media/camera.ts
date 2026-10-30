@@ -66,6 +66,7 @@ let startSeq = 0; // cada chamada de start() tem um número; a mais recente venc
 
 /** Registro curto das etapas de início da câmera, mostrado no painel de diagnóstico (botão "i"). */
 let audioRetried = false;
+let voiceAutoNext = false; // a próxima abertura da câmera liga a voz sem esperar toque (veio do reinício do microfone)
 
 export function logCam(msg: string): void {
   S.camLog.push(`${(performance.now() / 1000).toFixed(1)}s ${msg}`);
@@ -140,10 +141,12 @@ function armWatchdog(my: number): void {
       logCam('vídeo ok');
       noVideoRetries = 0;
       try {
-        startVoice('wait'); // só age se a escuta não estiver viva; nunca pode impedir a câmera de funcionar
+        // Depois do reinício do microfone a escuta tenta ligar sozinha (sem exigir toque); se ficar surda, o aviso de toque cobre.
+        startVoice(voiceAutoNext ? 'auto' : 'wait'); // só age se a escuta não estiver viva; nunca pode impedir a câmera de funcionar
       } catch (e) {
         logCam(`voz falhou: ${(e as Error).message}`);
       }
+      voiceAutoNext = false;
       return;
     }
     if (document.visibilityState !== 'visible') {
@@ -424,6 +427,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
       // Solta o microfone de verdade (a captura antiga mantida pelo reinício continuaria presa à sessão de áudio ruim).
       // A escuta de voz também fica presa ao microfone antigo: para e volta a esperar um toque (aviso na tela).
       stopVoice();
+      voiceAutoNext = true;
       S.stream?.getAudioTracks().forEach((t) => t.stop());
       setAudioSession('auto');
       setTimeout(() => {

@@ -515,3 +515,8 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Relato (v0.12.2): ao abrir a câmera depois de ver um clipe a voz exigia um toque na tela; antes da v0.12.1 (recarga ao fechar o player) tudo funcionava sozinho. Motivo: recarregar _ao abrir a câmera_ tira o toque do usuário, e a escuta de voz do iOS só liga dentro de um toque.
 - Agora: recarrega de novo **ao fechar o player** (clipe com som), voltando à mesma tela com um fade de entrada (`body.resumed`, 300 ms) para não piscar; o toque seguinte em "abrir câmera" é um gesto e liga câmera, microfone e voz sozinhos. Removida a recarga em `openCamera`.
 - Trade-off: uma recarga curta (fade) ao fechar o player. Se ainda incomodar, a alternativa é dispensar o recarregamento e aceitar o toque extra.
+
+## v0.12.4 — Voz religa sozinha após o reinício do microfone
+
+- Relato (v0.12.3): ainda pedia toque na tela para ativar o microfone. Hipótese: o reinício automático do microfone mudo (v0.10.4) parava a voz e a deixava em "aguardando toque". Agora, nesse reinício, a escuta tenta ligar sozinha (`voiceAutoNext` → `startVoice('auto')`); se o iOS a deixar surda, o aviso de toque e o toque seguinte a reiniciam como antes.
+- Se continuar pedindo toque, preciso do Diagnóstico logo depois: "Câmera: início" mostra se houve "microfone mudo … reabrindo" e "Comando de voz" mostra "aguardando toque na tela".
