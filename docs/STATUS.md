@@ -413,3 +413,12 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Transições: 340 → 300 ms.
 
 **Testar:** Galeria → clipe → câmera: o microfone volta sozinho (veja o Diagnóstico)? Bipe ainda estoura?
+
+## v0.10.3 — Recarrega a página ao fechar o player (microfone)
+
+- Dado (v0.10.2): o reinício automático rodou e o microfone continuou mudo (pico 0.0000) — dentro da página não há recuperação depois que o player usa o áudio.
+- Contorno: ao fechar o player de um clipe com som a página recarrega e volta para a mesma tela (`sessionStorage` `clip.resumeView`). Em cargas novas o microfone sempre funcionou. Não recarrega em testes (`navigator.webdriver`).
+- Custo: uma recarga curta ao fechar o player; a câmera segue abrindo só com o toque em "Abrir câmera".
+- Bipe: ainda estoura segundo o Kenidy; falta saber se é no alto-falante ou só no vídeo gravado.
+
+**Testar:** Galeria → clipe → fechar → câmera: voz e áudio da gravação funcionam?

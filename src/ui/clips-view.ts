@@ -107,12 +107,30 @@ export function openPlayer(c: Clip): void {
   });
 }
 
+/**
+ * Visto no iPhone (v0.10.1/v0.10.2): depois de tocar um clipe com som, o iOS deixa a sessão de áudio da página em modo de
+ * reprodução e o microfone volta mudo (pico 0,000) mesmo reabrindo a captura. Só uma página nova resolve, por isso ao fechar o
+ * player de um clipe com som a página recarrega e volta para a mesma tela. Fora do iPhone (testes) não recarrega.
+ */
+export const RESUME_KEY = 'clip.resumeView';
+function resetAudioByReload(): void {
+  if (navigator.webdriver || !current?.withAudio) return;
+  try {
+    sessionStorage.setItem(RESUME_KEY, S.view);
+    location.reload();
+  } catch {
+    /* sem sessionStorage: segue sem recarregar */
+  }
+}
+
 export function closePlayer(): void {
+  const reload = !!current;
   els.playerVideo.pause();
   els.playerVideo.removeAttribute('src');
   els.playerVideo.load();
   hideAnimated(els.player);
   setAudioSession('auto');
+  if (reload) resetAudioByReload();
   current = null;
 }
 

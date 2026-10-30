@@ -9,7 +9,7 @@ import { T } from './strings';
 import { onStorageChange, restoreClips } from './clips';
 import { getPref, setPref } from './storage/prefs';
 import { storageInfo } from './storage/clip-store';
-import { bindPlayer, renderClips } from './ui/clips-view';
+import { RESUME_KEY, bindPlayer, renderClips } from './ui/clips-view';
 import { tick, updateUI } from './ui/controls';
 import { bindDiagnostics } from './ui/diag-view';
 import { els } from './ui/dom';
@@ -275,6 +275,13 @@ export function initApp(): void {
   renderClips();
   void restoreClips();
   void paintStorage();
+  try {
+    const resume = sessionStorage.getItem(RESUME_KEY);
+    sessionStorage.removeItem(RESUME_KEY);
+    if (resume === 'gallery' || resume === 'home') S.view = resume; // volta à tela de antes do recarregamento
+  } catch {
+    /* sem sessionStorage */
+  }
   updateUI();
   // A câmera não abre sozinha: o Início espera o toque em "Abrir câmera" (ver openCamera).
 }
