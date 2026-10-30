@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.7 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.7 · `estavel` = 0.15.7 (validada no iPhone)
 
 ## v0.15.7 — "Sons no vídeo"
 
