@@ -1,4 +1,4 @@
-import { WakeGate, isWakePhrase } from '../core/wake-word';
+import { WakeGate, isEarlyWakePhrase, isWakePhrase } from '../core/wake-word';
 import { notify, stateChanged, voiceCommand } from '../events';
 import { S } from '../state';
 import { T } from '../strings';
@@ -75,16 +75,27 @@ function markAlive(): void {
   setVoice('listening');
 }
 
+/** Quando cada fala foi vista pela primeira vez (para medir quanto o reconhecedor demora). */
+const firstSeen = new Map<string, number>();
+
 function onResult(ev: SpeechEventLike, id: number): void {
   markAlive();
+  const now = performance.now();
   for (let i = ev.resultIndex; i < ev.results.length; i++) {
     const result = ev.results[i];
+    const key = `${id}:${i}`;
+    if (!firstSeen.has(key)) firstSeen.set(key, now);
+    if (firstSeen.size > 30) firstSeen.delete(firstSeen.keys().next().value as string);
     const alternatives = Array.from({ length: result.length }, (_, k) => result[k].transcript);
-    const hit = alternatives.some(isWakePhrase);
-    logVoice(`texto "${alternatives[0] ?? ''}"${hit ? ' ✓' : ''}`);
-    if (!hit) continue;
-    if (gate.accept(`${id}:${i}`, performance.now())) voiceCommand();
-    else logVoice('comando ignorado (repetido)');
+    const full = alternatives.some(isWakePhrase);
+    // "Ei cli" já inicia a gravação (parar exige a frase completa).
+    const early = !full && !S.rec && !S.finalizing && alternatives.some(isEarlyWakePhrase);
+    logVoice(`texto "${alternatives[0] ?? ''}"${full ? ' ✓' : early ? ' ⚡' : ''}`);
+    if (!full && !early) continue;
+    if (gate.accept(key, now)) {
+      logVoice(`comando ${Math.round(now - (firstSeen.get(key) ?? now))} ms após a 1ª palavra`);
+      voiceCommand();
+    } else logVoice('comando ignorado (repetido)');
   }
 }
 

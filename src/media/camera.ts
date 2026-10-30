@@ -15,6 +15,14 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   channelCount: { ideal: 2 },
 };
 
+let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
+
+/** Registro curto das etapas de início da câmera, mostrado no painel de diagnóstico (botão "i"). */
+export function logCam(msg: string): void {
+  S.camLog.push(`${(performance.now() / 1000).toFixed(1)}s ${msg}`);
+  if (S.camLog.length > 14) S.camLog.shift();
+}
+
 /** Mensagem com a causa real do erro do microfone (antes tudo virava "permissão negada"). */
 export function micHint(e: unknown): string {
   const err = e as { name?: string; message?: string } | null;
@@ -60,6 +68,8 @@ export async function enableMic(): Promise<void> {
 }
 
 export async function start(): Promise<void> {
+  const my = ++startSeq;
+  logCam(`start #${my}`);
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
   await stopAll();
   const sup = support();
@@ -76,19 +86,41 @@ export async function start(): Promise<void> {
   };
   S.note = '';
   S.micErr = '';
+  let stream: MediaStream;
+  logCam('pedindo câmera e microfone');
   try {
-    S.stream = await navigator.mediaDevices.getUserMedia({ video: videoC, audio: AUDIO_CONSTRAINTS });
+    stream = await navigator.mediaDevices.getUserMedia({ video: videoC, audio: AUDIO_CONSTRAINTS });
   } catch (e1) {
     const err1 = e1 as Error;
     S.micErr = `${err1.name}: ${err1.message}`;
+    logCam(`câmera+mic recusado: ${err1.name}`);
     try {
-      S.stream = await navigator.mediaDevices.getUserMedia({ video: videoC });
+      stream = await navigator.mediaDevices.getUserMedia({ video: videoC });
       S.note = micHint(e1);
     } catch (e2) {
       const err2 = e2 as Error;
+      logCam(`câmera recusada: ${err2.name}`);
       notify(T.cameraOpenFail(err2.name || err2.message), 'err');
       return;
     }
+  }
+  if (my !== startSeq) {
+    // Outra chamada de start() começou enquanto esta esperava a permissão: a mais recente vence.
+    stream.getTracks().forEach((t) => t.stop());
+    logCam(`start #${my} descartado (há um mais novo)`);
+    return;
+  }
+  S.stream = stream;
+  logCam(
+    `stream ok: ${stream
+      .getTracks()
+      .map((t) => t.kind)
+      .join('+')}`,
+  );
+  for (const t of stream.getTracks()) {
+    t.addEventListener('ended', () => logCam(`${t.kind}: ended`));
+    t.addEventListener('mute', () => logCam(`${t.kind}: mute`));
+    t.addEventListener('unmute', () => logCam(`${t.kind}: unmute`));
   }
   els.video.srcObject = S.stream;
   try {
@@ -127,9 +159,14 @@ export async function start(): Promise<void> {
 
   void acquireWake();
   startLoop();
-  startVoice();
   notify(S.note, S.note ? 'warn' : '');
   stateChanged();
+  logCam('rodando');
+  try {
+    startVoice(); // a escuta de voz nunca pode impedir a câmera de iniciar
+  } catch (e) {
+    logCam(`voz falhou: ${(e as Error).message}`);
+  }
 }
 
 export async function stopAll(): Promise<void> {

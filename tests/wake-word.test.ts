@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { WakeGate, isWakePhrase, normalize } from '../src/core/wake-word';
+import { WakeGate, isEarlyWakePhrase, isWakePhrase, normalize } from '../src/core/wake-word';
 
 describe('normalize', () => {
   it('remove acentos, pontuação e caixa alta', () => {
@@ -55,4 +55,14 @@ describe('WakeGate', () => {
     gate.reset();
     expect(gate.accept('0:0', 1100)).toBe(true);
   });
+});
+
+describe('isEarlyWakePhrase', () => {
+  it.each(['Ei cli', 'Hey cli', 'bora lá oi cli'])('reconhece o começo "%s"', (text) =>
+    expect(isEarlyWakePhrase(text)).toBe(true),
+  );
+
+  it.each(['Ei', 'cli', 'Ei clipe', 'Ei clima', 'ei cli ente', 'Ei Felipe', ''])('ignora "%s"', (text) =>
+    expect(isEarlyWakePhrase(text)).toBe(false),
+  );
 });

@@ -156,6 +156,17 @@ try {
     await page.waitForFunction((n) => window.__starts > n, base, { timeout: 4000 });
     ok('voz: reconhecedor religa sozinho depois de encerrar');
 
+    // "Ei cli" (começo da frase) já inicia a gravação, depois do intervalo mínimo entre comandos.
+    await page.waitForTimeout(3200);
+    await page.evaluate(() => {
+      document.querySelector('#btnVoice').classList.remove('heard');
+      window.__say('Ei cli');
+    });
+    check(
+      await page.evaluate(() => document.querySelector('#btnVoice').classList.contains('heard')),
+      'voz: "Ei cli" já inicia a gravação',
+    );
+
     // Botão desliga a escuta e lembra a escolha.
     await page.click('#btnVoice');
     await page.waitForFunction(

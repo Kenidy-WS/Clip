@@ -74,6 +74,8 @@ export interface AppState {
   voiceEnabled: boolean;
   /** Últimos eventos da escuta, só para o painel de diagnóstico. */
   voiceLog: string[];
+  /** Etapas do início da câmera (permissão, stream, erros), só para o painel de diagnóstico. */
+  camLog: string[];
 }
 
 export const S: AppState = {
@@ -138,4 +140,5 @@ export const S: AppState = {
   voice: 'off',
   voiceEnabled: true,
   voiceLog: [],
+  camLog: [],
 };

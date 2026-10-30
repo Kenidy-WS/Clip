@@ -22,6 +22,7 @@ export function diagnosticsText(): string {
     `Relógio áudio−vídeo: ${S.aLastTs && S.lastInTs ? Math.round((S.aLastTs - S.lastInTs) / 1000) + ' ms' : '-'}`,
     `Frames: entrada ${S.framesIn}, saída ${S.framesOut} (${S.outFps.toFixed(1)}/s), descartados ${S.dropped}, fora de ordem ${S.reorders}`,
     `Buffer: ${S.buffer.video.length} frames de vídeo, ${S.buffer.audio.length} blocos de áudio`,
+    `Câmera (início):\n  ${S.camLog.join('\n  ') || '-'}`,
     `Voz: ${S.voice}${S.voiceEnabled ? '' : ' (desligada)'}${S.voiceLog.length ? '\n  ' + S.voiceLog.join('\n  ') : ''}`,
     S.note ? 'Nota: ' + S.note : '',
     navigator.userAgent,

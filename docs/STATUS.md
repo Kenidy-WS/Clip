@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.1 (comando de voz; correção do início da escuta) · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.2 · aguardando teste no iPhone
 
 ## Feito
 
@@ -27,7 +27,21 @@ verde era mostrado cedo demais. Na `v0.5.1`: ícone âmbar enquanto liga e verde
 o primeiro toque na tela reinicia a escuta dentro do gesto; tocar no 🎙️ âmbar reinicia em vez de desligar; painel "i" mostra
 a linha "Voz" com os últimos eventos (start, audiostart, texto, end, erros).
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.1`)
+## Teste da v0.5.1 e ajustes (v0.5.2)
+
+A voz passou a funcionar logo depois do toque (confirmado pelo Kenidy). Dois pontos novos:
+
+1. **Primeira abertura: câmera/mic não iniciam depois do "Permitir"** (botão azul "Iniciar câmera" continua; ao tocar nele pede
+   permissão de novo e aí funciona). Causa **não confirmada**. Na `v0.5.2`: `start()` isolado do reconhecedor de voz (um erro da
+   voz não impede mais a câmera), chamada mais recente de `start()` vence se houver duas sobrepostas, e o painel "i" ganhou a
+   seção "Câmera (início)" com cada etapa (pedindo permissão, stream ok/erro, track ended/mute, rodando). Se acontecer de
+   novo: abrir o "i" logo após o "Permitir" e mandar um print, junto com qualquer mensagem que apareça na tela.
+2. **Atraso do comando:** o app reage em poucos ms; o tempo está no reconhecedor do iOS (texto parcial ~0,4–0,9 s depois do
+   início da fala). `v0.5.2` aceita "Ei cli" (começo da frase, ~0,3 s mais cedo) **só para começar a gravar**; parar continua
+   exigindo "Ei clipe" completo. O painel "i" (linha "Voz") mostra "comando N ms após a 1ª palavra" para medir.
+   O pre-roll de 15–30 s já inclui o que veio antes do comando; o fim do clipe inclui a fala do comando (aparar é ideia futura).
+
+## O que o Kenidy precisa testar no iPhone (`v0.5.2`)
 
 0. **Abrir o app, dar as permissões, tocar uma vez em qualquer lugar da tela e dizer "Ei Clip"** — deve funcionar de primeira.
    Se não funcionar, abrir o painel "i" e mandar um print da linha "Voz".

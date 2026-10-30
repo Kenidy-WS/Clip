@@ -28,6 +28,16 @@ export function isWakePhrase(text: string): boolean {
 }
 
 /**
+ * Início da frase ainda sendo reconhecida: texto parcial terminando em saudação + "cli" ("ei cli").
+ * Chega ~0,3 s antes de "ei clipe". Só serve para COMEÇAR a gravar (um começo falso é barato; parar sem querer, não).
+ */
+export function isEarlyWakePhrase(text: string): boolean {
+  const words = normalize(text).split(' ');
+  const n = words.length;
+  return n >= 2 && words[n - 1] === 'cli' && GREETINGS.has(words[n - 2]);
+}
+
+/**
  * Trava contra disparo duplo. O reconhecedor entrega a mesma fala várias vezes (parcial e depois final),
  * então um comando só vale se for de outra fala (`key` diferente) e passou o intervalo mínimo desde o último.
  */
