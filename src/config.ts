@@ -8,4 +8,11 @@ export const AUDIO_BITRATE = 192_000;
 export const AUDIO_BLOCK_FRAMES = 2048;
 export const DB_NAME = 'clip';
 export const DB_STORE = 'clips';
+/** Gravação em disco: pedaços do arquivo em andamento (versão 2 do banco) e o resumo de cada gravação. */
+export const DB_PARTS = 'parts';
+export const DB_TAKES = 'takes';
+/** Duração máxima de uma gravação em disco (o limite de 90 s da gravação na memória não vale aqui). */
+export const DISK_MAX_SEC = 30 * 60;
+/** A gravação em disco é encerrada (e salva) quando o espaço livre estimado cai abaixo disto. */
+export const DISK_MIN_FREE_MB = 300;
 export const APP_VERSION: string = __APP_VERSION__;

@@ -1,6 +1,25 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.13.5 · `estavel` = 0.13.2 · aguardando teste no iPhone (bloco de robustez, abaixo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.0 (gravação longa, experimental, aguardando teste no iPhone) · `estavel` = 0.13.2
+
+## v0.14.0 — gravação longa em disco (experimental, desligada por padrão)
+
+Motivo (Kenidy): o limite de 90 s por clipe (RAM) é curto; o uso real são takes de 2 a 10 min.
+
+- **Como funciona:** com "Gravação longa (experimental)" ligada nos Ajustes, o clipe é gravado como **MP4 fragmentado** direto no IndexedDB, um pedaço a cada ~2 s (`media/disk-rec.ts`, `storage/take-store.ts`, `core/part-collector.ts`). Memória usada: só o fragmento em andamento. Limite: 30 min (`DISK_MAX_SEC`) e para sozinho com menos de 300 MB livres. Desligada, tudo segue como na v0.13.5 (RAM, 90 s).
+- **Se algo falhar** ao abrir o disco, a gravação segue na memória. Se o disco falhar no meio, a gravação encerra e guarda o que já estava gravado.
+- **Recuperação:** se o app for encerrado/travar gravando, na próxima abertura o trecho até o último fragmento vira clipe ("Um clipe interrompido foi recuperado…", `recoverTakes` em `clips.ts`). Perda máxima: ~2 s.
+- Banco IndexedDB passou para a versão 2 (lojas `parts` e `takes`); clipes existentes não são tocados. Os pedaços só são apagados depois de o clipe estar salvo.
+- Testes: unitários (`tests/disk-rec.test.ts`, `part-collector.test.ts`) e e2e (gravar/parar, sair do app, travar e recuperar com `Page.crash`).
+
+**O que o Kenidy precisa testar no iPhone:**
+
+1. Ajustes → ligar "Gravação longa (experimental)". Gravar um take **de mais de 2 min** e parar: "Clipe salvo", toca na Galeria, dura o tempo certo.
+2. **Compatibilidade (o ponto de risco):** compartilhar → "Salvar Vídeo" no Rolo, tocar lá, e postar no TikTok/Instagram. O formato é MP4 fragmentado; se algum desses recusar, voltar a desligar a opção e avisar.
+3. Gravar e matar o app (arrastar para fechar) no meio; abrir de novo: o trecho deve aparecer na Galeria.
+4. Gravar 5+ min: o celular esquenta mais? A prévia continua fluida?
+
+**Limites conhecidos:** clipe recuperado ou salvo ao sair do app fica sem miniatura; o áudio não é declarado se o pre-roll não tinha áudio; calor/bateria em sessões longas ainda não medidos.
 
 ## Bloco de robustez da gravação (30/10) — v0.13.3 a v0.13.5, aguardando teste no iPhone
 

@@ -15,7 +15,7 @@ import { markVoiceUnverified, restartVoice, resumeVoice, setVoiceEnabled, voiceT
 import { trySetupAudio } from './media/audio';
 import { cfg, S } from './state';
 import { T } from './strings';
-import { onStorageChange, restoreClips } from './clips';
+import { onStorageChange, recoverTakes, restoreClips } from './clips';
 import { getPref, setPref } from './storage/prefs';
 import { storageInfo } from './storage/clip-store';
 import { bindPlayer, renderClips } from './ui/clips-view';
@@ -46,6 +46,7 @@ function loadPrefs(): void {
   const iq = getPref('imageQuality');
   if (iq === 'high' || iq === 'max') cfg.imageQuality = iq;
   S.beepInClip = getPref('beepClip') === '1';
+  S.diskRec = getPref('diskRec') === '1';
   const buffer = getPref('buffer');
   if (buffer === '15' || buffer === '30') cfg.bufferSec = Number(buffer);
   S.buffer.windowSec = cfg.bufferSec;
@@ -163,6 +164,11 @@ function bindSettings(): void {
   els.swBeepClip.addEventListener('click', () => {
     S.beepInClip = !S.beepInClip;
     setPref('beepClip', S.beepInClip ? '1' : '0');
+    updateUI();
+  });
+  els.swDisk.addEventListener('click', () => {
+    S.diskRec = !S.diskRec;
+    setPref('diskRec', S.diskRec ? '1' : '0');
     updateUI();
   });
   bindSegment(els.segBuffer, (v) => {
@@ -330,7 +336,7 @@ export function initApp(): void {
 
   setInterval(tick, 250);
   renderClips();
-  void restoreClips();
+  void restoreClips().then(recoverTakes);
   void paintStorage();
   updateUI();
   // A câmera não abre sozinha: o Início espera o toque em "Abrir câmera" (ver openCamera).

@@ -8,6 +8,7 @@ import { T } from '../strings';
 import type { Chunk } from '../types';
 import { salvageRecording } from './recorder';
 import { HAS_RVFC } from './support';
+import { recordVideo } from './rec-sink';
 
 /** Laço de captura: cada quadro novo do <video> passa pelo canvas e entra no VideoEncoder. */
 export function startLoop(): void {
@@ -178,7 +179,7 @@ function onVideoChunk(chunk: EncodedVideoChunk, meta?: EncodedVideoChunkMetadata
   };
   if (item.ts < S.lastOutTs) S.reorders++; // saída fora de ordem = encoder usando B-frames
   S.lastOutTs = Math.max(S.lastOutTs, item.ts);
-  if (S.rec) S.rec.v.push(item);
+  if (S.rec) recordVideo(S.rec, item);
   S.buffer.pushVideo(item);
   S.framesOut++;
   S.fpsCount++;

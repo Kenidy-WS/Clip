@@ -1,3 +1,5 @@
+import type { DiskRecorder } from './media/disk-rec';
+
 /** Pedaço de mídia já codificado (vídeo H.264 ou áudio AAC). Timestamps em microssegundos. */
 export interface Chunk {
   data: Uint8Array;
@@ -15,6 +17,8 @@ export interface Recording {
   startMs: number;
   /** Segundos de pre-roll incluídos no clipe. */
   preSec: number;
+  /** Gravação em disco: os chunks vão direto para o armazenamento e `v`/`a` ficam vazios. */
+  disk?: DiskRecorder;
 }
 
 export type StatusKind = '' | 'ok' | 'warn' | 'err';

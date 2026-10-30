@@ -1,3 +1,4 @@
+import { DISK_MAX_SEC, DISK_MIN_FREE_MB } from '../config';
 import { maxRecSec } from '../core/video-profile';
 import { formatDuration } from '../core/format';
 import { notify } from '../events';
@@ -54,9 +55,26 @@ export function updateUI(): void {
   paintSegment(els.segImageQuality, cfg.imageQuality, locked);
   paintSegment(els.segBuffer, String(cfg.bufferSec), false);
   els.swBeepClip.setAttribute('aria-checked', String(S.beepInClip));
+  els.swDisk.setAttribute('aria-checked', String(S.diskRec));
+  els.swDisk.disabled = locked;
   els.swVoice.setAttribute('aria-checked', String(S.voiceEnabled));
   els.swSound.setAttribute('aria-checked', String(S.soundOn));
   els.rowVoice.hidden = S.voice === 'unsupported';
+}
+
+let lastSpaceCheck = 0;
+/** A cada ~10 s da gravação em disco: se o espaço livre estiver acabando, encerra e salva antes de falhar. */
+function checkSpace(): void {
+  const now = performance.now();
+  if (now - lastSpaceCheck < 10_000) return;
+  lastSpaceCheck = now;
+  void navigator.storage
+    ?.estimate?.()
+    .then((e) => {
+      if (e.quota === undefined || e.usage === undefined || !S.rec || S.finalizing) return;
+      if (e.quota - e.usage < DISK_MIN_FREE_MB * 1e6) void stopRec().then(() => notify(T.storageLow, 'warn'));
+    })
+    .catch(() => {});
 }
 
 /** Atualização periódica (250 ms): indicador de buffer/gravação, avisos e diagnóstico. */
@@ -70,7 +88,9 @@ export function tick(): void {
   if (S.rec) {
     const live = (now - S.rec.startMs) / 1000;
     els.bufTxt.textContent = T.recording(formatDuration(S.rec.preSec + live));
-    if (live + S.rec.preSec > maxRecSec(S.bitrate) && !S.finalizing) void stopRec();
+    const limit = S.rec.disk ? DISK_MAX_SEC : maxRecSec(S.bitrate);
+    if (live + S.rec.preSec > limit && !S.finalizing) void stopRec();
+    else if (S.rec.disk && !S.finalizing) checkSpace();
   } else {
     els.bufTxt.textContent = T.bufferFill(shown, cfg.bufferSec);
   }

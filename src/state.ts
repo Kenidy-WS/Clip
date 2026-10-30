@@ -75,6 +75,8 @@ export interface AppState {
   beepVol: BeepVol;
   /** Bipe misturado no áudio do clipe (em vez de só tocar no alto-falante). */
   beepInClip: boolean;
+  /** Gravação longa (experimental): o clipe é gravado direto no armazenamento, sem limite de 90 s. */
+  diskRec: boolean;
   beepMix: { data: Float32Array; pos: number } | null;
   aInfo: string;
   aErr: string;
@@ -162,6 +164,7 @@ export const S: AppState = {
   soundOn: true,
   beepVol: 'max',
   beepInClip: false,
+  diskRec: false,
   beepMix: null,
   aInfo: '',
   aErr: '',

@@ -6,6 +6,7 @@ import type { AacMeta } from '../state';
 import { T } from '../strings';
 import type { Chunk } from '../types';
 import { WORKLET_SRC } from './worklet-source';
+import { recordAudio } from './rec-sink';
 
 /** O AudioContext é criado dentro de um toque do usuário (exigência do Safari) e mantido entre reinícios. */
 export function ensureAudioCtx(): void {
@@ -242,6 +243,6 @@ function onAudioChunk(chunk: EncodedAudioChunk, meta?: EncodedAudioChunkMetadata
   };
   S.aOut++;
   S.aLastTs = item.ts;
-  if (S.rec) S.rec.a.push(item);
+  if (S.rec) recordAudio(S.rec, item);
   S.buffer.pushAudio(item);
 }

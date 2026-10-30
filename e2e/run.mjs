@@ -744,7 +744,7 @@ try {
     await page.evaluate(
       () =>
         new Promise((res, rej) => {
-          const r = indexedDB.open('clip', 1);
+          const r = indexedDB.open('clip');
           r.onupgradeneeded = () => r.result.createObjectStore('clips', { keyPath: 'name' });
           r.onsuccess = () => {
             const db = r.result;
@@ -1020,7 +1020,7 @@ try {
       page.evaluate(
         () =>
           new Promise((res) => {
-            const r = indexedDB.open('clip', 1);
+            const r = indexedDB.open('clip');
             r.onerror = () => res(null);
             r.onsuccess = () => {
               const q = r.result.transaction('clips').objectStore('clips').getAll();
@@ -1118,6 +1118,147 @@ try {
       check(errs.length === 0, 'codificador falhou gravando: sem erros de JavaScript ' + errs.join(';'));
       await page.close();
     }
+
+    // Gravação longa (em disco): os pedaços vão para o armazenamento enquanto grava e viram um clipe só ao parar.
+    {
+      const dbCounts = (page) =>
+        page.evaluate(
+          () =>
+            new Promise((res) => {
+              const r = indexedDB.open('clip');
+              r.onerror = () => res(null);
+              r.onsuccess = () => {
+                const db = r.result;
+                const names = ['clips', 'parts', 'takes'];
+                if (!names.every((n) => db.objectStoreNames.contains(n))) return res(null);
+                const tx = db.transaction(names);
+                const qs = names.map((n) => tx.objectStore(n).getAll());
+                tx.oncomplete = () => {
+                  db.close();
+                  res({
+                    clips: qs[0].result.map((c) => c.blob.size),
+                    parts: qs[1].result.length,
+                    takes: qs[2].result.length,
+                  });
+                };
+              };
+            }),
+        );
+      const openDiskPage = async (context) => {
+        const ctx = context ?? (await browser.newContext());
+        const page = await ctx.newPage();
+        const errs = [];
+        page.on('pageerror', (e) => errs.push(String(e)));
+        await page.addInitScript(STUBS + EMIT);
+        await page.addInitScript(() => localStorage.setItem('clip.diskRec', '1'));
+        await page.goto(URL_);
+        await page.click('#btnOpen');
+        await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+          timeout: 8000,
+        });
+        await page.waitForFunction(() => window.__chunks > 20, null, { timeout: 8000 });
+        return { page, errs, ctx };
+      };
+      const startDisk = async (page, ms) => {
+        await page.click('#btnRec');
+        await page.waitForFunction(
+          () => document.querySelector('#btnRec').dataset.state === 'recording',
+          null,
+          { timeout: 3000 },
+        );
+        await page.waitForTimeout(ms);
+      };
+
+      // Gravar e parar: o clipe é guardado e os pedaços temporários são apagados.
+      {
+        const { page, errs } = await openDiskPage();
+        await startDisk(page, 4500);
+        const mid = await dbCounts(page);
+        check(
+          mid && mid.parts >= 1 && mid.takes === 1,
+          'gravação longa: durante a gravação os pedaços já estão guardados',
+        );
+        await page.click('#btnRec');
+        await waitReady(page);
+        await page.waitForTimeout(800);
+        const end = await dbCounts(page);
+        check(end && end.clips.length === 1 && end.clips[0] > 500, 'gravação longa: parar guarda o clipe');
+        check(
+          end && end.parts === 0 && end.takes === 0,
+          'gravação longa: os pedaços temporários são apagados',
+        );
+        check(
+          (await page.textContent('#status')).includes('Clipe salvo'),
+          'gravação longa: aviso "Clipe salvo"',
+        );
+        check(errs.length === 0, 'gravação longa: sem erros de JavaScript ' + errs.join(';'));
+        await page.close();
+      }
+
+      // Sair do app gravando em disco também guarda o clipe.
+      {
+        const { page, errs } = await openDiskPage();
+        await startDisk(page, 1500);
+        await page.evaluate(() => {
+          Object.defineProperty(document, 'visibilityState', { value: 'hidden', configurable: true });
+          document.dispatchEvent(new Event('visibilitychange'));
+        });
+        await page.waitForTimeout(1200);
+        const end = await dbCounts(page);
+        check(
+          end && end.clips.length === 1 && end.clips[0] > 500,
+          'gravação longa: sair do app gravando guarda o clipe',
+        );
+        check(
+          end && end.parts === 0 && end.takes === 0,
+          'gravação longa: sair do app apaga os pedaços temporários',
+        );
+        check(errs.length === 0, 'gravação longa (sair do app): sem erros de JavaScript ' + errs.join(';'));
+        await page.close();
+      }
+
+      // O app é encerrado no meio da gravação (sem aviso de saída): ao abrir de novo, o trecho gravado vira um clipe.
+      // Contexto persistente: o IndexedDB sobrevive ao fechamento, como no iPhone.
+      {
+        const dir = mkdtempSync(join(tmpdir(), 'ei-clip-profile-'));
+        const launch = () =>
+          chromium.launchPersistentContext(dir, {
+            reducedMotion: 'reduce',
+            args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
+          });
+        const ctx1 = await launch();
+        const { page } = await openDiskPage(ctx1);
+        await startDisk(page, 4500);
+        const before = await dbCounts(page);
+        check(before && before.parts >= 1, 'recuperação: há pedaços guardados antes da queda');
+        await ctx1.close(); // mata a página sem pagehide útil: nada de salvamento ao sair
+        const ctx2 = await launch();
+        const page2 = await ctx2.newPage();
+        const errs = [];
+        page2.on('pageerror', (e) => errs.push(String(e)));
+        await page2.addInitScript(STUBS + EMIT);
+        await page2.goto(URL_);
+        const gotNotice = await page2
+          .waitForFunction(() => document.querySelector('#status').textContent.includes('recuperado'), null, {
+            timeout: 8000,
+          })
+          .then(() => true)
+          .catch(() => false);
+        check(gotNotice, 'recuperação: aviso de clipe recuperado');
+        await page2.waitForTimeout(800);
+        const end = await dbCounts(page2);
+        check(
+          end && end.clips.length === 1 && end.clips[0] > 500,
+          'recuperação: o trecho gravado virou um clipe',
+        );
+        check(
+          end && end.parts === 0 && end.takes === 0,
+          'recuperação: os pedaços temporários foram apagados',
+        );
+        check(errs.length === 0, 'recuperação: sem erros de JavaScript ' + errs.join(';'));
+        await ctx2.close();
+      }
+    }
   }
 
   // 3c) Compartilhar/salvar: se a folha do iOS falhar o clipe é baixado; fechar a folha sem escolher não faz nada.
@@ -1126,7 +1267,7 @@ try {
       page.evaluate(
         () =>
           new Promise((res, rej) => {
-            const r = indexedDB.open('clip', 1);
+            const r = indexedDB.open('clip');
             r.onupgradeneeded = () => r.result.createObjectStore('clips', { keyPath: 'name' });
             r.onsuccess = () => {
               const db = r.result;

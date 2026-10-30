@@ -31,6 +31,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Publicação:** push na `main` roda `.github/workflows/deploy.yml` (checks + GitHub Pages). Base de caminhos é `./`.
 - **Fluxo de entrega (pedido do Kenidy):** quando uma feature estiver pronta e `npm run check` + `npm run e2e` passarem,
   suba direto na `main` (sem esperar aprovação do merge) para ele validar no iPhone. Avise a versão publicada e o que testar.
+- **Gravação longa (v0.14.0, experimental):** com `S.diskRec` o clipe vai por `media/disk-rec.ts` (MP4 fragmentado, pedaços no IndexedDB `parts`/`takes`) e não pela RAM; chunks entram por `media/rec-sink.ts`. Os pedaços só são apagados depois de o clipe estar salvo; `recoverTakes()` (`clips.ts`) recupera takes interrompidos na abertura. Compatibilidade do fMP4 com Fotos/TikTok/Instagram ainda não confirmada no iPhone.
 - **Gravação nunca é descartada:** qualquer caminho que encerre a captura com `S.rec` ativo passa por `salvageRecording()` (`media/recorder.ts`); `ui/rec-guard.ts` a chama ao sair do app. Não zere `S.rec` direto. A montagem do MP4 tem plano B só com vídeo (`core/salvage.ts`).
 - Commits: mensagens em português, curtas, no formato "vX.Y.Z: o que mudou".
 - Trabalho em **ondas** (ver roadmap): uma onda por chat, o Kenidy testa no iPhone e aprova antes da próxima.
