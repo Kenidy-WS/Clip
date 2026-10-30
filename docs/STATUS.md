@@ -1,6 +1,14 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.6 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.7 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.14.7 — textos e balão de aviso
+
+Validado no iPhone pelo Kenidy (v0.14.6): áudio do clipe em disco OK; TikTok abre e toca o clipe fragmentado (postar de verdade ainda não feito); recuperação ao fechar o app OK; clipe salvo ao sair do app **tem** miniatura. Sobram só: parada por pouco espaço e limite de 30 min (difíceis de simular), calor/bateria em sessões longas.
+
+- Balão de aviso (`.status`) mais estreito (até 300 px, ajustado ao texto), fonte 13 px, cantos menores. Posição mantida (abaixo da barra superior).
+- Textos: sem jargão (MP4, H.264, AAC, AudioContext, nomes de erro) e mais curtos; palavras-chave que o e2e confere foram mantidas.
+  **Testar:** ver os avisos (gravar/parar, salvar clipe grande, ligar o som do microfone) e dizer se a largura e a posição agradam.
 
 ## v0.14.6 — gravação longa oficial
 

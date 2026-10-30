@@ -194,10 +194,12 @@ p {
 }
 .status {
   display: none;
-  max-width: 420px;
-  padding: 8px 14px;
-  border-radius: 14px;
-  font-size: 14px;
+  width: fit-content;
+  max-width: min(300px, 100%);
+  padding: 7px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.35;
   text-align: center;
   background: var(--glass);
   -webkit-backdrop-filter: blur(10px);
