@@ -48,7 +48,7 @@ function downloadClips(list: Clip[]): void {
  * Clipe longo gravado em disco (v0.15.0): compartilhar com `File` derrubava a página (o iOS monta 1 GB+ na memória). Em vez
  * disso o clipe é baixado por um endereço servido pelo service worker (ver `sw-template.js`), direto do disco para Arquivos.
  */
-const BIG_DOWNLOAD_BYTES = 100e6;
+const BIG_DOWNLOAD_BYTES = 250e6; // até aqui a folha de compartilhar aguentava (limite antigo de clipe em memória)
 const viaDownload = (c: Clip): boolean =>
   !!c.take &&
   c.blob.size >= ((window as { __bigShare?: number }).__bigShare ?? BIG_DOWNLOAD_BYTES) &&

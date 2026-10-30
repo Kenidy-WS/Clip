@@ -1036,6 +1036,7 @@ try {
       const errs = [];
       page.on('pageerror', (e) => errs.push(String(e)));
       await page.addInitScript(STUBS + EMIT);
+      await page.addInitScript(() => localStorage.setItem('clip.diskRec', '0')); // este caminho cobre a gravação em memória
       await page.goto(URL_);
       await page.click('#btnOpen');
       await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {

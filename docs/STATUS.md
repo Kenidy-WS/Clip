@@ -1,6 +1,12 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.5 (clipe longo validado no iPhone) · `estavel` = 0.13.2
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.6 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.14.6 — gravação longa oficial
+
+Kenidy validou a v0.14.5 e pediu para oficializar. **Gravação longa agora vem ligada por padrão** (sem "experimental"; o interruptor nos Ajustes continua como plano B, desligado volta à gravação em memória de 90 s). Limite do download pelo service worker subiu de 100 para **250 MB** (`BIG_DOWNLOAD_BYTES`): clipes menores vão pela folha de compartilhar (menos telas), maiores por download. `estavel` avançou para a v0.14.5.
+**Testar:** um clipe de ~200–250 MB (≈1 a 2 min) em "Salvar / Compartilhar": se a página cair, descer o limite.
+**Pendências do bloco de gravação:** (1) áudio do clipe em disco ainda não conferido no iPhone (o player abre mudo; ligar o som desliga a câmera); (2) postar no TikTok/Instagram um clipe fragmentado; (3) recuperação ao fechar o app no meio de uma gravação longa; (4) clipe salvo ao sair do app ou recuperado fica sem miniatura; (5) parada por pouco espaço livre e limite de 30 min nunca exercitados no iPhone; (6) calor/bateria em sessões de 20–30 min; (7) revisão de textos e dos passos de download.
 
 ## v0.14.5 validada no iPhone (30/10, 16:22)
 

@@ -46,7 +46,7 @@ function loadPrefs(): void {
   const iq = getPref('imageQuality');
   if (iq === 'high' || iq === 'max') cfg.imageQuality = iq;
   S.beepInClip = getPref('beepClip') === '1';
-  S.diskRec = getPref('diskRec') === '1';
+  S.diskRec = getPref('diskRec') !== '0'; // ligada por padrão desde a v0.14.6
   const buffer = getPref('buffer');
   if (buffer === '15' || buffer === '30') cfg.bufferSec = Number(buffer);
   S.buffer.windowSec = cfg.bufferSec;
