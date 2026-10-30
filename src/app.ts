@@ -165,7 +165,7 @@ function bindSettings(): void {
 
 /** "Ei Clip" reconhecido: alterna a gravação (inicia com o pre-roll ou para e salva). */
 function onVoice(): void {
-  if (!S.running || S.finalizing) return;
+  if (!S.running || S.finalizing || S.view !== 'camera') return; // estacionada na Galeria a voz não grava
   els.btnVoice.classList.add('heard');
   setTimeout(() => els.btnVoice.classList.remove('heard'), 1200);
   if (S.rec) void stopRec();

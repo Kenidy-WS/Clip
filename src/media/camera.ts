@@ -85,10 +85,72 @@ export function cancelStart(): void {
   clearTimeout(watchdog);
 }
 
-/** O usuário saiu da câmera (Início ou Galeria): guarda a hora para a próxima abertura esperar o iOS liberar o microfone. */
-export function markCameraLeft(): void {
+/** A captura foi desligada de verdade: guarda a hora para a próxima abertura esperar o iOS liberar o microfone. */
+function markCameraLeft(): void {
   leftCameraAt = performance.now();
   logCam('saiu da câmera');
+}
+
+/**
+ * Câmera "estacionada" (v0.12.11): ao ir para a Galeria, câmera, microfone e voz seguem ligados por PARK_MS. Voltar nesse prazo
+ * não reabre nada (sem espera, sem novo pedido de permissão, sem microfone mudo). Ela é desligada de verdade quando o prazo
+ * acaba ou quando o usuário toca num clipe (com a captura ligada o iOS silencia o vídeo do player).
+ */
+const PARK_MS = 15000;
+let parked = false;
+let parkTimer = 0;
+
+export const isParked = (): boolean => parked;
+
+/** Mantém a captura ligada enquanto o usuário olha a Galeria; desliga sozinha depois de PARK_MS. */
+export function parkCamera(): void {
+  parked = true;
+  clearTimeout(parkTimer);
+  logCam(`Galeria: câmera mantida ligada por ${PARK_MS / 1000} s`);
+  parkTimer = window.setTimeout(() => {
+    logCam('Galeria há muito tempo: desligando a câmera');
+    void releaseCamera();
+  }, PARK_MS);
+}
+
+/**
+ * Voltou da Galeria com a câmera ainda estacionada: religa só a prévia (elemento novo, mesmo stream) e descarta o que o buffer
+ * guardou enquanto o usuário estava fora. Devolve falso se a captura já não estava viva (quem chamou abre a câmera normalmente).
+ */
+export function resumeParked(): boolean {
+  if (!parked) return false;
+  clearTimeout(parkTimer);
+  parked = false;
+  if (!S.running || !S.stream || S.stream.getTracks().some((t) => t.readyState !== 'live')) {
+    logCam('Galeria: a captura não estava mais viva; abrindo a câmera de novo');
+    return false;
+  }
+  S.buffer.discardUntil(S.lastInTs);
+  S.lastKeyMs = 0;
+  refreshPreview();
+  void S.audioCtx?.resume().catch(() => {});
+  void acquireWake();
+  logCam('câmera retomada da Galeria (sem reabrir)');
+  stateChanged();
+  return true;
+}
+
+/** Desliga a captura (câmera, microfone, voz) e fecha o áudio: sair para o Início, abrir um clipe ou fim do prazo da Galeria. */
+export async function releaseCamera(): Promise<void> {
+  clearTimeout(parkTimer);
+  parked = false;
+  markCameraLeft();
+  await stopAll();
+  try {
+    // Libera a sessão de áudio de vez (fecha o contexto): com a captura ligada o iOS deixa o som de qualquer <video> mudo ou
+    // baixo, e depois de tocar um clipe o microfone podia ficar mudo ao voltar. O contexto novo nasce no toque que abre a câmera.
+    const ctx = S.audioCtx;
+    S.audioCtx = null;
+    S.workletReady = false;
+    if (ctx && ctx.state !== 'closed') await ctx.close();
+  } catch {
+    /* segue */
+  }
 }
 
 /** Mensagem com a causa real do erro do microfone (antes tudo virava "permissão negada"). */

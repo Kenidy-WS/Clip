@@ -20,7 +20,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 
 ## Regras do projeto
 
-- **Telas:** Início, Câmera e Galeria (`S.view`), sem rolagem da página. Sair da câmera desliga captura/voz. Cores só por tokens
+- **Telas:** Início, Câmera e Galeria (`S.view`), sem rolagem da página. Sair da câmera para o Início desliga captura/voz; para a Galeria a câmera fica **estacionada** 15 s (`parkCamera`/`resumeParked`/`releaseCamera` em `camera.ts`) e desliga ao tocar num clipe. Cores só por tokens
   `:root` em `styles.css` (amarelo = ativo, vermelho = gravar, verde = escutando); ícones só em `src/ui/icons.ts`.
 - **Textos:** toda frase exibida ao usuário fica em `src/strings.ts` (rótulos fixos de botões/ajustes ficam no `index.html`). Tom simples, formal e profissional; telas limpas, sem
   informação técnica para o usuário final (diagnóstico é só para desenvolvimento).

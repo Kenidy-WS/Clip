@@ -605,6 +605,10 @@ try {
   {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS);
+    // O prazo de 15 s da câmera estacionada na Galeria (PARK_MS) vira 3 s nesta página, para o teste não esperar.
+    await page.addInitScript(
+      `{ const st = window.setTimeout.bind(window); window.setTimeout = (f, ms, ...a) => st(f, ms === 15000 ? 3000 : ms, ...a); }`,
+    );
     await page.goto(URL_);
     await page.evaluate(
       () =>
@@ -646,9 +650,32 @@ try {
     await page.click('#btnGallery');
     check(await page.isVisible('#screenGallery'), 'miniatura da câmera abre a Galeria');
     check(
-      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
-      'ao abrir a Galeria a captura é desligada (áudio de reprodução no iOS)',
+      (await page.getAttribute('#btnRec', 'data-state')) === 'ready',
+      'na Galeria a câmera fica estacionada (captura segue ligada)',
     );
+    // Voltar logo: instantâneo, sem reabrir a captura.
+    await page.evaluate(() => (window.__ord = []));
+    await page.click('#btnGalleryBack');
+    check(
+      await page.isVisible('#screenCamera'),
+      'voltar da Galeria (aberta pela câmera) volta para a câmera',
+    );
+    check(
+      (await page.getAttribute('#btnRec', 'data-state')) === 'ready' &&
+        !(await page.evaluate(() => (window.__ord || []).includes('gum'))),
+      'voltar com a câmera estacionada não pede a captura de novo',
+    );
+    // Esperar além do prazo: a câmera estacionada desliga sozinha.
+    await page.click('#btnGallery');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'idle', null, {
+      timeout: 5000,
+    });
+    ok('passado o prazo na Galeria, a câmera estacionada desliga sozinha');
+    await page.click('#btnGalleryBack');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    await page.click('#btnGallery'); // câmera estacionada de novo
     check((await page.locator('#clips .tile').count()) === 3, 'Galeria mostra os clipes guardados');
     check(
       (await page.locator('#clips .tile img').count()) === 3 &&
@@ -657,6 +684,10 @@ try {
     );
     await page.click('#clips .tile');
     check(await page.isVisible('#player'), 'tocar no clipe abre o player');
+    check(
+      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
+      'tocar num clipe desliga a câmera estacionada (áudio de reprodução no iOS)',
+    );
     check(
       (await page.evaluate(() => !!document.querySelector('#playerVideo').getAttribute('src'))) === true,
       'player carrega o vídeo',
@@ -685,7 +716,7 @@ try {
     await page.waitForFunction(() => !document.querySelector('#screenGallery').offsetParent, null, {
       timeout: 3000,
     });
-    ok('gesto da borda esquerda volta da Galeria para o Início');
+    ok('gesto da borda esquerda volta da Galeria para a tela de origem (câmera)');
     const w = await page.evaluate(() => innerWidth);
     await swipe(w - 5, w - 200); // da borda direita para a esquerda = Galeria
     await page.waitForFunction(() => !!document.querySelector('#screenGallery').offsetParent, null, {
@@ -764,7 +795,7 @@ try {
     await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    ok('"Abrir câmera" na Galeria liga a câmera de novo');
+    ok('"Abrir câmera" na Galeria volta à câmera ligada');
     await page.close();
   }
 

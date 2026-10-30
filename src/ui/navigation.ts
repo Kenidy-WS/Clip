@@ -1,5 +1,5 @@
 import { notify } from '../events';
-import { cancelStart, markCameraLeft, start, stopAll } from '../media/camera';
+import { cancelStart, isParked, parkCamera, releaseCamera, resumeParked, start } from '../media/camera';
 import { S } from '../state';
 import { T } from '../strings';
 import { exitSelection } from './clips-view';
@@ -16,6 +16,13 @@ let galleryFrom: 'home' | 'camera' = 'home';
  */
 export async function openCamera(): Promise<void> {
   if (S.opening && S.view === 'camera') return;
+  if (isParked()) {
+    // Voltou da Galeria com a câmera ainda ligada (ver `parkCamera`): não há nada a reabrir.
+    S.view = 'camera';
+    notify('');
+    updateUI();
+    if (resumeParked()) return;
+  }
   const mine = ++openSeq;
   S.view = 'camera';
   S.opening = true;
@@ -33,7 +40,10 @@ export async function openCamera(): Promise<void> {
   }
 }
 
-/** Vai para o Início ou a Galeria. Sair da câmera desliga captura, microfone e escuta de voz. */
+/**
+ * Vai para o Início ou a Galeria. Sair da câmera para o Início desliga captura, microfone e escuta de voz. Para a Galeria a
+ * câmera fica "estacionada" por alguns segundos (voltar logo é instantâneo); tocar num clipe ou esperar a desliga.
+ */
 export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   if (S.rec || S.finalizing) {
     notify(T.finishRecordingFirst, 'warn');
@@ -41,28 +51,18 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
   }
   const leavingCamera = S.view === 'camera';
   if (view === 'gallery') galleryFrom = leavingCamera ? 'camera' : 'home';
+  const park = leavingCamera && view === 'gallery' && S.running; // captura viva: segue ligada na Galeria
   S.view = view;
   if (view !== 'gallery') exitSelection();
   if (leavingCamera) {
     openSeq++;
     S.opening = false;
-    cancelStart();
-    markCameraLeft();
+    if (!park) cancelStart(); // câmera ainda abrindo: cancela o início
   }
   notify('');
   updateUI();
-  if (!leavingCamera) return;
-  await stopAll();
-  try {
-    // Libera a sessão de áudio de vez (fecha o contexto): com a captura ligada o iOS deixa o som de qualquer <video> mudo ou
-    // baixo, e depois de tocar um clipe o microfone podia ficar mudo ao voltar. O contexto novo nasce no toque que abre a câmera.
-    const ctx = S.audioCtx;
-    S.audioCtx = null;
-    S.workletReady = false;
-    if (ctx && ctx.state !== 'closed') await ctx.close();
-  } catch {
-    /* segue */
-  }
+  if (park) return parkCamera();
+  if (leavingCamera || (isParked() && view !== 'gallery')) await releaseCamera();
 }
 
 /** Voltar na Galeria: para a tela de onde veio (câmera ou Início). Chamar de dentro do toque (a câmera e a voz dependem disso). */

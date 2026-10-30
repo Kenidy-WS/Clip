@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.10 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.10 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.11 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.11 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -580,3 +580,13 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Mudança: `navigation.ts` guarda de onde a Galeria foi aberta (`galleryFrom`); `leaveGallery()` volta para a câmera (`openCamera()`, dentro do toque, com a espera mínima da v0.12.9 se for rápido) ou para o Início. Vale para o botão voltar e para o gesto de borda (`gestures.ts`). Entrando pelo Início ("Ver todos"), o voltar continua levando ao Início.
 - Testar: (1) câmera → atalho da Galeria → voltar: deve reabrir a câmera com a voz funcionando; (2) Início → Galeria → voltar: Início; (3) o mesmo com o gesto de arrastar da borda esquerda.
 - Pendente: microfone mudo depois de **reproduzir um clipe** (sessão `playback` do player).
+
+## v0.12.11 — Câmera "estacionada" na Galeria (voltar rápido é instantâneo)
+
+- Resultado da v0.12.10 (Kenidy): validado. Mas voltar da Galeria **muito rápido** ainda falhava às vezes: a câmera esperava ~3 s e depois o microfone nascia mudo e pedia toque (3 s está no limite; o tempo de liberação do iOS varia). Decisão dele: manter a câmera ligada em vez de afinar o atraso.
+- Mudança: ao ir da câmera para a **Galeria**, a captura (câmera, microfone e voz) **continua ligada por 15 s** (`PARK_MS`, `parkCamera()` em `camera.ts`). Voltar nesse prazo (botão voltar, atalho da câmera, gesto da borda) chama `resumeParked()`: refaz só a prévia (`refreshPreview`), descarta o buffer do período fora e **não reabre nada** (sem espera, sem permissão, sem microfone mudo). Vai ao **Início**: desliga como antes (`releaseCamera()`).
+- A câmera estacionada é desligada de verdade (`releaseCamera()` = `stopAll` + fecha o `AudioContext` + hora para o `MIN_REOPEN_MS`): (a) ao **tocar num clipe** (`openPlayer`; com captura ligada o iOS silencia o player), (b) após 15 s na Galeria, (c) ao ir ao Início. O comando de voz é ignorado fora da câmera (`onVoice` exige `S.view === 'camera'`), então não grava de dentro da Galeria.
+- Riscos a conferir no iPhone: (1) **som do clipe** tocado logo depois de entrar na Galeria (a captura é desligada no mesmo toque; se sair mudo/baixo, o desligamento precisa de um instante antes do `play()`); (2) a **prévia** ao voltar (o `<video>` ficou numa tela oculta; `refreshPreview` deveria bastar, como na volta do segundo plano); (3) uso de bateria e indicador de câmera/microfone do iOS aceso até 15 s na Galeria.
+- Diagnóstico, "Câmera: início": `Galeria: câmera mantida ligada por 15 s`, `câmera retomada da Galeria (sem reabrir)`, `Galeria há muito tempo: desligando a câmera`, `saiu da câmera`.
+- e2e: o teste que esperava a captura desligada ao abrir a Galeria foi trocado (câmera estacionada; voltar sem nova captura; desliga sozinha; tocar no clipe desliga). O prazo vira 3 s só na página do teste.
+- Testar: (1) câmera → atalho da Galeria → voltar **rápido**: volta na hora, com imagem, voz e microfone funcionando, sem pedir toque; (2) ficar mais de 15 s na Galeria e voltar: reabre normal (com a espera mínima); (3) câmera → Galeria → tocar num clipe: tem som? Depois voltar: o microfone ainda para (problema conhecido, próximo item); (4) dizer "Ei Clip" dentro da Galeria: não deve gravar.

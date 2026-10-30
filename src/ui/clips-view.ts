@@ -1,5 +1,6 @@
 import { removeClip, removeClips } from '../clips';
 import { setAudioSession } from '../media/audio-session';
+import { isParked, releaseCamera } from '../media/camera';
 import { formatDuration } from '../core/format';
 import { notify } from '../events';
 import { S } from '../state';
@@ -93,6 +94,9 @@ function tile(c: Clip, selectable = false): HTMLElement {
 }
 
 export function openPlayer(c: Clip): void {
+  // Com a captura ligada o iOS silencia o vídeo do player: desliga a câmera estacionada antes de tocar (parte síncrona do
+  // desligamento roda já aqui, dentro do toque).
+  if (isParked()) void releaseCamera();
   current = c;
   els.playerVideo.src = c.url;
   els.playerVideo.muted = false;
