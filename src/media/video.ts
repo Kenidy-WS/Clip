@@ -6,6 +6,7 @@ import { cfg, S } from '../state';
 import { els } from '../ui/dom';
 import { T } from '../strings';
 import type { Chunk } from '../types';
+import { isParked } from './camera';
 import { salvageRecording } from './recorder';
 import { HAS_RVFC } from './support';
 import { recordVideo } from './rec-sink';
@@ -33,6 +34,9 @@ export function startLoop(): void {
 function pump(now: number): void {
   const v = els.video;
   if (v.readyState < 2 || !v.videoWidth || S.configuring) return;
+  // Captura estacionada (usuário na Galeria ou no Início): não desenha nem codifica. Codificar 1080p60 enquanto o clipe toca no
+  // player disputava o chip de vídeo do iPhone e o clipe tocava em câmera lenta. Ao voltar, o buffer é descartado de qualquer jeito.
+  if (isParked()) return;
   // Com rVFC cada callback já é um quadro novo: filtrar por intervalo derrubava o fps (jitter do 'now').
   if (!HAS_RVFC && now - S.lastPump < (1000 / cfg.fps) * 0.8) return;
   const w = v.videoWidth & ~1;

@@ -1074,6 +1074,26 @@ try {
       await page.close();
     }
 
+    // Na Galeria (captura estacionada) o app não codifica: tocar um clipe não disputa o chip de vídeo; ao voltar, volta a codificar.
+    {
+      const { page, errs } = await openRecordingPage();
+      await page.click('#btnGallery');
+      await page.waitForTimeout(600);
+      const c1 = await page.evaluate(() => window.__chunks);
+      await page.waitForTimeout(1500);
+      const c2 = await page.evaluate(() => window.__chunks);
+      check(
+        c2 - c1 <= 2,
+        'estacionada: não codifica enquanto o usuário está na Galeria (' + (c2 - c1) + ' quadros)',
+      );
+      await page.click('#btnGalleryCam');
+      await page.waitForTimeout(1500);
+      const c3 = await page.evaluate(() => window.__chunks);
+      check(c3 - c2 > 10, 'estacionada: ao voltar à câmera volta a codificar (' + (c3 - c2) + ' quadros)');
+      check(errs.length === 0, 'estacionada: sem erros de JavaScript ' + errs.join(';'));
+      await page.close();
+    }
+
     // Sair do app gravando guarda o clipe na hora (o iOS pode encerrar a página em segundo plano).
     {
       const { page, errs } = await openRecordingPage();

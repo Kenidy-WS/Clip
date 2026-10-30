@@ -1,6 +1,14 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.1 (correção da gravação longa, aguardando teste no iPhone) · `estavel` = 0.13.2
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.14.3 · `estavel` = 0.13.2 · aguardando teste no iPhone
+
+## v0.14.2 e v0.14.3 — clipe em câmera lenta no player do app
+
+Relato (1080p/60/máxima, 48 Mbps): na Galeria do Rolo o clipe toca normal; no player do app toca em câmera lenta. Arquivo grande (1,2 GB) não salva: a página trava e fica branca (curto salva).
+
+- **v0.14.3:** com a captura estacionada (Galeria/Início) o app continuava desenhando e codificando 1080p60 a 48 Mbps enquanto o player decodificava: disputa do chip de vídeo. Agora `pump` não codifica enquanto `isParked()` (`media/video.ts`; o buffer já é descartado ao voltar). Câmera/microfone/voz seguem ligados.
+- **v0.14.2:** 60 fps usa 1,25× a taxa (era 1,5×) e 1080p Alta/Máxima = 22/28 Mbps: 1080p60 máxima cai de 48 para 35 Mbps.
+- **Aberto:** compartilhar/salvar arquivo grande derruba a página (a folha de compartilhar precisa carregar o arquivo inteiro na memória). Falta descobrir o limite: testar clipes de ~1, 2 e 4 min.
 
 ## v0.14.1 — clipe longo que não tocava nem baixava
 
