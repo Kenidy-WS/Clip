@@ -6,7 +6,7 @@
 
 Nível validado no iPhone (funciona). Rótulo dos Ajustes agora é só "Nível". Nomes dos outros ajustes ("Tempo antes do toque" → ideia "Pré-gravação", "Som de gravação", bipe no vídeo) ficam para a revisão de textos.
 **Foco por toque:** o Safari/iOS pode não expor controle de foco (`focusMode`/`pointsOfInterest`) à web. Em vez de supor, o Diagnóstico ganhou a linha "Controles" com o que a câmera informa. Se aparecer `focusMode`/`pointsOfInterest`, implemento o toque para focar; se não, o iOS segue com o foco automático contínuo e não há como fazer por código.
-**Testar:** abrir a câmera, abrir o "i" e me copiar a linha "Controles" (câmera traseira 1× e, se der, a 0,5× e a frontal).
+**Resultado (iPhone 18.7, 0,5×):** Controles = aspectRatio, backgroundBlur, deviceId, facingMode, frameRate, groupId, height, powerEfficient, torch, whiteBalanceMode, width, zoom. **Sem `focusMode`/`pointsOfInterest`: foco por toque não é possível na web.** Decisão: descartado. Disponíveis e ainda não usados: `torch` (lanterna), `whiteBalanceMode` (travar balanço de branco), `zoom`.
 
 ## v0.15.0 — nível de horizonte (opcional)
 
