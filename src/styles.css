@@ -999,9 +999,6 @@ p {
     opacity: 0;
   }
 }
-body.resumed {
-  animation: fade-in 300ms ease both; /* volta do recarregamento (microfone) sem piscar */
-}
 /* Ajustes (folha que sobe) e player (aparece com leve zoom) */
 .sheet-backdrop:not([hidden]) {
   animation: fade-in 200ms ease both;

@@ -526,3 +526,9 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Relato/Diagnóstico (v0.12.4): o 1º microfone nasce mudo (pico 0.0000) após o recarregamento; o reinício o recuperou, mas a voz religada sozinha ficou surda e o microfone voltou a pico 0.000 → o `voiceAutoNext` da v0.12.4 piorou; desfeito (a voz volta a esperar um toque depois do reinício).
 - Hipótese em teste: o `setAudioSession('play-and-record')` que o `start()` chama desde a v0.9.8 faz o microfone da câmera nascer mudo. Numa página recém-carregada ela não é necessária. Removida de `start()`; no player seguem 'playback' (ao abrir) e 'auto' (ao fechar, antes do recarregamento).
 - Se o microfone ainda nascer mudo: o gatilho é a ordem voz→câmera (a voz abre o microfone primeiro); próximo teste = câmera primeiro, voz logo em seguida dentro do mesmo toque.
+
+## v0.12.6 — Sem recarregamento ao fechar o player
+
+- Diagnóstico (v0.12.5): mesmo sem `setAudioSession('play-and-record')` e **com** recarregamento, o microfone da câmera nasceu mudo (pico 0.0000), o reinício automático não o recuperou e a voz ficou esperando toque. Ou seja: o recarregamento não evita o problema; só causa o piscar. Removido (`closePlayer` volta a só fechar; fora também a restauração da tela e o fade `body.resumed`).
+- Ficam: reinício automático do microfone mudo (3 s), a voz aguarda um toque depois dele, `setAudioSession` 'playback'/'auto' só no player, e o teste sem `play-and-record` no `start()`.
+- Ainda sem causa raiz do microfone mudo ao abrir a câmera. Hipóteses abertas: (1) a ordem voz→câmera (a voz abre o microfone antes do `getUserMedia`); (2) o reinício extra por troca de lente ("start #2"); (3) o `MediaStreamAudioSourceNode` com a faixa entregando zeros no iOS 27. Próximo experimento sugerido: câmera primeiro e voz logo depois no mesmo toque, e pedir o ultra-angular já no 1º `getUserMedia`.
