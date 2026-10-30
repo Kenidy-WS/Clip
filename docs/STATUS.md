@@ -483,3 +483,9 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Miniaturas: a geração agora só custa um desenho de 240×320 do quadro que já está na tela, ao parar a gravação (~poucos ms); clipes antigos tentam o caminho por vídeo escondido uma vez por abertura.
 
 **Testar:** toque longo num clipe; arrastar logo depois; toque curto continua abrindo o player.
+
+## v0.11.1 — Barra do topo mais baixa
+
+- Barra do Início e da Galeria desceu 14 px (altura 56 → 70 px, 14 px de respiro em cima) para sair de perto do notch; avisos acompanham (+14 px).
+- A tela da câmera tem espaçamento próprio (não mudou).
+- Atualização: o app verifica ao abrir, ao voltar ao primeiro plano e a cada 5 min; o publicar leva ~40 s. Se o aviso não vier, minimizar e voltar depois de um minuto.

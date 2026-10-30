@@ -87,12 +87,12 @@ p {
 /* ───────── Componentes ───────── */
 .bar {
   flex: none;
-  height: 56px;
+  height: 70px; /* 14 px a mais em cima: os botões ficavam colados no notch e ficavam borrados */
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 12px;
+  padding: 14px 12px 0;
 }
 .bar h2 {
   font-size: 17px;
@@ -180,7 +180,7 @@ p {
   position: absolute;
   left: 0;
   right: 0;
-  top: calc(var(--sat) + 80px);
+  top: calc(var(--sat) + 94px);
   z-index: 40;
   display: flex;
   flex-direction: column;
