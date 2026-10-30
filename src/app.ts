@@ -20,7 +20,7 @@ import { initLifecycleLog } from './ui/lifecycle-log';
 import { hideAnimated, showAnimated } from './ui/transitions';
 import { bindGestures } from './ui/gestures';
 import { initViewport } from './ui/viewport';
-import type { BeepVol, Facing, Fps, ImageQuality, Lens, Quality } from './types';
+import type { Facing, Fps, ImageQuality, Lens, Quality } from './types';
 import { APP_VERSION } from './config';
 
 async function paintStorage(): Promise<void> {
@@ -35,8 +35,6 @@ function loadPrefs(): void {
   if (getPref('fps') === '60' && quality !== '2160') cfg.fps = 60; // 4K a 60 não é entregue pelo iOS
   const iq = getPref('imageQuality');
   if (iq === 'high' || iq === 'max') cfg.imageQuality = iq;
-  const bv = getPref('beepVol');
-  if (bv === 'normal' || bv === 'max') S.beepVol = bv;
   S.beepInClip = getPref('beepClip') === '1';
   const buffer = getPref('buffer');
   if (buffer === '15' || buffer === '30') cfg.bufferSec = Number(buffer);
@@ -142,12 +140,6 @@ function bindSettings(): void {
     setPref('imageQuality', v);
     updateUI();
     if (S.running) await start();
-  });
-  bindSegment(els.segBeepVol, (v) => {
-    S.beepVol = v as BeepVol;
-    setPref('beepVol', v);
-    updateUI();
-    previewBeep(); // toca como amostra no novo volume
   });
   els.swBeepClip.addEventListener('click', () => {
     S.beepInClip = !S.beepInClip;

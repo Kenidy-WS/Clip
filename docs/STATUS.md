@@ -396,3 +396,12 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Dado do teste na v0.9.8: o microfone ficou mudo só às vezes depois da Galeria (pico 0.000); a detecção e reinício automático entraram na v0.9.9.
 
 **Testar:** gestos nas três telas; microfone depois de ver um clipe (com a v0.9.9+ instalada: rodapé do app).
+
+## v0.10.1 — Bipe fixo e mais suave, Ajustes enxutos, transições maiores
+
+- Removido o ajuste "Volume do bipe": volume único (o antigo "Máximo"), com saturação reduzida (1,8 → 0,9) e subida/descida mais longas (20/70 ms) para diminuir o estouro, principalmente no bipe de parar.
+- "Gravar bipe no vídeo" virou "Bipe no vídeo gravado", sem texto de ajuda.
+- Transições: telas deslizam ~26% da largura em 340 ms; o player agora fecha com fade.
+- Player: volume forçado a 1, sem mudo, e a categoria de áudio "playback" é reposta após 300 ms. Observação: nos Diagnósticos o pico do microfone é 0.002–0.013, ou seja, o áudio gravado é naturalmente baixo; se o som do clipe continuar fraco, o próximo passo é dar ganho digital ao microfone.
+
+**Testar:** bipe de parar (ainda estoura?); volume do clipe na Galeria; transição ao voltar com o gesto e ao fechar o player.

@@ -21,7 +21,7 @@ const TONES: Record<BeepKind, Array<[number, number, number]>> = {
 const PROFILE: Record<BeepVol, { peak: number; sustain: boolean; drive: number }> = {
   normal: { peak: 0.3, sustain: false, drive: 0 },
   high: { peak: 0.7, sustain: true, drive: 0 },
-  max: { peak: 1, sustain: true, drive: 1.8 },
+  max: { peak: 1, sustain: true, drive: 0.9 },
 };
 export const beepGain = (v: BeepVol): number => PROFILE[v].peak;
 export const beepSustain = (v: BeepVol): boolean => PROFILE[v].sustain;
@@ -42,8 +42,8 @@ export function renderBeep(kind: BeepKind, sampleRate: number, gain: number): Fl
   for (const [freq, off, dur] of TONES[kind]) {
     const i0 = Math.floor(off * sampleRate);
     const len = Math.floor(dur * sampleRate);
-    const atk = Math.max(1, Math.min(Math.floor(0.012 * sampleRate), Math.floor(len / 4)));
-    const rel = Math.max(1, Math.min(Math.floor(0.04 * sampleRate), Math.floor(len / 3)));
+    const atk = Math.max(1, Math.min(Math.floor(0.02 * sampleRate), Math.floor(len / 4)));
+    const rel = Math.max(1, Math.min(Math.floor(0.07 * sampleRate), Math.floor(len / 3)));
     for (let i = 0; i < len; i++) {
       const p = (2 * Math.PI * freq * i) / sampleRate;
       const wave = Math.sin(p);

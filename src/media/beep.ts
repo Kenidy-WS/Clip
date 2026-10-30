@@ -48,8 +48,8 @@ export function beep(kind: BeepKind): void {
       if (sustain) {
         // Volume cheio com bordas lineares a partir do zero (a subida exponencial a partir de 0,0001 estalava).
         g.gain.setValueAtTime(0, t0 + off);
-        g.gain.linearRampToValueAtTime(peak, t0 + off + 0.008);
-        g.gain.setValueAtTime(peak, t0 + off + d - 0.035);
+        g.gain.linearRampToValueAtTime(peak, t0 + off + 0.02);
+        g.gain.setValueAtTime(peak, t0 + off + d - 0.07);
         g.gain.linearRampToValueAtTime(0, t0 + off + d);
       } else {
         // Normal: o bipe original.

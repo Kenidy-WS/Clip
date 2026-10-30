@@ -157,7 +157,7 @@ export const S: AppState = {
   needTap: false,
   muteUntil: 0,
   soundOn: true,
-  beepVol: 'high',
+  beepVol: 'max',
   beepInClip: false,
   beepMix: null,
   aInfo: '',

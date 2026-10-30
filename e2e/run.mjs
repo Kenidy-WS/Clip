@@ -770,7 +770,6 @@ try {
     await page.click('#segQuality button[data-v="1080"]');
     await page.click('#segFps button[data-v="60"]');
     await page.click('#segImageQuality button[data-v="max"]');
-    await page.click('#segBeepVol button[data-v="max"]');
     await page.click('#swBeepClip');
     check(
       await page.evaluate(
@@ -778,7 +777,6 @@ try {
           localStorage.getItem('clip.quality') === '1080' &&
           localStorage.getItem('clip.fps') === '60' &&
           localStorage.getItem('clip.imageQuality') === 'max' &&
-          localStorage.getItem('clip.beepVol') === 'max' &&
           localStorage.getItem('clip.beepClip') === '1',
       ),
       'Ajustes: escolhas de vídeo e bipe são guardadas',
@@ -790,10 +788,6 @@ try {
     );
     ok('Ajustes: 1080p e 60 fps chegam ao pedido da câmera');
     await page.click('#swSound');
-    check(
-      await page.locator('#segBeepVol button[data-v="normal"]').isDisabled(),
-      'com os sons desligados o volume do bipe fica desligado',
-    );
     await page.click('#btnSheetClose');
     await page.waitForFunction(() => document.querySelector('#sheet').hidden, null, { timeout: 2000 });
     ok('Ajustes fecham depois da animação');

@@ -53,7 +53,6 @@ export function updateUI(): void {
   paintSegment(els.segFps, String(cfg.fps), locked);
   paintSegment(els.segImageQuality, cfg.imageQuality, locked);
   paintSegment(els.segBuffer, String(cfg.bufferSec), false);
-  paintSegment(els.segBeepVol, S.beepVol, !S.soundOn); // sem som no alto-falante, o volume não tem o que ajustar
   els.swBeepClip.setAttribute('aria-checked', String(S.beepInClip));
   els.swVoice.setAttribute('aria-checked', String(S.voiceEnabled));
   els.swSound.setAttribute('aria-checked', String(S.soundOn));

@@ -912,7 +912,7 @@ p {
 
 /* ───────── Transições ───────── */
 :root {
-  --t-screen: 280ms;
+  --t-screen: 340ms;
   --ease-out: cubic-bezier(0.22, 0.8, 0.26, 1);
 }
 .screen.in-fwd,
@@ -947,25 +947,25 @@ p {
 @keyframes in-from-right {
   from {
     opacity: 0;
-    transform: translateX(36px);
+    transform: translateX(26%);
   }
 }
 @keyframes out-to-left {
   to {
     opacity: 0;
-    transform: translateX(-24px);
+    transform: translateX(-14%);
   }
 }
 @keyframes in-from-left {
   from {
     opacity: 0;
-    transform: translateX(-36px);
+    transform: translateX(-26%);
   }
 }
 @keyframes out-to-right {
   to {
     opacity: 0;
-    transform: translateX(24px);
+    transform: translateX(14%);
   }
 }
 @keyframes fade-in {
@@ -1005,6 +1005,9 @@ p {
 }
 .player:not([hidden]) {
   animation: player-in 220ms var(--ease-out) both;
+}
+.player.closing {
+  animation: fade-out 200ms ease both;
 }
 @keyframes player-in {
   from {

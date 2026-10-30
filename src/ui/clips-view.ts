@@ -7,7 +7,7 @@ import { T } from '../strings';
 import type { Clip } from '../types';
 import { els } from './dom';
 import { icon } from './icons';
-import { showAnimated } from './transitions';
+import { hideAnimated, showAnimated } from './transitions';
 
 /** Quantos clipes aparecem no Início. */
 const RECENT_COUNT = 4;
@@ -91,6 +91,8 @@ function tile(c: Clip, selectable = false): HTMLElement {
 export function openPlayer(c: Clip): void {
   current = c;
   els.playerVideo.src = c.url;
+  els.playerVideo.muted = false;
+  els.playerVideo.volume = 1;
   els.playerMeta.textContent = T.clipMeta({
     when: whenText(c),
     durText: formatDuration(c.durSec),
@@ -98,6 +100,7 @@ export function openPlayer(c: Clip): void {
     withAudio: c.withAudio,
   });
   setAudioSession('playback');
+  setTimeout(() => setAudioSession('playback'), 300); // o iOS pode ter reposto a categoria de captura
   showAnimated(els.player);
   void els.playerVideo.play().catch(() => {
     /* se o iOS exigir, é só tocar em play */
@@ -108,7 +111,7 @@ export function closePlayer(): void {
   els.playerVideo.pause();
   els.playerVideo.removeAttribute('src');
   els.playerVideo.load();
-  els.player.hidden = true;
+  hideAnimated(els.player);
   setAudioSession('auto');
   current = null;
 }
