@@ -12,17 +12,18 @@ let openSeq = 0;
  * o iOS só libera áudio, câmera sem ficar muda e escuta de voz dentro de um gesto, por isso nada pode ser
  * esperado (`await`) antes de `start()`.
  */
-export async function openCamera(): Promise<void> {
+export async function openCamera(afterReload = false): Promise<void> {
   if (S.opening && S.view === 'camera') return;
   // Depois de ver um clipe com som o microfone só volta com uma página nova: recarrega e deixa a câmera pronta para um toque.
-  if (audioNeedsReset() && reloadForAudio('camera')) return;
+  if (!afterReload && audioNeedsReset() && reloadForAudio('camera')) return;
   const mine = ++openSeq;
   S.view = 'camera';
   S.opening = true;
   notify('');
   updateUI();
   try {
-    await start(false, true);
+    // Depois do recarregamento não há toque: a câmera abre sozinha e a voz espera o próximo toque na tela (aviso).
+    await start(false, !afterReload);
     if (S.running && S.audioCtx && S.audioCtx.state !== 'running') {
       S.needTap = true;
       notify(T.needTap, 'warn');

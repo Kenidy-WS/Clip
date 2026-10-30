@@ -52,6 +52,8 @@ let session = 0; // identifica cada instância do reconhecedor (os índices de r
 let restartTimer = 0;
 let quickEnds = 0; // quantas vezes seguidas o reconhecedor encerrou quase logo ao ligar
 let startedAt = 0;
+/** "clip" solto só para a gravação depois disto (ms). */
+const LOOSE_STOP_AFTER_MS = 3500;
 let fatal = false; // erro de permissão: não adianta insistir
 let inGesture = false; // a instância atual foi iniciada dentro de um toque do usuário
 let retries = 0;
@@ -125,12 +127,14 @@ function onResult(ev: SpeechEventLike, id: number): void {
     if (firstSeen.size > 30) firstSeen.delete(firstSeen.keys().next().value as string);
     const alternatives = Array.from({ length: result.length }, (_, k) => result[k].transcript);
     const full = alternatives.some(isWakePhrase);
-    // "Ei cli" já inicia a gravação (parar exige a frase completa).
+    // "Ei cli" e "clip" solto iniciam a gravação. Para parar, "clip" solto só vale depois de alguns segundos de gravação
+    // (o "clip" do próprio "Ei clip" que começou chega repetido e não pode parar logo em seguida).
+    const loose = alternatives.some((a) => isLooseWakeStart(a));
+    const stopOk = !!S.rec && !S.finalizing && now - S.rec.startMs > LOOSE_STOP_AFTER_MS;
     const early =
       !full &&
-      !S.rec &&
       !S.finalizing &&
-      alternatives.some((a) => isEarlyWakePhrase(a) || isLooseWakeStart(a));
+      ((!S.rec && (loose || alternatives.some(isEarlyWakePhrase))) || (loose && stopOk));
     logVoice(`texto "${alternatives[0] ?? ''}"${full ? ' ✓' : early ? ' ⚡' : ''}`);
     if (!full && !early) continue;
     if (gate.accept(key, now)) {

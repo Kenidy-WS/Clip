@@ -503,3 +503,9 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Causa do piscar (Diagnóstico v0.12.0: 6 recarregamentos seguidos em "Cargas da página"): o recarregamento da v0.10.3 acontecia a cada fechamento do player. Agora ele só acontece ao **abrir a câmera** depois de ver um clipe com som (`audioNeedsReset`/`reloadForAudio` em `clips-view.ts`, chamado de `openCamera`); a câmera volta pronta e um toque a liga. Navegar na Galeria e fechar o player não recarrega mais.
 - Arrastar para baixo: ao soltar, a tela continua descendo/esmaecendo e só então esconde (antes voltava a 100% por um instante).
 - Pergunta do Kenidy: ativar e desativar usam a mesma regra — a frase completa ("ei clip", "aclip", "eiclip"…) alterna (liga/desliga); "clip"/"clipe" solto só **liga**.
+
+## v0.12.2 — "clip" solto também para a gravação; câmera abre sozinha após o recarregamento
+
+- Pedido do Kenidy: parar só com "clip". Agora "clip"/"clipe" solto **também para**, mas só depois de 3,5 s de gravação (`LOOSE_STOP_AFTER_MS` em `voice.ts`), para o "clip" repetido do próprio "Ei clip" que iniciou não parar logo em seguida. A trava de 3 s entre comandos continua.
+- Depois de ver um clipe com som, ao abrir a câmera a página ainda recarrega (microfone), mas agora a câmera abre sozinha ao voltar (`openCamera(true)`); a voz espera um toque na tela (aviso), em vez de exigir "ligar câmera" de novo.
+- Risco: falar "clipe" durante a gravação (depois de 3,5 s) a encerra.

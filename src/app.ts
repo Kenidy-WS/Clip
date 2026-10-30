@@ -275,13 +275,16 @@ export function initApp(): void {
   renderClips();
   void restoreClips();
   void paintStorage();
+  let afterReload = false;
   try {
     const resume = sessionStorage.getItem(RESUME_KEY);
     sessionStorage.removeItem(RESUME_KEY);
-    if (resume === 'gallery' || resume === 'home' || resume === 'camera') S.view = resume; // volta à tela de antes do recarregamento
+    if (resume === 'gallery' || resume === 'home') S.view = resume; // volta à tela de antes do recarregamento
+    if (resume === 'camera') afterReload = true;
   } catch {
     /* sem sessionStorage */
   }
   updateUI();
+  if (afterReload) void openCamera(true); // o toque que abriu a câmera foi antes do recarregamento
   // A câmera não abre sozinha: o Início espera o toque em "Abrir câmera" (ver openCamera).
 }
