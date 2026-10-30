@@ -2,13 +2,13 @@
 
 Uma onda por chat. Em cada uma: Claude entrega, o Kenidy testa no iPhone e aprova, só então começa a próxima.
 
-| Onda | Objetivo                                                                                                      | Estado                               |
-| ---- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| 0    | Protótipo funcional: pre-roll, qualidade, áudio, offline, aviso de atualização                                | Concluída (`v0.3.7`, commit 0e9176b) |
-| 1    | Base profissional: TypeScript + Vite, módulos, testes, lint, CI/deploy, documentação, nome "Ei Clip"          | Concluída e aprovada (`v0.4.0`)      |
-| 2    | Comando de voz "Ei Clip": teste de viabilidade no iPhone (vento/ruído) e integração                           | Em andamento (`v0.5.0` na `onda-2`)  |
-| 3    | Interface, marca e ícone: tela limpa, textos finais, layout ocupando a tela toda, ícone, esconder diagnóstico | Planejada                            |
-| 4    | Polimento e robustez: áudio, permissões, armazenamento; decidir se vale migrar para app nativo                | Planejada                            |
+| Onda | Objetivo                                                                                                      | Estado                                      |
+| ---- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| 0    | Protótipo funcional: pre-roll, qualidade, áudio, offline, aviso de atualização                                | Concluída (`v0.3.7`, commit 0e9176b)        |
+| 1    | Base profissional: TypeScript + Vite, módulos, testes, lint, CI/deploy, documentação, nome "Ei Clip"          | Concluída e aprovada (`v0.4.0`)             |
+| 2    | Comando de voz "Ei Clip": teste de viabilidade no iPhone (vento/ruído) e integração                           | Concluída (`v0.7.0`)                        |
+| 3    | Interface, marca e ícone: tela limpa, textos finais, layout ocupando a tela toda, ícone, esconder diagnóstico | 3a feita (`v0.8.0`, em teste); 3b planejada |
+| 4    | Polimento e robustez: áudio, permissões, armazenamento; decidir se vale migrar para app nativo                | Planejada                                   |
 
 ## Onda 2 — pontos de atenção
 
@@ -25,7 +25,7 @@ Uma onda por chat. Em cada uma: Claude entrega, o Kenidy testa no iPhone e aprov
 - Proporção/layout: o preview deve ocupar os espaços corretos (hoje sobra espaço), principalmente no web app instalado.
 - Favicon/ícone próprio e marca "Ei Clip".
 
-### Plano da Onda 3 (combinado em 2026-10-29; Kenidy vai mandar prints de apps de referência)
+### Plano da Onda 3 (combinado em 2026-10-29). **3a feita na `v0.8.0`** (ver `docs/STATUS.md`); decisões: Ajustes é uma folha aberta do Início e da Câmera, sair da câmera desliga a captura, preview em tela cheia (`cover`)
 
 Três telas, **sem rolagem** em nenhuma (hoje é uma página só com a galeria embaixo):
 

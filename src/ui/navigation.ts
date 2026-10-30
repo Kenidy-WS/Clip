@@ -1,0 +1,56 @@
+import { notify } from '../events';
+import { cancelStart, start, stopAll } from '../media/camera';
+import { S } from '../state';
+import { T } from '../strings';
+import { updateUI } from './controls';
+
+let openSeq = 0;
+
+/**
+ * Abre a tela da câmera e liga câmera, áudio e comando de voz. Chamar direto de dentro do toque do usuário:
+ * o iOS só libera áudio, câmera sem ficar muda e escuta de voz dentro de um gesto, por isso nada pode ser
+ * esperado (`await`) antes de `start()`.
+ */
+export async function openCamera(): Promise<void> {
+  if (S.opening && S.view === 'camera') return;
+  const mine = ++openSeq;
+  S.view = 'camera';
+  S.opening = true;
+  notify('');
+  updateUI();
+  try {
+    await start(false, true);
+    if (S.running && S.audioCtx && S.audioCtx.state !== 'running') {
+      S.needTap = true;
+      notify(T.needTap, 'warn');
+    }
+  } finally {
+    if (mine === openSeq) S.opening = false;
+    updateUI();
+  }
+}
+
+/** Vai para o Início ou a Galeria. Sair da câmera desliga captura, microfone e escuta de voz. */
+export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
+  if (S.rec || S.finalizing) {
+    notify(T.finishRecordingFirst, 'warn');
+    return;
+  }
+  const leavingCamera = S.view === 'camera';
+  S.view = view;
+  if (leavingCamera) {
+    openSeq++;
+    S.opening = false;
+    cancelStart();
+  }
+  notify('');
+  updateUI();
+  if (!leavingCamera) return;
+  await stopAll();
+  try {
+    // Libera a sessão de áudio: com a captura ligada o iOS deixa o som de qualquer <video> mudo ou baixo.
+    if (S.audioCtx && S.audioCtx.state === 'running') await S.audioCtx.suspend();
+  } catch {
+    /* segue */
+  }
+}

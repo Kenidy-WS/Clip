@@ -39,6 +39,12 @@ export function logCam(msg: string): void {
   if (S.camLog.length > 14) S.camLog.shift();
 }
 
+/** Cancela um início de câmera em andamento (o usuário saiu da tela). A captura que chegar depois é descartada. */
+export function cancelStart(): void {
+  startSeq++;
+  clearTimeout(watchdog);
+}
+
 /** Mensagem com a causa real do erro do microfone (antes tudo virava "permissão negada"). */
 export function micHint(e: unknown): string {
   const err = e as { name?: string; message?: string } | null;

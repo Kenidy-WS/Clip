@@ -2,8 +2,12 @@
 <html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-    <meta name="theme-color" content="#0e1116" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#000000" />
+    <meta name="format-detection" content="telephone=no" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="Ei Clip" />
@@ -12,60 +16,154 @@
     <link rel="apple-touch-icon" href="icon-180.png" />
     <title>Ei Clip</title>
   </head>
-  <body>
-    <div class="stage">
-      <div class="view">
-        <video id="preview" playsinline muted autoplay></video>
-        <div id="intro" class="intro">
-          <div class="intro-name">Ei Clip</div>
-          <p class="intro-text">Câmera de ação com comando de voz.</p>
-          <button id="btnIntro" class="intro-btn">Iniciar</button>
+  <body data-view="home">
+    <main class="app">
+      <!-- Início -->
+      <section id="screenHome" class="screen home">
+        <header class="bar">
+          <span></span>
+          <button class="btn-icon" id="btnSettingsHome" data-icon="settings" aria-label="Ajustes"></button>
+        </header>
+        <div class="home-main">
+          <h1 class="brand">Ei Clip</h1>
+          <p class="tagline">Câmera de ação com comando de voz.</p>
+          <button class="btn-primary" id="btnOpen"><span data-icon="camera"></span>Abrir câmera</button>
         </div>
-        <div class="topbar">
-          <div class="pill">
-            <div class="fill" id="fill"></div>
-            <span id="bufTxt">Câmera parada</span>
+        <div class="recent">
+          <div class="recent-head">
+            <h2>Recentes</h2>
+            <button class="btn-link" id="btnSeeAll" hidden>Ver todos</button>
           </div>
-          <div class="mic" title="Nível do microfone"><div id="micFill"></div></div>
-          <button class="icon" id="btnInfo" aria-label="Diagnóstico">i</button>
+          <div class="recent-grid" id="recent"></div>
+          <p class="empty" id="recentEmpty">Nenhum clipe ainda.</p>
         </div>
-        <div id="status" class="status"></div>
+        <p class="ver" id="ver"></p>
+      </section>
+
+      <!-- Câmera: só gravação -->
+      <section id="screenCamera" class="screen camera" hidden>
+        <video id="preview" playsinline muted autoplay></video>
+        <div class="cam-top">
+          <div class="cam-left">
+            <button class="btn-glass" id="btnBack" data-icon="back" aria-label="Voltar"></button>
+          </div>
+          <div class="pill" id="pill" hidden>
+            <div class="fill" id="fill"></div>
+            <span id="bufTxt"></span>
+          </div>
+          <div class="cam-right">
+            <button class="btn-glass" id="btnVoice" aria-label="Comando de voz “Ei Clip”" aria-pressed="true">
+              <span class="icon-on" data-icon="mic"></span>
+              <span class="icon-off" data-icon="micOff"></span>
+            </button>
+            <button class="btn-glass" id="btnSettingsCam" data-icon="settings" aria-label="Ajustes"></button>
+          </div>
+        </div>
+        <button class="btn-glass retry" id="btnRetry" hidden>Ligar câmera</button>
+        <div class="cam-bottom">
+          <button class="btn-glass wide" id="btnMic" hidden>Ativar microfone</button>
+          <div class="lens" id="lens" hidden>
+            <button id="lensWide" aria-label="Lente ultra-angular 0,5×" aria-pressed="false">0,5</button>
+            <button id="lensMain" aria-label="Lente principal 1×" aria-pressed="true">1×</button>
+          </div>
+          <div class="cam-row">
+            <button class="thumb-btn" id="btnGallery" aria-label="Clipes">
+              <span data-icon="gallery"></span>
+              <video id="camThumb" muted playsinline preload="metadata"></video>
+            </button>
+            <button class="shutter" id="btnRec" data-state="idle" aria-label="Ligar câmera">
+              <span class="shutter-core"></span>
+            </button>
+            <button class="btn-glass big" id="btnFlip" data-icon="flip" aria-label="Trocar câmera"></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Galeria -->
+      <section id="screenGallery" class="screen gallery" hidden>
+        <header class="bar">
+          <button class="btn-icon" id="btnGalleryBack" data-icon="back" aria-label="Voltar"></button>
+          <h2 id="galleryTitle">Clipes</h2>
+          <button class="btn-icon" id="btnGalleryCam" data-icon="camera" aria-label="Abrir câmera"></button>
+        </header>
+        <div class="grid" id="clips"></div>
+        <p class="empty" id="galleryEmpty">Nenhum clipe ainda.</p>
+      </section>
+
+      <!-- Avisos (erros, atualização) -->
+      <div class="notices">
         <div id="update" class="update">
           <span>Nova versão disponível</span><button id="btnUpdate">Atualizar</button>
         </div>
-        <pre id="info" class="info"></pre>
+        <div id="status" class="status"></div>
       </div>
-      <div class="controls">
-        <button class="micfix" id="btnMic" hidden>🎤 Microfone desligado — toque para ativar</button>
-        <div class="opts">
-          <select id="selBuffer" aria-label="Tamanho do buffer">
-            <option value="15" selected>Buffer 15 s</option>
-            <option value="30">Buffer 30 s</option>
-          </select>
-          <select id="selQuality" aria-label="Qualidade">
-            <option value="1080" selected>1080p · 16 Mbps</option>
-            <option value="720">720p · 8 Mbps</option>
-          </select>
-          <button class="flip" id="btnVoice" aria-label="Comando de voz “Ei Clip”">🎙️</button>
-          <button class="flip" id="btnSound" aria-label="Sons de início e fim">🔊</button>
-          <button class="flip" id="btnLens" aria-label="Trocar lente (1× ou 0,5×)" hidden>1×</button>
-          <button class="flip" id="btnFlip" aria-label="Trocar câmera">⇄</button>
+
+      <!-- Player de clipe -->
+      <div id="player" class="player" hidden>
+        <div class="player-bar">
+          <button class="btn-glass" id="btnPlayerClose" data-icon="close" aria-label="Fechar"></button>
+          <span id="playerMeta"></span>
         </div>
-        <button class="rec idle" id="btnRec">Iniciar câmera</button>
-        <div class="below">
-          <button class="link" id="btnClips">Clipes (0) ↓</button><span class="ver" id="ver"></span>
+        <video id="playerVideo" controls playsinline></video>
+        <div class="player-actions">
+          <button class="btn-primary" id="btnShare">
+            <span data-icon="share"></span>Salvar / Compartilhar
+          </button>
+          <button class="btn-square danger" id="btnDelete" data-icon="trash" aria-label="Excluir"></button>
+        </div>
+        <p class="hint">Para guardar no Rolo da Câmera, escolha “Salvar vídeo”.</p>
+      </div>
+
+      <!-- Ajustes -->
+      <div id="sheet" class="sheet-backdrop" hidden>
+        <div class="sheet" role="dialog" aria-label="Ajustes">
+          <div class="sheet-head">
+            <h2>Ajustes</h2>
+            <button class="btn-icon" id="btnSheetClose" data-icon="close" aria-label="Fechar"></button>
+          </div>
+          <div class="row">
+            <span>Qualidade</span>
+            <div class="seg" id="segQuality">
+              <button data-v="1080">1080p</button>
+              <button data-v="720">720p</button>
+            </div>
+          </div>
+          <div class="row">
+            <span>Tempo antes do toque</span>
+            <div class="seg" id="segBuffer">
+              <button data-v="15">15 s</button>
+              <button data-v="30">30 s</button>
+            </div>
+          </div>
+          <div class="row" id="rowVoice">
+            <span>Comando de voz</span>
+            <button
+              class="switch"
+              id="swVoice"
+              role="switch"
+              aria-checked="true"
+              aria-label="Comando de voz"
+            ></button>
+          </div>
+          <div class="row">
+            <span>Sons de gravação</span>
+            <button
+              class="switch"
+              id="swSound"
+              role="switch"
+              aria-checked="true"
+              aria-label="Sons de gravação"
+            ></button>
+          </div>
+          <div class="row">
+            <span>Armazenamento</span>
+            <span class="val" id="storage"></span>
+          </div>
+          <button class="row row-btn" id="btnInfo"><span>Diagnóstico</span></button>
+          <pre id="info" class="info"></pre>
         </div>
       </div>
-    </div>
-    <section id="clipsSection">
-      <h2 id="clipsTitle">Clipes (0)</h2>
-      <p class="hint">
-        Os clipes ficam guardados neste app até você excluir. Toque em “Salvar / Compartilhar” → “Salvar
-        vídeo” para mandar ao Rolo da Câmera.
-      </p>
-      <p class="hint" id="storage"></p>
-      <div id="clips"></div>
-    </section>
+    </main>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

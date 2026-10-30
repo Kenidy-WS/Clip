@@ -1,5 +1,5 @@
-// Testes de fluxo no Chromium (Playwright): abertura automática, permissão negada, assistir clipe,
-// offline e aviso de atualização. Uso: npm run build && npm run e2e
+// Testes de fluxo no Chromium (Playwright): telas (Início, Câmera, Galeria), voz, lentes, permissão negada,
+// layout em pé e deitado, offline e aviso de atualização. Uso: npm run build && npm run e2e
 import { createServer } from 'node:http';
 import { cpSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -121,7 +121,7 @@ const browser = await chromium.launch({
   args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
 });
 try {
-  // 1) A câmera só inicia depois do toque em "Iniciar" na tela inicial.
+  // 1) A câmera só inicia depois do toque em "Abrir câmera" no Início.
   {
     const page = await (await browser.newContext()).newPage();
     const errs = [];
@@ -129,20 +129,21 @@ try {
     await page.addInitScript(STUBS);
     await page.goto(URL_);
     await page.waitForTimeout(600);
-    check(await page.isVisible('#intro'), 'tela inicial aparece ao abrir');
-    check(!(await page.isVisible('#btnRec')), 'botão de baixo escondido antes do primeiro Iniciar');
+    check(await page.isVisible('#screenHome'), 'início aparece ao abrir');
+    check(!(await page.isVisible('#screenCamera')), 'tela da câmera escondida antes do toque');
     check(
-      (await page.textContent('#btnRec')).startsWith('Iniciar'),
+      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
       'a câmera não abre sozinha antes do toque',
     );
-    await page.click('#btnIntro');
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    check((await page.textContent('#ver')).startsWith('v'), 'versão exibida no Início');
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    ok('câmera iniciou depois do toque em Iniciar');
-    check(!(await page.isVisible('#intro')), 'tela inicial some depois do toque');
-    check(await page.isVisible('#btnRec'), 'botão de baixo aparece depois do Iniciar');
-    check((await page.textContent('#ver')).startsWith('v'), 'versão exibida no rodapé');
+    ok('câmera iniciou depois do toque em Abrir câmera');
+    check(!(await page.isVisible('#screenHome')), 'início some depois do toque');
+    check(await page.isVisible('#btnRec'), 'botão de gravar aparece na tela da câmera');
+    check(await page.isVisible('#preview'), 'imagem da câmera visível');
     check(errs.length === 0, 'sem erros de JavaScript ao abrir ' + errs.join(';'));
     await page.close();
   }
@@ -155,15 +156,18 @@ try {
     await page.addInitScript(STUBS + VOICE);
     await page.goto(URL_);
     await page.waitForTimeout(600);
-    check((await page.evaluate(() => window.__starts)) === 0, 'voz: não escuta antes do toque em Iniciar');
-    await page.click('#btnIntro');
+    check(
+      (await page.evaluate(() => window.__starts)) === 0,
+      'voz: não escuta antes do toque em Abrir câmera',
+    );
+    await page.click('#btnOpen');
     // A escuta nasce dentro do toque e abre ANTES da câmera (os dois pedidos de permissão não competem).
     await page.waitForFunction(() => window.__starts >= 1, null, { timeout: 5000 });
     check(
       await page.evaluate(() => window.__ord.join() === 'voice,gum'),
       'voz: liga dentro do toque, antes de a câmera pedir permissão',
     );
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
     await page.waitForFunction(
@@ -176,7 +180,7 @@ try {
       (await page.evaluate(() => window.__starts)) === 1,
       'voz: câmera pronta não reinicia a escuta viva',
     );
-    // Começou dentro do toque em Iniciar: toques seguintes não mexem na escuta.
+    // Começou dentro do toque em Abrir câmera: toques seguintes não mexem na escuta.
     await page.mouse.click(5, 5);
     check(
       (await page.evaluate(() => window.__starts)) === 1,
@@ -196,7 +200,7 @@ try {
     );
     // Com os codificadores falsos o buffer não enche; o aviso prova que a gravação foi acionada.
     check(
-      (await page.textContent('#status')).toLowerCase().includes('buffer'),
+      (await page.textContent('#status')).toLowerCase().includes('aguarde'),
       'voz: comando chamou a gravação',
     );
 
@@ -269,13 +273,13 @@ try {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript('window.__audioDelay = 1500;' + STUBS + VOICE);
     await page.goto(URL_);
-    await page.click('#btnIntro');
+    await page.click('#btnOpen');
     await page.waitForTimeout(700);
     check(
       await page.evaluate(() => window.__ord.join() === 'voice'),
       'voz lenta: a câmera espera o pedido de microfone da voz',
     );
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
     check(await page.evaluate(() => window.__ord.join() === 'voice,gum'), 'voz lenta: câmera abre depois');
@@ -284,8 +288,8 @@ try {
     const page2 = await (await browser.newContext()).newPage();
     await page2.addInitScript("window.__voiceErr = 'not-allowed';" + STUBS + VOICE);
     await page2.goto(URL_);
-    await page2.click('#btnIntro');
-    await page2.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page2.click('#btnOpen');
+    await page2.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
     ok('voz recusada: a câmera abre mesmo assim');
@@ -297,14 +301,14 @@ try {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS + LENS);
     await page.goto(URL_);
-    check(!(await page.isVisible('#btnLens')), 'lente: botão escondido antes da câmera');
-    await page.click('#btnIntro');
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    check(!(await page.isVisible('#lens')), 'lente: seletor escondido antes da câmera');
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    await page.waitForFunction(() => !document.querySelector('#btnLens').hidden, null, { timeout: 3000 });
-    check((await page.textContent('#btnLens')) === '1×', 'lente: começa na 1×');
-    await page.click('#btnLens');
+    await page.waitForFunction(() => !document.querySelector('#lens').hidden, null, { timeout: 3000 });
+    check((await page.getAttribute('#lensMain', 'aria-pressed')) === 'true', 'lente: começa na 1×');
+    await page.click('#lensWide');
     await page.waitForFunction(() => window.__cons.length >= 2, null, { timeout: 5000 });
     check(
       await page.evaluate(
@@ -312,11 +316,11 @@ try {
       ),
       'lente: 0,5× pede a câmera ultra-angular pelo deviceId',
     );
-    check((await page.textContent('#btnLens')) === '0,5×', 'lente: botão mostra 0,5×');
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    check((await page.getAttribute('#lensWide', 'aria-pressed')) === 'true', 'lente: 0,5 fica selecionada');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    await page.click('#btnLens');
+    await page.click('#lensMain');
     await page.waitForFunction(() => window.__cons.length >= 3, null, { timeout: 5000 });
     check(
       await page.evaluate(() => window.__cons[2].includes('facingMode')),
@@ -328,7 +332,7 @@ try {
     const page2 = await (await browser.newContext()).newPage();
     await page2.addInitScript("localStorage.setItem('clip.lens','0.5');" + STUBS + LENS);
     await page2.goto(URL_);
-    await page2.click('#btnIntro');
+    await page2.click('#btnOpen');
     await page2.waitForFunction(() => window.__cons.length >= 2, null, { timeout: 8000 });
     await page2.waitForTimeout(1500);
     check(
@@ -345,8 +349,8 @@ try {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript('window.__freeAfter = 600;' + STUBS + MUTED);
     await page.goto(URL_);
-    await page.click('#btnIntro');
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
     check(
@@ -358,8 +362,8 @@ try {
     const page2 = await (await browser.newContext()).newPage();
     await page2.addInitScript('window.__freeAfter = 0;' + STUBS + MUTED);
     await page2.goto(URL_);
-    await page2.click('#btnIntro');
-    await page2.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page2.click('#btnOpen');
+    await page2.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 10000,
     });
     check(
@@ -382,7 +386,7 @@ try {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS + NOFRAMES);
     await page.goto(URL_);
-    await page.click('#btnIntro');
+    await page.click('#btnOpen');
     await page.waitForFunction(() => document.querySelector('#status').textContent.includes('imagem'), null, {
       timeout: 25000,
     });
@@ -393,30 +397,107 @@ try {
     await page.close();
   }
 
-  // 1e) Qualquer início da câmera (mesmo pelo botão de baixo) esconde a tela inicial.
+  // 1e) Sair da câmera desliga captura e voz; abrir de novo religa; sair durante a abertura não deixa a câmera ligada.
   {
     const page = await (await browser.newContext()).newPage();
-    await page.addInitScript(STUBS);
+    await page.addInitScript(STUBS + VOICE);
     await page.goto(URL_);
-    await page.evaluate(() => document.querySelector('#btnRec').click());
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    check(!(await page.isVisible('#intro')), 'início pelo botão de baixo: tela inicial não cobre a imagem');
+    await page.click('#btnBack');
+    check(await page.isVisible('#screenHome'), 'voltar: leva ao início');
+    check(
+      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
+      'voltar: a câmera é desligada ao sair da tela',
+    );
+    check(
+      await page.evaluate(() => window.__cur === null),
+      'voltar: a escuta de voz é desligada ao sair da tela',
+    );
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    ok('abrir de novo: a câmera liga outra vez');
+    await page.close();
+
+    const page2 = await (await browser.newContext()).newPage();
+    await page2.addInitScript('window.__audioDelay = 1500;' + STUBS + VOICE);
+    await page2.goto(URL_);
+    await page2.click('#btnOpen');
+    await page2.waitForTimeout(300);
+    await page2.click('#btnBack');
+    await page2.waitForTimeout(2500);
+    check(
+      await page2.evaluate(() => window.__ord.join() === 'voice'),
+      'sair durante a abertura: a câmera não chega a abrir',
+    );
+    check(
+      (await page2.getAttribute('#btnRec', 'data-state')) === 'idle',
+      'sair durante a abertura: continua desligada',
+    );
+    await page2.close();
+  }
+
+  // 1g) Layout em pé e deitado: sem rolagem da página, imagem em tela cheia, controles dentro da tela, zoom bloqueado.
+  for (const vp of [
+    { width: 390, height: 844 },
+    { width: 844, height: 390 },
+  ]) {
+    const tag = vp.width > vp.height ? 'deitado' : 'em pé';
+    const page = await (await browser.newContext({ viewport: vp })).newPage();
+    await page.addInitScript(STUBS);
+    await page.goto(URL_);
+    const noScroll = () =>
+      page.evaluate(
+        () =>
+          document.documentElement.scrollHeight <= innerHeight &&
+          document.documentElement.scrollWidth <= innerWidth,
+      );
+    const inside = (sel) =>
+      page.evaluate((q) => {
+        const r = document.querySelector(q).getBoundingClientRect();
+        return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight;
+      }, sel);
+    check(await noScroll(), `layout ${tag}: Início sem rolagem`);
+    check(await inside('#btnOpen'), `layout ${tag}: "Abrir câmera" dentro da tela`);
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    check(await noScroll(), `layout ${tag}: Câmera sem rolagem`);
+    check(
+      (await page.evaluate(() => getComputedStyle(document.querySelector('#preview')).objectFit)) === 'cover',
+      `layout ${tag}: imagem em tela cheia (cover)`,
+    );
+    const box = await page.evaluate(() => {
+      const r = document.querySelector('#preview').getBoundingClientRect();
+      return [r.width, r.height];
+    });
+    check(box[0] === vp.width && box[1] === vp.height, `layout ${tag}: imagem ocupa a tela toda`);
+    for (const sel of ['#btnRec', '#btnFlip', '#btnGallery', '#btnBack', '#btnSettingsCam'])
+      check(await inside(sel), `layout ${tag}: ${sel} dentro da tela`);
+    await page.click('#btnGallery');
+    check(await noScroll(), `layout ${tag}: Galeria sem rolagem`);
+    if (tag === 'em pé')
+      check(
+        (await page.getAttribute('meta[name=viewport]', 'content')).includes('user-scalable=no'),
+        'zoom bloqueado no viewport',
+      );
     await page.close();
   }
 
-  // 2) Permissão negada: botão "Iniciar câmera" e mensagem de erro.
+  // 2) Permissão negada: botão "Ligar câmera" e mensagem de erro.
   {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript(STUBS + DENY);
     await page.goto(URL_);
-    await page.click('#btnIntro');
+    await page.click('#btnOpen');
     await page.waitForTimeout(1500);
-    check(
-      (await page.textContent('#btnRec')).startsWith('Iniciar'),
-      'permissão negada: botão volta a "Iniciar câmera"',
-    );
+    await page.waitForSelector('#btnRetry', { state: 'visible', timeout: 5000 });
+    ok('permissão negada: aparece o botão "Ligar câmera"');
     check(
       (await page.textContent('#status')).toLowerCase().includes('câmera'),
       'permissão negada: mensagem de erro exibida',
@@ -459,30 +540,32 @@ try {
         }),
     );
     await page.reload();
-    await page.click('#btnIntro');
-    await page.waitForSelector('.clip video', { timeout: 8000 });
-    ok('clipe restaurado do IndexedDB');
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page.waitForSelector('.recent .tile', { timeout: 8000 });
+    ok('clipe restaurado do IndexedDB e exibido no Início');
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    await page.evaluate(() => document.querySelector('.clip video').dispatchEvent(new Event('play')));
-    await page.waitForFunction(
-      () => document.querySelector('#btnRec').textContent.startsWith('Iniciar'),
-      null,
-      { timeout: 5000 },
+    await page.click('#btnGallery');
+    check(await page.isVisible('#screenGallery'), 'miniatura da câmera abre a Galeria');
+    check(
+      (await page.getAttribute('#btnRec', 'data-state')) === 'idle',
+      'ao abrir a Galeria a captura é desligada (áudio de reprodução no iOS)',
     );
-    // O botão volta a "Iniciar" um instante antes do aviso aparecer: espera o aviso em vez de ler cedo demais.
-    await page.waitForFunction(
-      () => document.querySelector('#status').textContent.includes('Câmera pausada'),
-      null,
-      { timeout: 5000 },
+    check((await page.locator('#clips .tile').count()) === 1, 'Galeria mostra o clipe guardado');
+    await page.click('#clips .tile');
+    check(await page.isVisible('#player'), 'tocar no clipe abre o player');
+    check(
+      (await page.evaluate(() => !!document.querySelector('#playerVideo').getAttribute('src'))) === true,
+      'player carrega o vídeo',
     );
-    ok('ao assistir clipe: câmera pausada e aviso exibido');
-    await page.click('#btnRec');
-    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+    await page.click('#btnPlayerClose');
+    check(!(await page.isVisible('#player')), 'fechar volta para a Galeria');
+    await page.click('#btnGalleryCam');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    ok('"Iniciar câmera" religa depois de assistir');
+    ok('"Abrir câmera" na Galeria liga a câmera de novo');
     await page.close();
   }
 

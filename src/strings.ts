@@ -1,6 +1,6 @@
 /**
  * Todos os textos exibidos ao usuário ficam aqui (pt-BR), para revisar o tom e a grafia num só lugar.
- * Os textos fixos da tela (rótulos de botões e selects) estão em index.html.
+ * Os rótulos fixos das telas (títulos, botões, ajustes) estão em index.html.
  */
 export const APP_NAME = 'Ei Clip';
 
@@ -8,7 +8,7 @@ export const T = {
   // Câmera e microfone
   noWebCodecs: 'Este navegador não tem WebCodecs (VideoEncoder). Atualize o iOS/Safari.',
   cameraOpenFail: (name: string) =>
-    `Não consegui abrir a câmera: ${name}. Permita câmera e microfone nas configurações do Safari.`,
+    `Não foi possível abrir a câmera (${name}). Permita câmera e microfone nos ajustes do Safari.`,
   micDenied: (n: string) =>
     `Microfone sem permissão (${n}). Toque em “Ativar microfone” e permita. Se o pedido não aparecer: aA → Ajustes do Site → Microfone → Permitir, e recarregue.`,
   micBusy: (n: string) =>
@@ -18,7 +18,7 @@ export const T = {
   micEnabled: 'Microfone ativado.',
   micNoSignal: (ctxState: string) =>
     `Microfone sem sinal (AudioContext: ${ctxState}). Toque na tela ou reinicie a câmera.`,
-  needTap: 'Toque na tela uma vez para ativar o áudio e o comando de voz.',
+  needTap: 'Toque na tela para ativar o áudio.',
   videoOnly: 'Este navegador não suporta AudioEncoder: clipes só com vídeo.',
   h264Unsupported: (w: number, h: number) => `Nenhuma configuração H.264 suportada para ${w}x${h}.`,
   videoEncoderError: (msg: string) => `Erro no encoder de vídeo: ${msg}`,
@@ -40,42 +40,38 @@ export const T = {
   voiceUnsupported: 'Comando de voz indisponível neste aparelho.',
 
   // Gravação
-  waitBuffer: 'Aguarde o buffer começar a encher.',
-  noKeyframe: 'Ainda sem keyframe no buffer, tente de novo em 1 s.',
+  waitBuffer: 'Aguarde um instante para começar a gravar.',
+  noKeyframe: 'Ainda sem imagem suficiente, tente de novo em 1 s.',
   finalizing: 'Finalizando clipe…',
-  clipSaved: 'Clipe salvo na lista abaixo.',
+  clipSaved: 'Clipe salvo.',
   mp4Failed: (msg: string) => `Falha ao gerar o MP4: ${msg}`,
   noVideoData: 'sem dados de vídeo',
+  finishRecordingFirst: 'Termine a gravação primeiro.',
 
   // Clipes
   storeFailed:
-    'Clipe pronto, mas o navegador não deixou guardá-lo: salve-o agora em “Salvar / Compartilhar”.',
-  finishRecordingFirst: 'Termine a gravação antes de assistir um clipe.',
-  cameraPaused: 'Câmera pausada para você assistir. Toque em “Iniciar câmera” para voltar.',
-  clipsTitle: (n: number) => `Clipes (${n})`,
-  clipsLink: (n: number) => `Clipes (${n}) ↓`,
-  share: 'Salvar / Compartilhar',
-  remove: 'Excluir',
+    'Clipe pronto, mas o navegador não deixou guardá-lo. Salve-o agora em “Salvar / Compartilhar”.',
+  clipsCount: (n: number) => (n === 1 ? '1 clipe' : `${n} clipes`),
+  clipOpen: (when: string) => `Abrir clipe de ${when}`,
+  clipMeta: (c: { when: string; durText: string; mb: number; withAudio: boolean }) =>
+    `${c.when} · ${c.durText} · ${c.mb.toFixed(1)} MB${c.withAudio ? '' : ' · sem áudio'}`,
   removeConfirm: 'Excluir este clipe? Se ainda não salvou no Rolo da Câmera, ele será perdido.',
-  shareFailed: (msg: string) => `Não consegui compartilhar: ${msg}`,
-  clipMeta: (c: { durSec: number; preSec: number; mb: number; dims: string; mbps: number; audio: string }) =>
-    `${c.durSec.toFixed(0)} s (${c.preSec.toFixed(0)} s antes do toque) · ${c.mb.toFixed(1)} MB · ${c.dims} · ${c.mbps.toFixed(1)} Mbps · ${c.audio}`,
-  clipAudio: (sec: number, blocks: number) => `áudio ${sec.toFixed(1)} s (${blocks} blocos)`,
-  clipNoAudio: 'SEM áudio',
+  shareFailed: (msg: string) => `Não foi possível compartilhar: ${msg}`,
   storage: (usedMb: number, quotaMb: number, persisted: boolean) =>
-    `Armazenamento: ${usedMb.toFixed(0)} MB usados de ~${quotaMb.toFixed(0)} MB${persisted ? ' · protegido' : ''}`,
+    `${usedMb.toFixed(0)} MB de ~${quotaMb.toFixed(0)} MB${persisted ? ' · protegido' : ''}`,
 
-  // Botão principal e barra de buffer
-  btnStart: 'Iniciar câmera',
-  btnFinalizing: 'Finalizando…',
-  btnStop: '■ Parar e salvar',
+  // Câmera
+  shutter: {
+    idle: 'Ligar câmera',
+    ready: 'Gravar',
+    recording: 'Parar e salvar',
+    busy: 'Finalizando',
+  },
   lensMain: '1×',
-  lensWide: '0,5×',
+  lensWide: '0,5',
   lensFail: 'A lente 0,5× não abriu. Voltamos para a 1×.',
-  btnReady: (preSec: number) => `● Gravar (+${preSec}s antes)`,
-  bufferStopped: 'Câmera parada',
-  bufferFill: (shown: number, window: number) => `Buffer ${shown.toFixed(0)}/${window} s`,
-  recording: (total: number, pre: number) => `● REC ${total.toFixed(0)} s (inclui ${pre.toFixed(0)} s antes)`,
+  bufferFill: (shown: number, window: number) => `${shown.toFixed(0)}/${window} s`,
+  recording: (timeText: string) => `● ${timeText}`,
 
   // Atualização do app
   updateBtn: 'Atualizar',

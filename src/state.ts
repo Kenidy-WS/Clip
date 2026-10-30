@@ -1,5 +1,5 @@
 import { ReplayBuffer } from './core/replay-buffer';
-import type { Clip, Config, Recording } from './types';
+import type { Clip, Config, Recording, Screen } from './types';
 
 export interface AacMeta {
   decoderConfig: { codec: string; sampleRate: number; numberOfChannels: number; description: Uint8Array };
@@ -76,8 +76,10 @@ export interface AppState {
   voiceLog: string[];
   /** Etapas do início da câmera (permissão, stream, erros), só para o painel de diagnóstico. */
   camLog: string[];
-  /** O usuário já tocou em "Iniciar" na tela inicial (esconde a tela inicial). */
-  introDone: boolean;
+  /** Tela atual. */
+  view: Screen;
+  /** A câmera está sendo aberta pelo botão "Abrir câmera" (inclui a espera pelos pedidos de permissão). */
+  opening: boolean;
   /** deviceId da câmera ultra-angular traseira ('' = não encontrada). */
   lensId: string;
   /** Lente realmente em uso na captura atual. */
@@ -152,7 +154,8 @@ export const S: AppState = {
   voiceEnabled: true,
   voiceLog: [],
   camLog: [],
-  introDone: false,
+  view: 'home',
+  opening: false,
   lensId: '',
   lensActive: '1',
   lensCan: false,

@@ -1,4 +1,5 @@
 import { MAX_REC_SEC } from '../config';
+import { formatDuration } from '../core/format';
 import { notify } from '../events';
 import { sampleFps } from '../media/video';
 import { stopRec } from '../media/recorder';
@@ -7,59 +8,86 @@ import { T } from '../strings';
 import { diagnosticsText } from './diagnostics';
 import { els } from './dom';
 
-/** Estado do botão principal e dos controles conforme o estado do motor. */
+/** Depois de quanto tempo sem câmera aparece o botão "Ligar câmera" (reinícios rápidos não devem piscar o botão). */
+const RETRY_DELAY_MS = 1500;
+let notRunningSince = 0;
+
+/** Marca como selecionado o botão do grupo cujo `data-v` é o valor atual. */
+function paintSegment(group: HTMLElement, value: string, locked: boolean): void {
+  group.querySelectorAll<HTMLButtonElement>('button').forEach((b) => {
+    b.setAttribute('aria-checked', String(b.dataset.v === value));
+    b.disabled = locked;
+  });
+}
+
+/** Estado das telas e dos controles conforme o estado do motor. */
 export function updateUI(): void {
-  const b = els.btnRec;
-  if (!S.running) {
-    b.textContent = T.btnStart;
-    b.className = 'rec idle';
-  } else if (S.finalizing) {
-    b.textContent = T.btnFinalizing;
-    b.className = 'rec busy';
-  } else if (S.rec) {
-    b.textContent = T.btnStop;
-    b.className = 'rec on';
-  } else {
-    b.textContent = T.btnReady(cfg.bufferSec);
-    b.className = 'rec ready';
-  }
-  els.btnFlip.disabled = els.selQuality.disabled = els.btnLens.disabled = !!S.rec || S.finalizing;
-  els.btnLens.hidden = !(S.running && cfg.facing === 'environment' && S.lensCan);
-  els.btnLens.textContent = cfg.lens === '0.5' ? T.lensWide : T.lensMain;
+  // Telas
+  els.screenHome.hidden = S.view !== 'home';
+  els.screenCamera.hidden = S.view !== 'camera';
+  els.screenGallery.hidden = S.view !== 'gallery';
+  document.body.dataset.view = S.view;
+
+  // Botão de gravar
+  const state = !S.running ? 'idle' : S.finalizing ? 'busy' : S.rec ? 'recording' : 'ready';
+  els.btnRec.dataset.state = state;
+  els.btnRec.setAttribute('aria-label', T.shutter[state]);
+
+  // Câmera
+  const locked = !!S.rec || S.finalizing;
+  els.btnFlip.disabled = locked;
+  els.lens.hidden = !(S.running && cfg.facing === 'environment' && S.lensCan);
+  els.lensWide.setAttribute('aria-pressed', String(cfg.lens === '0.5'));
+  els.lensMain.setAttribute('aria-pressed', String(cfg.lens === '1'));
+  els.lensWide.disabled = els.lensMain.disabled = locked;
   els.btnMic.disabled = S.micBusy;
-  els.intro.hidden = S.introDone || S.running;
-  els.btnRec.hidden = !S.introDone && !S.running; // antes do primeiro "Iniciar" só existe o botão da tela inicial
+  els.pill.hidden = !S.running;
   els.btnVoice.classList.toggle('listening', S.voice === 'listening');
   els.btnVoice.classList.toggle('starting', S.voice === 'starting');
   els.btnVoice.setAttribute('aria-pressed', String(S.voiceEnabled));
   els.btnVoice.hidden = S.voice === 'unsupported';
+  if (S.running) notRunningSince = 0;
+  else if (!notRunningSince) notRunningSince = performance.now();
+
+  // Ajustes
+  paintSegment(els.segQuality, cfg.quality, locked);
+  paintSegment(els.segBuffer, String(cfg.bufferSec), false);
+  els.swVoice.setAttribute('aria-checked', String(S.voiceEnabled));
+  els.swSound.setAttribute('aria-checked', String(S.soundOn));
+  els.rowVoice.hidden = S.voice === 'unsupported';
 }
 
-/** Atualização periódica (250 ms): barra de buffer, cronômetro, nível do microfone, avisos e diagnóstico. */
+/** Atualização periódica (250 ms): indicador de buffer/gravação, avisos e diagnóstico. */
 export function tick(): void {
   const now = performance.now();
   sampleFps(now);
 
   const shown = Math.min(S.buffer.spanSec(), cfg.bufferSec);
   els.fill.style.width = (S.running ? Math.min(1, shown / cfg.bufferSec) * 100 : 0) + '%';
+  els.pill.classList.toggle('rec', !!S.rec);
   if (S.rec) {
     const live = (now - S.rec.startMs) / 1000;
-    els.bufTxt.textContent = T.recording(S.rec.preSec + live, S.rec.preSec);
+    els.bufTxt.textContent = T.recording(formatDuration(S.rec.preSec + live));
     if (live + S.rec.preSec > MAX_REC_SEC && !S.finalizing) void stopRec();
   } else {
-    els.bufTxt.textContent = S.running ? T.bufferFill(shown, cfg.bufferSec) : T.bufferStopped;
-    // O botão mostra o pre-roll realmente disponível agora (a gravação funciona mesmo com o buffer incompleto).
-    if (S.running && !S.finalizing) els.btnRec.textContent = T.btnReady(Math.floor(shown));
+    els.bufTxt.textContent = T.bufferFill(shown, cfg.bufferSec);
   }
 
-  els.micFill.style.height = (S.running ? Math.min(100, S.audioPeak * 160) : 0) + '%';
+  els.btnRetry.hidden = !(
+    S.view === 'camera' &&
+    !S.running &&
+    !S.opening &&
+    notRunningSince > 0 &&
+    now - notRunningSince > RETRY_DELAY_MS
+  );
+
   if (els.update.classList.contains('show') && !els.btnUpdate.dataset.updating) {
     const busy = !!(S.rec || S.finalizing);
     els.btnUpdate.disabled = busy; // não atualiza no meio de uma gravação
     els.btnUpdate.textContent = busy ? T.updateWait : T.updateBtn;
   }
   const hasMic = !!S.stream?.getAudioTracks().length;
-  els.btnMic.hidden = !(S.running && !hasMic && !S.rec && !S.finalizing); // botão só aparece sem microfone
+  els.btnMic.hidden = !(S.running && !hasMic && !S.rec && !S.finalizing); // só aparece sem microfone
   if (
     S.running &&
     hasMic &&

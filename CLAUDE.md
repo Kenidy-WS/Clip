@@ -20,7 +20,9 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 
 ## Regras do projeto
 
-- **Textos:** toda frase exibida ao usuário fica em `src/strings.ts`. Tom simples, formal e profissional; telas limpas, sem
+- **Telas:** Início, Câmera e Galeria (`S.view`), sem rolagem da página. Sair da câmera desliga captura/voz. Cores só por tokens
+  `:root` em `styles.css` (amarelo = ativo, vermelho = gravar, verde = escutando); ícones só em `src/ui/icons.ts`.
+- **Textos:** toda frase exibida ao usuário fica em `src/strings.ts` (rótulos fixos de botões/ajustes ficam no `index.html`). Tom simples, formal e profissional; telas limpas, sem
   informação técnica para o usuário final (diagnóstico é só para desenvolvimento).
 - **Camadas:** `src/core/` é lógica pura (sem DOM, sem navegador) e **tem teste** em `tests/`. `src/media/` é o motor
   (câmera, encoders, buffer) e não conhece o DOM: avisa a interface por `src/events.ts`. `src/ui/` só desenha e lê o estado.
@@ -56,12 +58,12 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   na v0.5.0: ícone verde e nenhum comando reconhecido até desligar/ligar o botão). Por isso o indicador só fica verde depois de
   `onaudiostart`/resultado. **A escuta só começa dentro de um toque** (`voiceTap`; sem toque ela fica surda, confirmado de novo na v0.5.6):
   `startVoice()` sem toque só marca "aguardando toque" (ícone âmbar + aviso). Por isso a câmera **não abre sozinha** (v0.6.0):
-  a tela inicial tem o botão "Iniciar", que liga câmera, áudio e voz no mesmo gesto. Eventos da escuta ficam no
+  o Início tem o botão "Abrir câmera" (`openCamera`), que liga câmera, áudio e voz no mesmo gesto. Eventos da escuta ficam no
   painel "i" (linha "Voz").
 - **Dois pedidos de permissão:** o iOS pede (1) "Câmera e Microfone" (`getUserMedia`) e, quando a escuta de voz inicia, (2) "Microfone"
   de novo, só para o reconhecimento de voz (Web Speech). Não há como juntar os dois em código. No Safari, "aA → Ajustes do Site →
   Câmera/Microfone: Permitir" pode eliminar ambos (a confirmar se vale para o pedido da voz); o app instalado não tem esses ajustes.
-- **Ordem de início (v0.7.0):** no toque em "Iniciar", `start(false, true)` liga a voz **primeiro** (`startVoice('tap')`, dentro do gesto)
+- **Ordem de início (v0.7.0):** no toque em "Abrir câmera", `start(false, true)` liga a voz **primeiro** (`startVoice('tap')`, dentro do gesto)
   e só abre a câmera depois de `voiceSettled` (microfone da voz aberto/recusado/20 s). Ligar voz e câmera ao mesmo tempo dava
   tela preta + 3 pedidos. Reinícios mantêm a captura antiga aberta até a nova chegar (senão o iOS pede permissão de novo).
 - **Lente 0,5×:** o iOS só informa os nomes das câmeras depois da permissão; a ultra-angular é a câmera cujo nome casa `/ultra/i`

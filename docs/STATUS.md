@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.7.0 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.0 (Onda 3a) · aguardando teste no iPhone
 
 ## Feito
 
@@ -104,16 +104,62 @@ aparece em religamentos sem toque (voltar de segundo plano). **Não confirmado n
 iniciada junto do pedido de permissão da câmera (pode virar 2 pedidos em sequência, ou conflito). Se der conflito: iniciar a voz
 logo que a câmera entregar o primeiro quadro, ainda no mesmo gesto, ou voltar ao toque pós-permissão.
 
-## Teste da v0.7.0 (resultado) e próximo passo
+## Onda 3a: três telas e visual novo (v0.8.0)
+
+Pedido do Kenidy: câmera em tela cheia como o app Câmera do iPhone (galeria à esquerda embaixo, troca de lente, ajustes),
+essenciais à vista, o resto escondido; interface, cores e ícones padronizados, discretos e minimalistas. Feito:
+
+- **Três telas sem rolagem** (`S.view`: `home` | `camera` | `gallery`), em `index.html`/`src/ui/`:
+  - **Início:** "Abrir câmera" (é o gesto que liga voz+câmera+áudio), 4 clipes recentes, "Ver todos", engrenagem de Ajustes, versão.
+  - **Câmera:** imagem em tela cheia (`object-fit: cover`); topo: voltar, indicador de buffer/gravação (`12/15 s`, `● 0:23` em vermelho),
+    microfone da voz (cinza = desligado, laranja = ligando, verde = escutando) e Ajustes; embaixo: miniatura do último clipe (abre a
+    Galeria), botão de gravar (anel branco, centro vermelho; vira quadrado ao gravar), trocar câmera, seletor de lente `0,5 | 1×`.
+    **Deitado:** os controles vão para a lateral direita (CSS `orientation`), o vídeo gravado não gira por causa disso.
+  - **Galeria:** grade de miniaturas (primeiro quadro do vídeo, duração, ícone laranja se sem áudio); toque abre o player
+    (Salvar/Compartilhar, Excluir). Só a grade rola; a página não.
+  - **Ajustes** (folha por cima, aberta do Início e da Câmera): qualidade 1080p/720p, tempo antes do toque 15/30 s, comando de voz,
+    sons, armazenamento e Diagnóstico (o "i" antigo). Qualidade e buffer agora **ficam salvos** (`src/storage/prefs.ts`).
+- **Sair da tela da câmera desliga captura, microfone e voz** (`showScreen` em `src/ui/navigation.ts`; `cancelStart()` cancela uma
+  abertura em andamento). Isso resolve o áudio ao assistir clipes (a Galeria nunca tem captura ligada). Não dá para sair gravando
+  ("Termine a gravação primeiro").
+- **Visual:** tokens em `:root` de `src/styles.css` (preto, cinzas neutros, **amarelo `#ffd60a` só para "ativo/selecionado"**,
+  vermelho só para gravar, verde só para escutando); ícones só em `src/ui/icons.ts` (`data-icon`); textos em `src/strings.ts`.
+  Removidos da tela: medidor do microfone (a leitura fica no Diagnóstico), tamanhos/Mbps, avisos técnicos.
+- **Zoom bloqueado:** `user-scalable=no`, `touch-action: manipulation` e `gesturestart` com `preventDefault`.
+- Testes: `format` (novo) e e2e reescrito para as telas, incluindo layout em pé/deitado (sem rolagem, imagem ocupa a tela toda,
+  controles dentro da tela) e "sair durante a abertura não deixa a câmera ligada".
+
+**Hipóteses/riscos para confirmar no iPhone (não dá para testar na sandbox):**
+
+1. Voltar ao Início/Galeria e reabrir a câmera **pode pedir permissão de novo** (iOS costuma pedir quando nenhuma captura está ativa).
+2. Preview em tela cheia **corta as laterais** (~9% de cada lado numa tela 19,5:9): o arquivo gravado (9:16) tem mais imagem que a tela mostra.
+3. Gravar **deitado**: o iOS deve entregar quadro deitado e o encoder reconfigura sozinho (fora da gravação); girar o aparelho
+   _durante_ a gravação não é tratado.
+4. Miniaturas pelo primeiro quadro do `<video>` (seek em `loadedmetadata`): se vierem pretas no iOS, trocar por imagem gerada em canvas.
+5. Pinça/duplo toque sem zoom: o Safari às vezes ignora `user-scalable=no`; confirmar.
+6. O ícone do app (tela de início do iPhone) **ainda é o antigo** (Onda 3b).
+
+### O que o Kenidy precisa testar no iPhone (`v0.8.0`)
+
+0. Abrir → **Abrir câmera** → permitir → imagem em tela cheia, "Ei Clip" funciona sem tocar.
+1. Seletor **0,5 | 1×** (troca sem novo pedido?), trocar câmera, gravar por botão e por voz (indicador vermelho com o tempo).
+2. **Em pé e deitado:** os botões ficam no lugar certo? O clipe gravado deitado sai deitado?
+3. Miniatura → **Galeria** → abrir clipe → som normal? Salvar/Compartilhar e Excluir funcionam?
+4. **Voltar** e **Abrir câmera** de novo: quantos pedidos de permissão aparecem?
+5. **Ajustes** (Início e Câmera): trocar qualidade/buffer, fechar e abrir o app: continuam salvos?
+6. Pinça e duplo toque na tela não dão zoom? O que está feio, grande, pequeno ou fora do lugar (print ajuda)?
+
+**Próximo (Onda 3b):** ajustes finos do visual depois do teste, ícone do app/marca/cores, e decidir se o enquadramento do preview
+deve mostrar o que é gravado (barras) em vez de cortar. Depois, Onda 4.
+
+## Teste da v0.7.0 (resultado)
 
 Kenidy testou a `v0.7.0` no iPhone: **funcional**. Agora são só **2 pedidos**, e ao aceitar o segundo a câmera já abre e tudo
 funciona (voz + gravação). **Troca de lente 1×/0,5× funciona e a gravação na 0,5× também.** Pendência visual: na 0,5× o preview
 fica menor, com faixas pretas laterais (tratar na Onda 3). Ainda sem confirmação: áudio dos clipes com a voz ouvindo, teste ao
 ar livre/vento, sessão longa.
 
-**Próximo chat: Onda 3a (estrutura de telas)**, conforme o plano em `docs/ROADMAP.md` ("Plano da Onda 3"). Kenidy grava em pé
-(principalmente) e deitado; vai mandar prints de apps de referência (câmera e galeria). Começar pedindo/olhando os prints e
-confirmando o desenho das três telas (Início, Câmera, Galeria) antes de codar. Manter o fluxo: `check` + `e2e` verdes → `main`.
+Kenidy grava em pé (principalmente) e deitado. A Onda 3a (telas) foi feita na `v0.8.0`, acima.
 
 ## v0.6.1 com defeito → v0.7.0 (voz primeiro + lente 0,5×)
 
@@ -218,5 +264,5 @@ para rodar junto do encoder de vídeo: precisaria de teste de viabilidade (Onda 
 
 ## Próximo passo
 
-Kenidy testa a `v0.5.0` (lista acima). Aprovada, a Onda 2 fecha e a Onda 3 (interface, marca e ícone) começa em chat novo:
+Kenidy testa a `v0.8.0` (lista acima). Com o resultado, abrir chat novo para a Onda 3b (ajustes do visual, ícone e marca):
 pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).

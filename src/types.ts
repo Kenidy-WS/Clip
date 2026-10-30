@@ -22,6 +22,8 @@ export type Quality = '1080' | '720';
 export type Facing = 'environment' | 'user';
 /** Lente traseira: '1' = principal (1×), '0.5' = ultra-angular (0,5×). */
 export type Lens = '1' | '0.5';
+/** Telas do app: Início, Câmera (só gravação) e Galeria (grade de clipes). */
+export type Screen = 'home' | 'camera' | 'gallery';
 
 export interface Config {
   bufferSec: number;
