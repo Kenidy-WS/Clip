@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.8 · aguardando teste no iPhone (ver as seções v0.12.7 e v0.12.8 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.9 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.9 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -563,3 +563,12 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Agora (v0.12.8): `stopVoice()` de volta na recuperação do microfone mudo; a voz espera um toque depois do reinício (comportamento da v0.12.6, que funciona após o toque). É preferível pedir um toque a mostrar verde estando surda.
 - Resumo do que já foi testado para a voz depois do reinício do microfone: religar sem toque (v0.12.4) → surda; manter viva (v0.12.7) → verde e surda; parar e esperar toque (v0.12.6/0.12.8) → funciona após o toque.
 - Conclusão: sem toque não dá para recuperar a voz; o caminho para eliminar o toque é **evitar o microfone mudo** (a recuperação não precisaria rodar). Próximo experimento: câmera primeiro e voz logo depois no mesmo toque (atenção: a v0.7.0 viu tela preta e 3 pedidos ao abrir voz e câmera juntas), ou pedir o ultra-angular já no 1º `getUserMedia` para evitar o "start #2".
+
+## v0.12.9 — Espera mínima antes de reabrir o microfone (microfone mudo ao voltar rápido)
+
+- Observação do Kenidy (v0.12.8): entrar na Galeria e voltar **depressa** à câmera deixa o microfone mudo (a tela pisca com o reinício e a voz pede toque); esperando uns segundos na Galeria e voltando, **funciona**. O atalho ao lado do botão de gravar e o botão "voltar → Início → Galeria" usam o mesmo código (`showScreen`); a diferença é só o tempo até reabrir. Com um clipe reproduzido o microfone para nos dois caminhos (problema à parte: sessão `playback` do player).
+- Hipótese (apoiada pelo teste manual): voltar logo após sair → o iOS ainda não liberou a sessão de áudio → o microfone nasce mudo → recuperação aos 3 s → voz espera toque.
+- Mudança: `showScreen` chama `markCameraLeft()` (`camera.ts`) ao sair da câmera; no `start()`, depois de a voz se definir e **antes** do `getUserMedia`, espera até `MIN_REOPEN_MS` (3000 ms, palpite) desde a saída. A voz continua nascendo dentro do toque. Só vale na 1ª abertura depois de sair (não afeta trocar lente/qualidade).
+- Diagnóstico, "Câmera: início": `saiu da câmera` e `reabriu N ms após sair; aguardando M ms` (ou `sem espera`). Use para ajustar `MIN_REOPEN_MS`.
+- Testar: (1) entrar na Galeria pelo atalho e voltar **rápido** → a câmera deve demorar ~3 s para abrir, e a voz e o microfone devem funcionar sem pedir toque; (2) repetir pelo caminho voltar → Início → Galeria; (3) se ainda falhar, copiar o Diagnóstico pela tela da câmera (linhas "saiu da câmera", "reabriu…", "microfone mudo…").
+- Não resolve o microfone mudo depois de **reproduzir um clipe** (outro gatilho). Próximo: investigar `setAudioSession('playback')` no player e o tempo de liberação após fechar o player.

@@ -1,5 +1,5 @@
 import { notify } from '../events';
-import { cancelStart, start, stopAll } from '../media/camera';
+import { cancelStart, markCameraLeft, start, stopAll } from '../media/camera';
 import { S } from '../state';
 import { T } from '../strings';
 import { exitSelection } from './clips-view';
@@ -44,6 +44,7 @@ export async function showScreen(view: 'home' | 'gallery'): Promise<void> {
     openSeq++;
     S.opening = false;
     cancelStart();
+    markCameraLeft();
   }
   notify('');
   updateUI();

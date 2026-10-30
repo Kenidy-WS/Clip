@@ -60,6 +60,13 @@ let watchdogSoftAt = 0;
 const SOFT_WAIT_MS = 2000;
 /** Quanto a câmera espera a escuta de voz se definir (inclui o tempo de o usuário responder ao pedido de microfone). */
 const VOICE_WAIT_MS = 20000;
+/**
+ * Tempo mínimo entre sair da câmera e abrir o microfone de novo (v0.12.9). Visto no iPhone: voltar à câmera logo depois de sair
+ * faz o microfone nascer mudo (o iOS ainda não liberou a sessão de áudio); esperando alguns segundos ele nasce normal.
+ * O valor é um palpite (não medido): ajustar com o Diagnóstico ("reabriu … ms após sair").
+ */
+const MIN_REOPEN_MS = 3000;
+let leftCameraAt = 0; // quando o usuário saiu da câmera pela última vez (0 = já reaberta ou nunca saiu)
 let lensSwitched = false; // a troca automática para a ultra-angular (1ª abertura) só acontece uma vez
 let watchdog = 0;
 let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
@@ -76,6 +83,12 @@ export function logCam(msg: string): void {
 export function cancelStart(): void {
   startSeq++;
   clearTimeout(watchdog);
+}
+
+/** O usuário saiu da câmera (Início ou Galeria): guarda a hora para a próxima abertura esperar o iOS liberar o microfone. */
+export function markCameraLeft(): void {
+  leftCameraAt = performance.now();
+  logCam('saiu da câmera');
 }
 
 /** Mensagem com a causa real do erro do microfone (antes tudo virava "permissão negada"). */
@@ -259,6 +272,17 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   if (voiceFirst) {
     await voiceSettled(VOICE_WAIT_MS);
     if (my !== startSeq) return stopTracks(previous);
+  }
+  // Voltou logo depois de sair: dá tempo ao iOS para liberar o microfone antes de pedir a captura (a voz já começou no toque).
+  if (leftCameraAt) {
+    const since = performance.now() - leftCameraAt;
+    leftCameraAt = 0;
+    const wait = MIN_REOPEN_MS - since;
+    if (wait > 0) {
+      logCam(`reabriu ${Math.round(since)} ms após sair; aguardando ${Math.round(wait)} ms`);
+      await new Promise((resolve) => setTimeout(resolve, wait));
+      if (my !== startSeq) return stopTracks(previous);
+    } else logCam(`reabriu ${Math.round(since)} ms após sair; sem espera`);
   }
   const sup = support();
   if (!sup.VideoEncoder) {
