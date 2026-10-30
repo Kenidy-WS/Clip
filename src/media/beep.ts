@@ -2,6 +2,7 @@ import { beepDrive, beepDurationSec, beepGain, beepSustain, beepTones, renderBee
 import type { BeepKind } from '../core/beep-wave';
 import { S } from '../state';
 import { ensureAudioCtx } from './audio';
+import { pauseVoiceFor } from './voice';
 
 /** Quanto do bipe entra no clipe em relação ao tocado no alto-falante (evita estourar a voz). */
 const CLIP_MIX = 0.6;
@@ -24,8 +25,8 @@ export const beepMs = (kind: BeepKind): number => Math.round(beepDurationSec(kin
  *   O microfone fica mudo durante o bipe para não captá-lo em dobro.
  * - `beepInClip`: o bipe é somado digitalmente ao áudio do clipe (não depende do alto-falante nem da chave de silencioso).
  */
-/** Fração do pico usada no alto-falante: o 0,9 estourava ao vivo (só na saída do iPhone, a gravação saía limpa). Teste v0.10.5. */
-const SPEAKER_SCALE = 0.55;
+/** Fração do pico usada no alto-falante (1 = o pico do perfil). A v0.10.5 testou 0,55 sem resolver o chiado. */
+const SPEAKER_SCALE = 1; // volta ao nível anterior: o chiado vinha da escuta de voz aberta, não do volume
 
 export function beep(kind: BeepKind): void {
   const ctx = S.audioCtx;
@@ -67,6 +68,7 @@ export function beep(kind: BeepKind): void {
       o.stop(t0 + off + d + 0.02);
     }
     S.muteUntil = performance.now() + beepMs(kind) + 280; // microfone em silêncio enquanto o bipe toca
+    pauseVoiceFor(beepMs(kind) + 150); // a escuta de voz aberta faz o alto-falante chiar
   }
   const rate = ctx?.sampleRate || S.sampleRate;
   if (S.beepInClip && S.rec && S.running && rate) {

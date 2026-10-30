@@ -436,3 +436,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - v0.10.4: o bipe estoura ao vivo mesmo em 1080p/30 Padrão, então não é carga de processamento; a gravação sai limpa. Hipótese: o 0,9 de pico passa do que o alto-falante aguenta com o microfone aberto.
 - Alto-falante agora usa 55% do pico (≈0,5); o bipe gravado no vídeo continua igual.
 - Se ainda estourar: o iOS limita a saída com o microfone aberto; alternativas = bipe só no vídeo ou vibração/aviso visual.
+
+## v0.10.6 — Bipe sem chiado: a escuta de voz pausa durante o bipe
+
+- Teste do Kenidy (v0.10.5): com o comando de voz desligado o bipe sai limpo; ligado, chia. A causa é o reconhecimento de voz (Web Speech) aberto enquanto o alto-falante toca (o eco do `getUserMedia` já estava desligado).
+- `pauseVoiceFor(ms)` (`voice.ts`): aborta a escuta no bipe e religa em `beepMs + 150 ms`, sem toque. Pode deixar a escuta surda em alguns casos; o aviso "toque na tela" e o toque seguinte a reiniciam (ver Diagnóstico → Comando de voz: "pausa de … ms (bipe)").
+- Volume do alto-falante voltou ao pico 0,9 (o teste de 0,55 não resolvia).
+
+**Testar:** bipes ao vivo (sem chiado?); depois do bipe, o comando de voz continua respondendo (várias gravações seguidas, por voz e por toque).

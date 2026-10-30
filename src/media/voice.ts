@@ -214,6 +214,26 @@ function attempt(fromTap: boolean): void {
   begin(fromTap);
 }
 
+/**
+ * Pausa a escuta durante o bipe do alto-falante e religa depois. Visto no iPhone (v0.10.5): com o reconhecimento de voz aberto o
+ * bipe sai com chiado/estouro; com o comando de voz desligado o bipe sai limpo. A escuta religa sozinha (sem toque, como nos
+ * religamentos do iOS); se ficar surda, o aviso de toque e o toque seguinte a reiniciam.
+ */
+export function pauseVoiceFor(ms: number): void {
+  if (!rec || !wanted || fatal) return;
+  logVoice(`pausa de ${Math.round(ms)} ms (bipe)`);
+  clearTimeout(restartTimer);
+  session++; // ignora os eventos da instância que vai parar
+  const old = rec;
+  rec = null;
+  try {
+    old.abort();
+  } catch {
+    /* já parado */
+  }
+  restartTimer = window.setTimeout(() => attempt(false), ms);
+}
+
 /** Derruba a instância atual (se houver) e inicia outra, já dentro do toque que chamou. */
 function restartNow(): void {
   clearTimeout(restartTimer);
