@@ -26,8 +26,8 @@ export function renderBeep(kind: BeepKind, sampleRate: number, gain: number): Fl
   for (const [freq, off, dur] of TONES[kind]) {
     const i0 = Math.floor(off * sampleRate);
     const len = Math.floor(dur * sampleRate);
-    const atk = Math.max(1, Math.min(Math.floor(0.008 * sampleRate), Math.floor(len / 4)));
-    const rel = Math.max(1, Math.min(Math.floor(0.025 * sampleRate), Math.floor(len / 3)));
+    const atk = Math.max(1, Math.min(Math.floor(0.012 * sampleRate), Math.floor(len / 4)));
+    const rel = Math.max(1, Math.min(Math.floor(0.04 * sampleRate), Math.floor(len / 3)));
     for (let i = 0; i < len; i++) {
       const p = (2 * Math.PI * freq * i) / sampleRate;
       const wave = Math.sin(p);

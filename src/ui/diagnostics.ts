@@ -25,6 +25,14 @@ const VOICE_LABEL = {
 } as const;
 const clean = (s: string): string => s.replace(/\s+/g, ' ').trim();
 
+/** Taxa real do último clipe salvo (tamanho ÷ duração): mostra se a Qualidade escolhida chegou ao arquivo. */
+function lastClip(): string {
+  const c = S.clips[0];
+  if (!c || !c.durSec) return '-';
+  const mbps = (c.blob.size * 8) / c.durSec / 1e6;
+  return `${(c.blob.size / 1048576).toFixed(1)} MB · ${c.durSec.toFixed(1)} s · ≈ ${mbps.toFixed(1)} Mbps (vídeo + áudio)`;
+}
+
 /** Problemas que o Diagnóstico precisa destacar no topo. */
 function alerts(): string[] {
   const out: string[] = [];
@@ -78,6 +86,7 @@ export function diagnosticsSections(): DiagSection[] {
       ['Codificação', S.W ? `${S.W}x${S.H} · ${S.codec} · ${(S.bitrate / 1e6).toFixed(0)} Mbps` : '-'],
       ['Quadros', `entrada ${S.framesIn} · saída ${S.framesOut} (${S.outFps.toFixed(1)}/s)`],
       ['Descartados / fora de ordem', `${S.dropped} / ${S.reorders}`],
+      ['Último clipe', lastClip()],
       ['Buffer', `${S.buffer.video.length} quadros · ${S.buffer.audio.length} blocos de áudio`],
       ['Elemento de vídeo', S.srcInfo || '-'],
     ],
@@ -88,6 +97,12 @@ export function diagnosticsSections(): DiagSection[] {
     rows: [
       ['Microfone', at ? (at.muted ? 'MUDO' : at.readyState) : 'nenhum'],
       ['Contexto de áudio', S.audioCtx ? S.audioCtx.state : '-'],
+      [
+        'Processamento do mic',
+        at?.getSettings
+          ? `eco ${at.getSettings().echoCancellation ? 'sim' : 'não'} · ruído ${at.getSettings().noiseSuppression ? 'sim' : 'não'} · ganho ${at.getSettings().autoGainControl ? 'sim' : 'não'}`
+          : '-',
+      ],
       ['Sinal', `pico ${S.audioPeak.toFixed(3)} · ${S.audioBlocks} blocos`],
       [
         'Codificação',

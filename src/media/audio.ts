@@ -134,6 +134,10 @@ function mixBeepInto(planar: Float32Array, frames: number, nCh: number): void {
   if (m.pos >= m.data.length) S.beepMix = null;
 }
 
+/** Última decisão de silêncio do microfone e duração (amostras) da rampa entre som e silêncio. */
+let micMuted = false;
+const MIC_RAMP = 256;
+
 async function onAudioBlock(ev: MessageEvent<{ ch: Float32Array[]; frames: number }>): Promise<void> {
   const { ch, frames } = ev.data;
   let pk = 0;
@@ -153,10 +157,21 @@ async function onAudioBlock(ev: MessageEvent<{ ch: Float32Array[]; frames: numbe
   if (S.aEnc.state !== 'configured') return;
   const nCh = S.nCh;
   const planar = new Float32Array(frames * nCh); // começa zerado = silêncio
-  if (performance.now() >= S.muteUntil) {
-    // janela de silêncio durante os bipes, para o som do app não entrar no clipe
-    for (let c = 0; c < nCh; c++) planar.set(ch[Math.min(c, ch.length - 1)].subarray(0, frames), c * frames);
+  // Janela de silêncio durante os bipes, para o som do app não entrar no clipe. A entrada e a saída do silêncio são
+  // suaves (rampa curta); corte seco no meio da onda faz um estalo no áudio do clipe.
+  const muted = performance.now() < S.muteUntil;
+  const ramp = Math.min(MIC_RAMP, frames);
+  for (let c = 0; c < nCh; c++) {
+    const src = ch[Math.min(c, ch.length - 1)]!.subarray(0, frames);
+    const base = c * frames;
+    if (!muted) {
+      planar.set(src, base);
+      if (micMuted) for (let i = 0; i < ramp; i++) planar[base + i]! *= i / ramp; // saindo do silêncio
+    } else if (!micMuted) {
+      for (let i = 0; i < ramp; i++) planar[base + i] = src[i]! * (1 - i / ramp); // entrando no silêncio
+    }
   }
+  micMuted = muted;
   if (S.rec) mixBeepInto(planar, frames, nCh); // bipe de gravação dentro do clipe (opção dos Ajustes)
   // Relógio do áudio = contador de amostras ancorado no relógio do vídeo. Se o iOS suspender o áudio
   // (ex.: compartilhar/salvar), o contador atrasa; sem reancorar, o buffer descartaria o áudio para sempre.

@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.9.2 — estalos do bipe e prova das qualidades
+
+- Relato (v0.9.1): bipe ainda "ruim" (possivelmente ainda na v0.9.0: conferir o rodapé do Início), **estoura** ao tocar a amostra nos Ajustes e às vezes na gravação, mesmo o bipe antigo.
+- Hipóteses e mudanças: (1) o áudio do iPhone estala ao sair do repouso → 60 ms de silêncio antes do bipe, e a amostra dos Ajustes espera 150 ms após acordar o áudio; (2) início/fim bruscos → rampas de 12 ms/40 ms; (3) **corte seco do microfone** durante o bipe causava estalo no áudio do clipe → rampa de 256 amostras ao entrar e sair do silêncio (`audio.ts`).
+- Diagnóstico novo: "Processamento do mic" (eco/ruído/ganho; se o iOS ligou o cancelamento de eco, ele pode deformar o bipe) e "Último clipe" (MB, s e Mbps reais, para conferir Padrão/Alta/Máxima).
+- Pendente: se ainda estourar, ver em qual momento (amostra nos Ajustes, bipe durante a gravação, ou áudio do clipe salvo) e o "Processamento do mic".
+
 ## v0.9.1 — bipe original e Diagnóstico reorganizado
 
 - Feedback: o bipe de 2 kHz ficou "péssimo, muito agudo". **Voltou ao original** (880 Hz no início, 660 Hz duas vezes no fim, seno puro). Mantidos "Volume do bipe" (Normal = volume antigo 0,3 · **Alto = 0,6, padrão** · Máximo = 1,0) e "Bipe no vídeo".
