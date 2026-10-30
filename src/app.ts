@@ -47,6 +47,7 @@ function loadPrefs(): void {
   const iq = getPref('imageQuality');
   if (iq === 'high' || iq === 'max') cfg.imageQuality = iq;
   S.beepInClip = getPref('beepClip') === '1';
+  S.mirrorFront = getPref('mirrorFront') !== '0';
   S.diskRec = getPref('diskRec') !== '0'; // ligada por padrão desde a v0.14.6
   S.levelOn = getPref('level') === '1';
   const buffer = getPref('buffer');
@@ -186,6 +187,11 @@ function bindSettings(): void {
     })();
   });
   document.addEventListener('levelchange', updateUI);
+  els.swMirror.addEventListener('click', () => {
+    S.mirrorFront = !S.mirrorFront;
+    setPref('mirrorFront', S.mirrorFront ? '1' : '0');
+    updateUI();
+  });
   els.swDisk.addEventListener('click', () => {
     S.diskRec = !S.diskRec;
     setPref('diskRec', S.diskRec ? '1' : '0');

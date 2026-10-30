@@ -1,6 +1,11 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.2 · `estavel` = 0.14.5 (validada no iPhone)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.15.3 · `estavel` = 0.14.5 (validada no iPhone)
+
+## v0.15.3 — "Espelhar frontal"
+
+Kenidy tem "Espelhar câmera frontal" ligado no iPhone e quer o clipe igual à prévia. A v0.15.2 (clipe invertido) fica como opção: Ajustes → **Espelhar frontal**, **ligado por padrão** (clipe = prévia, como a Câmera do iPhone); desligado, o clipe sai como os outros veem (texto legível). Vale para clipe e miniatura; traseira intacta.
+**Testar:** gravar com a frontal nos dois modos e comparar com a prévia (versão 0.15.3 no rodapé; tocar em "Atualizar" se avisar).
 
 ## v0.15.2 — frontal sem espelhar no clipe
 

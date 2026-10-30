@@ -87,6 +87,7 @@ export const els = {
   swBeepClip: byId<HTMLButtonElement>('swBeepClip'),
   swDisk: byId<HTMLButtonElement>('swDisk'),
   swLevel: byId<HTMLButtonElement>('swLevel'),
+  swMirror: byId<HTMLButtonElement>('swMirror'),
   level: byId<HTMLElement>('level'),
   rowVoice: byId<HTMLElement>('rowVoice'),
   swVoice: byId<HTMLButtonElement>('swVoice'),

@@ -79,6 +79,8 @@ export interface AppState {
   beepInClip: boolean;
   /** Gravação longa (padrão desde a v0.14.6): o clipe é gravado direto no armazenamento, sem limite de 90 s. */
   diskRec: boolean;
+  /** Frontal: clipe igual à prévia (espelhado, como o app Câmera do iPhone). Desligado, o clipe sai como os outros veem. */
+  mirrorFront: boolean;
   /** Nível de horizonte na câmera (opcional; desligado por padrão: o iOS pede uma permissão a mais). */
   levelOn: boolean;
   levelInfo: string;
@@ -173,6 +175,7 @@ export const S: AppState = {
   beepVol: 'max',
   beepInClip: false,
   diskRec: true,
+  mirrorFront: true,
   levelOn: false,
   levelInfo: '',
   beepMix: null,

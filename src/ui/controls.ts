@@ -57,6 +57,7 @@ export function updateUI(): void {
   paintSegment(els.segBuffer, String(cfg.bufferSec), false);
   els.swBeepClip.setAttribute('aria-checked', String(S.beepInClip));
   els.swDisk.setAttribute('aria-checked', String(S.diskRec));
+  els.swMirror.setAttribute('aria-checked', String(S.mirrorFront));
   els.swLevel.setAttribute('aria-checked', String(S.levelOn));
   syncLevel();
   els.swDisk.disabled = locked;
