@@ -48,6 +48,8 @@ técnicos/avisos que o usuário final não precisa ver.
 ## Ideias futuras
 
 - **Câmera (pedidos do Kenidy, 30/10):** (1) nível/horizonte na tela como o app nativo (sensor de movimento; pede permissão no iOS); (2) toque na tela para focar (o Safari só permite em alguns aparelhos: verificar no iPhone antes); (3) analisar a estabilização de vídeo (o que o Safari entrega e o que dá para fazer).
+- **Espelhamento/posição da câmera (dúvida do Kenidy):** conferir como a imagem sai gravada, em especial com a câmera frontal (prévia espelhada x arquivo), orientação em pé/deitado e a 0,5×. Verificar no código (`pump` desenha via canvas) e testar no iPhone.
+- **Limite de download x folha de compartilhar:** hoje clipes em disco ≥ 100 MB vão pelo download (2 telas a mais do iOS). Descobrir o maior tamanho que a folha de compartilhar aguenta (RAM antigos, até ~260 MB, funcionavam) e subir o limite (`BIG_DOWNLOAD_BYTES` em `clips-view.ts`).
 - **Marca (3b):** ideia do Kenidy: **ponto de exclamação na marca** ("Clip!"). Analisar junto com a identidade visual.
 
 - App nativo em Swift (4K60, estabilização, escolha de lente), compilado por GitHub Actions macOS; expira em 7 dias com Apple ID gratuito.
