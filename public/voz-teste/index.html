@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="robots" content="noindex" />
+    <title>Teste de voz — Ei Clip</title>
+    <style>
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 16px; font: 16px/1.4 -apple-system, system-ui, sans-serif; background: #0b0b0c; color: #eee; }
+      h1 { font-size: 20px; margin: 0 0 4px; }
+      p.sub { margin: 0 0 14px; color: #9a9a9f; font-size: 14px; }
+      label { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+      button { width: 100%; padding: 14px; margin: 8px 0; border: 0; border-radius: 12px; font-size: 17px; font-weight: 600; background: #2a7bff; color: #fff; }
+      button.sec { background: #2a2a2e; }
+      button:disabled { opacity: 0.45; }
+      #hit { margin: 12px 0; padding: 18px; border-radius: 14px; text-align: center; font-size: 22px; font-weight: 700; background: #1b1b1e; transition: background 0.15s; }
+      #hit.on { background: #1f9d55; }
+      table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 10px 0; }
+      td { padding: 4px 0; border-bottom: 1px solid #222; }
+      td:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+      #log { height: 240px; overflow-y: auto; background: #111; border-radius: 10px; padding: 8px; font: 12px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
+      video { width: 100%; max-height: 180px; background: #000; border-radius: 10px; display: none; }
+    </style>
+  </head>
+  <body>
+    <h1>Teste de voz</h1>
+    <p class="sub">Verifica se o iPhone reconhece a expressão "Ei Clip". Não grava nada.</p>
+
+    <label><input type="checkbox" id="optMic" checked /> Manter o microfone aberto (como na gravação)</label>
+    <label><input type="checkbox" id="optCam" /> Manter a câmera aberta também</label>
+
+    <button id="start">Iniciar teste</button>
+    <button id="stop" class="sec" disabled>Parar</button>
+
+    <div id="hit">Aguardando</div>
+    <video id="vid" playsinline muted></video>
+
+    <table>
+      <tr><td>Modo</td><td id="mMode">—</td></tr>
+      <tr><td>Motor de voz</td><td id="mEngine">—</td></tr>
+      <tr><td>Tempo de teste</td><td id="mUp">0 s</td></tr>
+      <tr><td>Detecções de "Ei Clip"</td><td id="mHits">0</td></tr>
+      <tr><td>Reinícios automáticos</td><td id="mRestarts">0</td></tr>
+      <tr><td>Erros</td><td id="mErrs">0</td></tr>
+    </table>
+
+    <div id="log"></div>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const standalone = window.navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
+      let rec = null, stream = null, active = false, t0 = 0, timer = 0;
+      let hits = 0, restarts = 0, errs = 0, lastHitAt = 0, hitTimer = 0;
+
+      // Variações que o reconhecedor costuma devolver para "Ei Clip".
+      const WAKE = /\b(e+i+|ei|hei|hey|ey|ay|ai|oi)\s*[-,]?\s*(clip|clipe|click|clic|kleep|quip)\b/i;
+
+      function log(msg) {
+        const s = ((performance.now() - t0) / 1000).toFixed(1).padStart(5, ' ');
+        const el = $('log');
+        el.textContent += `[${s}s] ${msg}\n`;
+        el.scrollTop = el.scrollHeight;
+      }
+      function paint() {
+        $('mHits').textContent = hits;
+        $('mRestarts').textContent = restarts;
+        $('mErrs').textContent = errs;
+      }
+      function flash() {
+        const h = $('hit');
+        h.textContent = 'Ei Clip reconhecido';
+        h.classList.add('on');
+        clearTimeout(hitTimer);
+        hitTimer = setTimeout(() => { h.textContent = active ? 'Escutando…' : 'Aguardando'; h.classList.remove('on'); }, 1500);
+      }
+
+      function startRec() {
+        rec = new Rec();
+        rec.lang = 'pt-BR';
+        rec.continuous = true;
+        rec.interimResults = true;
+        rec.maxAlternatives = 3;
+        rec.onresult = (ev) => {
+          for (let i = ev.resultIndex; i < ev.results.length; i++) {
+            const r = ev.results[i];
+            const alts = Array.from(r, (a) => a.transcript.trim());
+            log(`${r.isFinal ? 'final  ' : 'parcial'} "${alts[0]}"`);
+            if (alts.some((a) => WAKE.test(a)) && performance.now() - lastHitAt > 1500) {
+              lastHitAt = performance.now();
+              hits++;
+              log('>>> DETECTADO');
+              paint();
+              flash();
+            }
+          }
+        };
+        rec.onerror = (ev) => {
+          if (ev.error === 'no-speech' || ev.error === 'aborted') return;
+          errs++;
+          log(`erro: ${ev.error}`);
+          paint();
+        };
+        rec.onend = () => {
+          if (!active) return;
+          restarts++;
+          paint();
+          log('reconhecedor encerrou; reiniciando');
+          setTimeout(() => { if (active) { try { startRec(); } catch (e) { log(`falha ao reiniciar: ${e.message}`); } } }, 250);
+        };
+        rec.start();
+      }
+
+      async function start() {
+        $('log').textContent = '';
+        t0 = performance.now(); hits = 0; restarts = 0; errs = 0; paint();
+        $('mMode').textContent = standalone ? 'App instalado' : 'Safari';
+        if (!Rec) {
+          $('mEngine').textContent = 'Indisponível';
+          log('SpeechRecognition não existe neste navegador.');
+          return;
+        }
+        $('mEngine').textContent = 'Web Speech (pt-BR)';
+        $('start').disabled = true; $('stop').disabled = false;
+        active = true;
+        try {
+          if ($('optMic').checked || $('optCam').checked) {
+            stream = await navigator.mediaDevices.getUserMedia({
+              audio: $('optMic').checked ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : false,
+              video: $('optCam').checked ? { facingMode: 'environment' } : false,
+            });
+            log(`stream aberto: ${stream.getTracks().map((t) => t.kind).join(' + ')}`);
+            if ($('optCam').checked) { $('vid').style.display = 'block'; $('vid').srcObject = stream; $('vid').play().catch(() => {}); }
+          }
+          startRec();
+          $('hit').textContent = 'Escutando…';
+          timer = setInterval(() => { $('mUp').textContent = `${Math.round((performance.now() - t0) / 1000)} s`; }, 1000);
+          log('escutando; diga "Ei Clip"');
+        } catch (e) {
+          errs++; paint();
+          log(`falha ao iniciar: ${e.name}: ${e.message}`);
+          stop();
+        }
+      }
+
+      function stop() {
+        active = false;
+        clearInterval(timer);
+        try { rec && rec.abort(); } catch (e) {}
+        if (stream) { stream.getTracks().forEach((t) => t.stop()); stream = null; }
+        $('vid').srcObject = null; $('vid').style.display = 'none';
+        $('start').disabled = false; $('stop').disabled = true;
+        $('hit').textContent = 'Aguardando'; $('hit').classList.remove('on');
+        log('teste encerrado');
+      }
+
+      $('start').addEventListener('click', start);
+      $('stop').addEventListener('click', stop);
+      $('mMode').textContent = standalone ? 'App instalado' : 'Safari';
+      $('mEngine').textContent = Rec ? 'Web Speech disponível' : 'Indisponível';
+    </script>
+  </body>
+</html>
