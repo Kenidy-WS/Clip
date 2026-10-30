@@ -380,9 +380,19 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 **Relato (v0.9.8):** 4K/60/Máxima deu "Encoding task did not complete", o app travou e reabriu; depois os clipes saíam com vídeo preto (só áudio) mesmo em 1080p; microfone mudo após ver um clipe continuava.
 
 **Feito**
+
 - Canvas de captura é recriado a cada configuração do encoder (hipótese: o iOS estraga o canvas 4K e `drawImage` sai preto).
 - Erro do encoder de vídeo: o app reduz sozinho (4K → 1080p, 60 → 30 fps, senão qualidade Padrão), grava a preferência, avisa e reabre a câmera (até 3 vezes).
 - 4K só a 30 fps (o iOS entregou 4K a 30); escolher 4K muda o fluxo para 30; escolher 60 fps tira do 4K; 4K salvo com 60 vira 30 ao abrir. Taxas de 4K reduzidas (30/38/45) e teto 50 Mbps.
 - Microfone: 3 s após abrir a câmera, se a faixa está muda/sem blocos, reinicia a sessão de áudio e reabre a câmera uma vez (linha "microfone mudo" no Diagnóstico).
 
 **Testar no iPhone:** 1080p gravar e ver na Galeria (vídeo preto sumiu?); abrir um clipe, voltar à câmera e testar a voz; 4K a 30 só se quiser. Se ainda sair preto, mandar o Diagnóstico logo após gravar.
+
+## v0.10.0 — Navegação por gestos
+
+- Arrastar a partir da **borda esquerda** para a direita = voltar (fecha player, Diagnóstico ou Ajustes; sai da seleção; Galeria/Câmera → Início). Na gravação o app avisa para finalizar antes.
+- Arrastar a partir da **borda direita** para a esquerda = abrir a Galeria (Início ou Câmera).
+- Só vale se o toque começa na borda (28 px), para não atrapalhar a seleção por arrasto nem a barra do vídeo.
+- Dado do teste na v0.9.8: o microfone ficou mudo só às vezes depois da Galeria (pico 0.000); a detecção e reinício automático entraram na v0.9.9.
+
+**Testar:** gestos nas três telas; microfone depois de ver um clipe (com a v0.9.9+ instalada: rodapé do app).

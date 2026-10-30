@@ -658,6 +658,35 @@ try {
     );
     await page.click('#btnPlayerClose');
     check(!(await page.isVisible('#player')), 'fechar volta para a Galeria');
+    const swipe = (fromX, toX) =>
+      page.evaluate(
+        ([a, b]) => {
+          const mk = (type, x) => {
+            const t = new Touch({ identifier: 7, target: document.body, clientX: x, clientY: 400 });
+            document.dispatchEvent(
+              new TouchEvent(type, {
+                touches: type === 'touchend' ? [] : [t],
+                changedTouches: [t],
+                bubbles: true,
+              }),
+            );
+          };
+          mk('touchstart', a);
+          mk('touchend', b);
+        },
+        [fromX, toX],
+      );
+    await swipe(5, 160); // da borda esquerda para a direita = voltar
+    await page.waitForFunction(() => !document.querySelector('#screenGallery').offsetParent, null, {
+      timeout: 3000,
+    });
+    ok('gesto da borda esquerda volta da Galeria para o Início');
+    const w = await page.evaluate(() => innerWidth);
+    await swipe(w - 5, w - 200); // da borda direita para a esquerda = Galeria
+    await page.waitForFunction(() => !!document.querySelector('#screenGallery').offsetParent, null, {
+      timeout: 3000,
+    });
+    ok('gesto da borda direita avança para a Galeria');
     // Ações em lote: selecionar, Todos/Nenhum, arrastar, cancelar e excluir.
     await page.click('#btnSelect');
     check(await page.isVisible('#selectBar'), 'Selecionar mostra a barra de ações em lote');

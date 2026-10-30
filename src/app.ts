@@ -18,6 +18,7 @@ import { openCamera, showScreen } from './ui/navigation';
 import { setStatus } from './ui/status';
 import { initLifecycleLog } from './ui/lifecycle-log';
 import { hideAnimated, showAnimated } from './ui/transitions';
+import { bindGestures } from './ui/gestures';
 import { initViewport } from './ui/viewport';
 import type { BeepVol, Facing, Fps, ImageQuality, Lens, Quality } from './types';
 import { APP_VERSION } from './config';
@@ -271,6 +272,7 @@ export function initApp(): void {
   onVoiceCommand(onVoice);
 
   bindNavigation();
+  bindGestures();
   bindCamera();
   bindSettings();
   bindPlayer();
