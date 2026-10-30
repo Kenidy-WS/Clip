@@ -30,6 +30,7 @@ export const T = {
   noAudioContext: 'sem AudioContext',
   noAudioTrack: 'sem faixa de áudio',
   restarting: 'Voltando ao app: reiniciando a câmera…',
+  cameraNoImage: 'A câmera não enviou imagem. Toque na tela para reiniciar.',
 
   // Comando de voz
   voiceDenied:

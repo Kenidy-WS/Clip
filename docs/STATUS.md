@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.3 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.5.4 · aguardando teste no iPhone
 
 ## Feito
 
@@ -50,7 +50,23 @@ espera até 2 s a faixa de vídeo liberar (`unmute`); se não liberar, refaz a c
 no botão azul fazia) e segue mesmo assim; ao liberar, o vídeo volta a tocar sozinho. Dois cenários novos no e2e simulam isso.
 Se a permissão ainda for pedida duas vezes (o refazer chama a câmera de novo), é o bug do WebKit no app instalado.
 
-## O que o Kenidy precisa testar no iPhone (`v0.5.3`)
+## v0.5.3 insuficiente → recuperação automática (v0.5.4)
+
+Teste da `v0.5.3` (print do "i"): `stream ok` aos 3,5 s, `video/audio: mute` aos 3,7 s (depois da checagem de mudo do
+`start()`), `rodando` aos 5,0 s, mas **0 quadros de vídeo** (690 blocos de áudio chegando) e sem botão azul para refazer: ficou
+travado. Causa raiz do mudo **ainda desconhecida**; hipóteses: outra aba/instância do site (ex.: `/voz-teste/` aberta, app
+instalado + aba do Safari) segurando a câmera; permissão recém-dada sem gesto do usuário. Na `v0.5.4`: **watchdog** — se nenhum
+quadro chegar em 3,5 s depois de "rodando", refaz a captura até 2 vezes sozinho e depois avisa "A câmera não enviou imagem.
+Toque na tela para reiniciar."; **qualquer toque na tela reinicia a câmera quando não há imagem** (`tapRecover`). O "i" registra
+cada tentativa na seção "Câmera (início)". Se continuar: pedir ao Kenidy para fechar todas as outras abas/apps do Ei Clip antes
+de testar e mandar o print do "i" de novo.
+
+## O que o Kenidy precisa testar no iPhone (`v0.5.4`)
+
+0. Fechar outras abas do site (inclusive `/voz-teste/`), abrir o app e dar a permissão: deve aparecer imagem sozinha, no máx.
+   ~8 s (até 2 tentativas automáticas). Se aparecer o aviso "A câmera não enviou imagem", tocar na tela. Mandar print do "i".
+
+## Anteriores (`v0.5.3`)
 
 0. Abrir o app (com permissão já dada e depois fechando e abrindo de novo): a câmera deve iniciar sozinha, sem tocar no botão azul.
    Se não iniciar, abrir o "i" e mandar print da seção "Câmera (início)".

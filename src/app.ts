@@ -1,5 +1,5 @@
 import { onClipsChange, onStateChange, onStatus, onVoiceCommand } from './events';
-import { acquireWake, enableMic, start } from './media/camera';
+import { acquireWake, enableMic, start, tapRecover } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { beep } from './media/beep';
 import { voiceTap, restartVoice, resumeVoice, setVoiceEnabled } from './media/voice';
@@ -121,7 +121,10 @@ function bindLifecycle(): void {
   });
 
   // Qualquer toque reinicia uma escuta de voz que tenha começado sem gesto do usuário (ver voiceTap).
-  document.addEventListener('click', () => voiceTap());
+  document.addEventListener('click', () => {
+    tapRecover(); // câmera sem imagem: o toque reinicia a captura
+    voiceTap();
+  });
 
   // Qualquer toque tenta destravar o áudio (o Safari pode deixar o AudioContext suspenso).
   document.addEventListener('pointerdown', () => {

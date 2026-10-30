@@ -19,6 +19,12 @@ const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
 const MUTE_WAIT_MS = 2000;
 const PLAY_WAIT_MS = 1500;
 
+/** Depois de iniciar, quanto esperar o primeiro quadro de vídeo e quantas vezes refazer a captura se ele não vier. */
+const FRAME_WAIT_MS = 3500;
+const NO_VIDEO_RETRIES = 2;
+
+let noVideoRetries = 0;
+let watchdog = 0;
 let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
 
 /** Registro curto das etapas de início da câmera, mostrado no painel de diagnóstico (botão "i"). */
@@ -71,6 +77,40 @@ export async function enableMic(): Promise<void> {
   }
 }
 
+/**
+ * Visto no iPhone: depois do "Permitir" a câmera pode ficar muda e nunca entregar imagem (0 quadros), sem erro nenhum.
+ * Se nenhum quadro chegar a tempo, refazemos a captura (o que o toque em "Iniciar câmera" fazia), até NO_VIDEO_RETRIES vezes.
+ */
+function armWatchdog(my: number): void {
+  clearTimeout(watchdog);
+  watchdog = window.setTimeout(() => {
+    if (my !== startSeq || !S.running) return;
+    if (S.framesIn > 0) {
+      logCam('vídeo ok');
+      noVideoRetries = 0;
+      return;
+    }
+    if (document.visibilityState !== 'visible') return armWatchdog(my); // em segundo plano o iOS não entrega imagem
+    if (noVideoRetries < NO_VIDEO_RETRIES) {
+      noVideoRetries++;
+      logCam(`sem quadros de vídeo; refazendo a captura (${noVideoRetries}/${NO_VIDEO_RETRIES})`);
+      void start(true);
+    } else {
+      logCam('sem quadros de vídeo; aguardando toque');
+      notify(T.cameraNoImage, 'warn');
+    }
+  }, FRAME_WAIT_MS);
+}
+
+/** Chamar em todo toque na tela: se a câmera está "rodando" mas sem imagem, reinicia (dentro do gesto do usuário). */
+export function tapRecover(): void {
+  if (!S.running || S.rec || S.finalizing || S.framesIn > 0) return;
+  if (performance.now() - S.startedAt < 1500) return; // acabou de iniciar
+  logCam('toque: câmera sem imagem; reiniciando');
+  noVideoRetries = 0;
+  void start(true);
+}
+
 /** Espera a faixa sair do estado "mudo" (o iOS a silencia por instantes ao abrir). Falso se não liberar a tempo. */
 function waitUnmute(track: MediaStreamTrack, ms: number): Promise<boolean> {
   if (!track.muted) return Promise.resolve(true);
@@ -89,7 +129,8 @@ function waitUnmute(track: MediaStreamTrack, ms: number): Promise<boolean> {
 /** `isRetry`: segunda tentativa automática depois de a câmera ficar muda (não repete mais de uma vez). */
 export async function start(isRetry = false): Promise<void> {
   const my = ++startSeq;
-  logCam(`start #${my}`);
+  if (!isRetry) noVideoRetries = 0;
+  logCam(`start #${my}${isRetry ? ' (nova tentativa)' : ''}`);
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
   await stopAll();
   const sup = support();
@@ -195,6 +236,7 @@ export async function start(isRetry = false): Promise<void> {
   notify(S.note, S.note ? 'warn' : '');
   stateChanged();
   logCam('rodando');
+  armWatchdog(my);
   try {
     startVoice(); // a escuta de voz nunca pode impedir a câmera de iniciar
   } catch (e) {

@@ -73,6 +73,12 @@ const MUTED = `
     }
     return s;
   };`;
+// Câmera que "roda" mas nunca entrega quadros (visto no iPhone): o vídeo nunca chama o callback de quadro.
+const NOFRAMES = `
+  window.__gum = 0;
+  const _g2 = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = (c) => { window.__gum++; return _g2(c); };
+  HTMLVideoElement.prototype.requestVideoFrameCallback = function () { return 0; };`;
 const DENY = `navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));`;
 
 let failed = 0;
@@ -221,6 +227,21 @@ try {
       'câmera muda que não libera: refaz uma vez e inicia',
     );
     await page2.close();
+  }
+
+  // 1d) Sem quadros de vídeo: refaz a captura 2 vezes sozinho, avisa, e um toque na tela reinicia de novo.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript(STUBS + NOFRAMES);
+    await page.goto(URL_);
+    await page.waitForFunction(() => document.querySelector('#status').textContent.includes('imagem'), null, {
+      timeout: 25000,
+    });
+    check((await page.evaluate(() => window.__gum)) === 3, 'sem quadros: refez a captura 2 vezes sozinho');
+    await page.mouse.click(5, 5);
+    await page.waitForFunction(() => window.__gum >= 4, null, { timeout: 5000 });
+    ok('sem quadros: toque na tela reinicia a câmera');
+    await page.close();
   }
 
   // 2) Permissão negada: botão "Iniciar câmera" e mensagem de erro.
