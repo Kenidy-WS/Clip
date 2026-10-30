@@ -422,3 +422,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Bipe: ainda estoura segundo o Kenidy; falta saber se é no alto-falante ou só no vídeo gravado.
 
 **Testar:** Galeria → clipe → fechar → câmera: voz e áudio da gravação funcionam?
+
+## v0.10.4 — Voz após o reinício do microfone, bipe com buffer maior
+
+- Dado (v0.10.3): mesmo após o recarregamento o 1º microfone vem mudo (pico 0.0000); o reinício automático da v0.10.2+ recupera (pico 0.023) mas a escuta de voz ficava presa ao microfone antigo ("escutando" sem ouvir). Agora o reinício também para a voz; ela volta a esperar um toque na tela (aviso).
+- Bipe: estoura só no alto-falante ao vivo (não na gravação) nos dois bipes, mais no 2º. Hipótese: falta de buffer no áudio com 1080p60 a 48 Mbps ocupando a página; `AudioContext` passou de `latencyHint: 'interactive'` para `'playback'` (buffer maior). Risco: pequena mudança na sincronia áudio/vídeo (ver "Áudio − vídeo" no Diagnóstico).
+- A recarga ao fechar o player (v0.10.3) segue; avaliar se ainda é necessária, já que o reinício automático resolveu o microfone sozinho.
+
+**Testar:** bipe ao vivo; voz após o reinício (um toque na tela); sincronia áudio/vídeo de um clipe.

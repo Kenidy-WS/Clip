@@ -12,7 +12,7 @@ export function ensureAudioCtx(): void {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if (!Ctx) return;
   if (!S.audioCtx || S.audioCtx.state === 'closed') {
-    S.audioCtx = new Ctx({ latencyHint: 'interactive' });
+    S.audioCtx = new Ctx({ latencyHint: 'playback' });
     S.workletReady = false;
   }
   if (S.audioCtx.state !== 'running') S.audioCtx.resume().catch(() => {});

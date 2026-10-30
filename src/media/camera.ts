@@ -422,6 +422,8 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
       audioRetried = true;
       logCam(`microfone mudo (pico ${S.audioPeak.toFixed(4)}): liberando a captura e reabrindo`);
       // Solta o microfone de verdade (a captura antiga mantida pelo reinício continuaria presa à sessão de áudio ruim).
+      // A escuta de voz também fica presa ao microfone antigo: para e volta a esperar um toque (aviso na tela).
+      stopVoice();
       S.stream?.getAudioTracks().forEach((t) => t.stop());
       setAudioSession('auto');
       setTimeout(() => {
