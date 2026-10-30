@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.6.1 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.7.0 · aguardando teste no iPhone
 
 ## Feito
 
@@ -103,6 +103,30 @@ assistir um clipe) também religa a voz no seu toque. Sem a abertura automática
 aparece em religamentos sem toque (voltar de segundo plano). **Não confirmado no iPhone:** se o iOS aceita a escuta de voz
 iniciada junto do pedido de permissão da câmera (pode virar 2 pedidos em sequência, ou conflito). Se der conflito: iniciar a voz
 logo que a câmera entregar o primeiro quadro, ainda no mesmo gesto, ou voltar ao toque pós-permissão.
+
+## v0.6.1 com defeito → v0.7.0 (voz primeiro + lente 0,5×)
+
+Teste da `v0.6.1` (relato): **3 pedidos** (câmera+mic → mic → câmera+mic), tela preta entre eles, e só então funcionou. Leitura:
+o 2º pedido é o da escuta de voz (Web Speech), que o iOS pede à parte e **não dá para juntar** com o da câmera; ele aparecia
+com a câmera ainda abrindo, a faixa ficava muda (tela preta), o vigia refazia a captura e o iOS pedia o 3º. Na `v0.7.0`:
+
+- **Voz primeiro:** no toque em "Iniciar" a escuta liga dentro do gesto (resolve também a escuta surda) e a câmera só abre
+  depois que o microfone da voz abrir, for recusado ou passar 20 s (`voiceSettled`). Esperado: **2 pedidos seguidos, sem tela
+  preta no meio** (o mínimo possível com Web Speech).
+- Todo reinício de câmera (lente, câmera, qualidade, voltar do segundo plano) mantém a captura antiga aberta até a nova chegar,
+  para o iOS não pedir permissão de novo; se a antiga travar a nova (`NotReadable/Abort`), fecha e tenta de novo.
+- **Lente 0,5×:** botão ao lado do ⇄ (aparece só se o iOS listar uma câmera "ultra" ou aceitar zoom < 1). Escolha fica salva.
+  Na 1ª abertura com 0,5× salva, abre a principal (os nomes só vêm depois da permissão) e troca sozinho uma vez.
+  Se a ultra não abrir, volta para 1× com aviso. O "i" mostra "Lentes:" (nomes que o iOS informou) e a linha da câmera.
+- Hipóteses não confirmadas no iPhone: (a) abrir a câmera com a escuta de voz já ativa pode derrubar a escuta (se acontecer,
+  o ícone fica âmbar e um toque a religa); (b) o nome da câmera ultra no iOS ("Back Ultra Wide Camera"/equivalente em português)
+  casa com `/ultra/i`; (c) 1080p/16 Mbps na ultra-angular não foi testado.
+
+## O que o Kenidy precisa testar no iPhone (`v0.7.0`)
+
+0. Abrir → **Iniciar** → permitir os 2 pedidos (microfone da voz e câmera+mic) → imagem sem tela preta → "Ei Clip" sem tocar.
+1. Botão **1×/0,5×**: aparece? Troca sem novo pedido de permissão? Imagem mais aberta? Gravar um clipe na 0,5×.
+2. Se algo falhar: print do "i" (seções "Lentes", "Câmera (início)" e "Voz").
 
 ## v0.6.0 com defeitos → v0.6.1
 

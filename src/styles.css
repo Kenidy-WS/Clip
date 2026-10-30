@@ -373,6 +373,7 @@ section h2 {
   background: #2f6feb;
 }
 
+button.flip[hidden],
 button.rec[hidden] {
   display: none;
 }

@@ -13,6 +13,7 @@ export const els = {
   selBuffer: byId<HTMLSelectElement>('selBuffer'),
   selQuality: byId<HTMLSelectElement>('selQuality'),
   btnFlip: byId<HTMLButtonElement>('btnFlip'),
+  btnLens: byId<HTMLButtonElement>('btnLens'),
   btnInfo: byId<HTMLButtonElement>('btnInfo'),
   btnClips: byId<HTMLButtonElement>('btnClips'),
   btnSound: byId<HTMLButtonElement>('btnSound'),

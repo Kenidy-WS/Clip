@@ -6,7 +6,7 @@ export interface AacMeta {
 }
 
 /** Preferências atuais (mudam pela interface). */
-export const cfg: Config = { bufferSec: 15, quality: '1080', facing: 'environment' };
+export const cfg: Config = { bufferSec: 15, quality: '1080', facing: 'environment', lens: '1' };
 
 /** Estado do motor de captura. Compartilhado entre os módulos de media/; a interface só lê. */
 export interface AppState {
@@ -78,6 +78,15 @@ export interface AppState {
   camLog: string[];
   /** O usuário já tocou em "Iniciar" na tela inicial (esconde a tela inicial). */
   introDone: boolean;
+  /** deviceId da câmera ultra-angular traseira ('' = não encontrada). */
+  lensId: string;
+  /** Lente realmente em uso na captura atual. */
+  lensActive: '1' | '0.5';
+  /** O aparelho oferece a lente 0,5× (câmera própria ou zoom abaixo de 1). */
+  lensCan: boolean;
+  lensZoomMin: number;
+  /** Nomes das câmeras que o iOS informou, só para o painel de diagnóstico. */
+  lensInfo: string;
 }
 
 export const S: AppState = {
@@ -144,4 +153,9 @@ export const S: AppState = {
   voiceLog: [],
   camLog: [],
   introDone: false,
+  lensId: '',
+  lensActive: '1',
+  lensCan: false,
+  lensZoomMin: 1,
+  lensInfo: '',
 };

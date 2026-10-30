@@ -6,7 +6,7 @@ import { els } from '../ui/dom';
 import { ensureAudioCtx, trySetupAudio } from './audio';
 import { support } from './support';
 import { startLoop } from './video';
-import { startVoice, stopVoice } from './voice';
+import { startVoice, stopVoice, voiceSettled } from './voice';
 
 const AUDIO_CONSTRAINTS: MediaTrackConstraints = {
   echoCancellation: false,
@@ -27,6 +27,9 @@ let noVideoRetries = 0;
 let softTried = false; // o reinício leve só vale uma vez por início pedido pelo usuário
 let watchdogSoftAt = 0;
 const SOFT_WAIT_MS = 2000;
+/** Quanto a câmera espera a escuta de voz se definir (inclui o tempo de o usuário responder ao pedido de microfone). */
+const VOICE_WAIT_MS = 20000;
+let lensSwitched = false; // a troca automática para a ultra-angular (1ª abertura) só acontece uma vez
 let watchdog = 0;
 let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
 
@@ -170,20 +173,52 @@ function waitUnmute(track: MediaStreamTrack, ms: number): Promise<boolean> {
   });
 }
 
+/** Descobre as lentes traseiras (os nomes só aparecem depois da permissão) e se a 0,5× está disponível. */
+async function refreshLenses(stream: MediaStream): Promise<void> {
+  try {
+    const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+    const ultra = cams.find((d) => /ultra/i.test(d.label));
+    if (ultra) S.lensId = ultra.deviceId;
+    S.lensInfo = cams.map((d) => d.label || '?').join(' | ');
+  } catch {
+    /* sem lista de câmeras */
+  }
+  const caps = stream.getVideoTracks()[0]?.getCapabilities?.() as { zoom?: { min?: number } } | undefined;
+  S.lensZoomMin = caps?.zoom?.min ?? 1;
+  S.lensCan = !!S.lensId || S.lensZoomMin <= 0.55;
+  logCam(`lentes: ${S.lensInfo || '-'}; ultra ${S.lensId ? 'sim' : 'não'}; zoom mín ${S.lensZoomMin}`);
+  stateChanged();
+}
+
 /** `isRetry`: segunda tentativa automática depois de a câmera ficar muda (não repete mais de uma vez). */
-export async function start(isRetry = false): Promise<void> {
+export async function start(isRetry = false, voiceFirst = false): Promise<void> {
   const my = ++startSeq;
   if (!isRetry) {
     noVideoRetries = 0;
     softTried = false;
+    lensSwitched = false;
   }
   watchdogSoftAt = 0;
   logCam(`start #${my}${isRetry ? ' (nova tentativa)' : ''}`);
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
+  // A escuta de voz só funciona se nascer dentro de um toque do usuário (sem toque o iOS a deixa surda). Por isso ela é a
+  // primeira coisa a ligar no toque em "Iniciar"; a câmera abre depois que o pedido de microfone da voz for respondido.
+  if (voiceFirst) {
+    try {
+      startVoice('tap');
+    } catch (e) {
+      logCam(`voz falhou: ${(e as Error).message}`);
+    }
+  }
   // Nova tentativa: a captura antiga continua aberta até a nova chegar. Parar todas as faixas antes faz o iOS pedir a
   // permissão de câmera/microfone de novo (era o 2º pedido igual ao 1º); com uma captura ainda ativa ele não pede.
-  const previous = isRetry ? S.stream : null;
+  // Vale para qualquer reinício (trocar lente/câmera/qualidade, voltar do segundo plano, nova tentativa).
+  const previous = S.stream;
   await stopAll(!!previous, true);
+  if (voiceFirst) {
+    await voiceSettled(VOICE_WAIT_MS);
+    if (my !== startSeq) return stopTracks(previous);
+  }
   const sup = support();
   if (!sup.VideoEncoder) {
     stopTracks(previous);
@@ -191,24 +226,45 @@ export async function start(isRetry = false): Promise<void> {
     return;
   }
   const q = VIDEO_SIZE[cfg.quality];
-  const videoC: MediaTrackConstraints = {
-    facingMode: { ideal: cfg.facing },
-    width: { ideal: q.w },
-    height: { ideal: q.h },
-    frameRate: { ideal: FPS },
-  };
+  const sizeC = { width: { ideal: q.w }, height: { ideal: q.h }, frameRate: { ideal: FPS } };
+  const wantUltra = cfg.facing === 'environment' && cfg.lens === '0.5' && !!S.lensId;
+  const videoC: MediaTrackConstraints = wantUltra
+    ? { deviceId: { exact: S.lensId }, ...sizeC }
+    : { facingMode: { ideal: cfg.facing }, ...sizeC };
+  S.lensActive = wantUltra ? '0.5' : '1';
   S.note = '';
   S.micErr = '';
   let stream: MediaStream;
-  logCam('pedindo câmera e microfone');
+  logCam(`pedindo câmera e microfone${wantUltra ? ' (lente 0,5×)' : ''}`);
+  const gum = (video: MediaTrackConstraints, audio: boolean): Promise<MediaStream> =>
+    navigator.mediaDevices.getUserMedia({ video, audio: audio ? AUDIO_CONSTRAINTS : false });
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: videoC, audio: AUDIO_CONSTRAINTS });
+    try {
+      stream = await gum(videoC, true);
+    } catch (e0) {
+      const n0 = (e0 as Error).name;
+      if (wantUltra && (n0 === 'OverconstrainedError' || n0 === 'NotFoundError')) {
+        // A lente 0,5× não abriu: volta para a principal.
+        logCam(`lente 0,5× recusada: ${n0}`);
+        cfg.lens = '1';
+        S.lensId = '';
+        S.lensCan = false;
+        S.lensActive = '1';
+        S.note = T.lensFail;
+        stream = await gum({ facingMode: { ideal: cfg.facing }, ...sizeC }, true);
+      } else if (previous && (n0 === 'NotReadableError' || n0 === 'AbortError')) {
+        // A câmera antiga pode estar impedindo a nova de abrir: fecha e tenta de novo.
+        logCam(`câmera ocupada (${n0}); fechando a anterior`);
+        stopTracks(previous);
+        stream = await gum(videoC, true);
+      } else throw e0;
+    }
   } catch (e1) {
     const err1 = e1 as Error;
     S.micErr = `${err1.name}: ${err1.message}`;
     logCam(`câmera+mic recusado: ${err1.name}`);
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: videoC });
+      stream = await gum(videoC, false);
       S.note = micHint(e1);
     } catch (e2) {
       const err2 = e2 as Error;
@@ -226,11 +282,26 @@ export async function start(isRetry = false): Promise<void> {
     return;
   }
   S.stream = stream;
-  // A permissão da câmera acabou de ser dada: ligamos a escuta de voz já (sem novo pedido e o mais perto possível do toque).
-  try {
-    startVoice('auto');
-  } catch (e) {
-    logCam(`voz falhou: ${(e as Error).message}`);
+  await refreshLenses(stream);
+  if (my !== startSeq) return;
+  if (cfg.facing === 'environment' && cfg.lens === '0.5') {
+    if (S.lensActive !== '0.5' && S.lensId && !lensSwitched) {
+      // Primeira abertura: só agora sabemos qual é a ultra-angular. Troca sem fechar a captura atual (sem novo pedido).
+      lensSwitched = true;
+      logCam('trocando para a lente 0,5×');
+      return start(true);
+    }
+    if (S.lensActive !== '0.5' && !S.lensId && S.lensZoomMin <= 0.55) {
+      try {
+        await stream
+          .getVideoTracks()[0]
+          .applyConstraints({ advanced: [{ zoom: 0.5 } as MediaTrackConstraintSet] });
+        S.lensActive = '0.5';
+        logCam('zoom 0,5× aplicado');
+      } catch (e) {
+        logCam(`zoom 0,5× recusado: ${(e as Error).name}`);
+      }
+    }
   }
   logCam(
     `stream ok: ${stream

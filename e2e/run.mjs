@@ -42,15 +42,24 @@ const STUBS = `
     configure(){ this.state='configured'; } encode(){} close(){ this.state='closed'; }
     static async isConfigSupported(c){ return { supported:true, config:c }; } }
   window.VideoEncoder = class extends FakeEnc {};
-  window.AudioEncoder = class extends FakeEnc {};`;
+  window.AudioEncoder = class extends FakeEnc {};
+  // Sem voz de verdade no Chromium de teste.
+  window.SpeechRecognition = window.webkitSpeechRecognition = undefined;
+`;
 // Reconhecedor de voz falso: __say(texto) entrega um resultado; __endRecognizer() simula o iOS encerrando a escuta.
 const VOICE = `
   window.__starts = 0; window.__n = 0; window.__cur = null;
   class FakeRecognition {
-    start() { window.__starts++; window.__cur = this; setTimeout(() => this.onaudiostart && this.onaudiostart(), 0); }
+    start() {
+      window.__starts++; window.__cur = this; (window.__ord = window.__ord || []).push('voice');
+      if (window.__voiceErr) setTimeout(() => this.onerror && this.onerror({ error: window.__voiceErr }), 0);
+      else setTimeout(() => this.onaudiostart && this.onaudiostart(), window.__audioDelay || 0);
+    }
     abort() { if (window.__cur === this) window.__cur = null; }
   }
   window.SpeechRecognition = window.webkitSpeechRecognition = FakeRecognition;
+  const _gv = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = (c) => { (window.__ord = window.__ord || []).push('gum'); return _gv(c); };
   window.__say = (text, same) => {
     const r = window.__cur; if (!r) return;
     const idx = same ? window.__n - 1 : window.__n++;
@@ -83,6 +92,19 @@ const NOFRAMES = `
   const _g2 = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
   navigator.mediaDevices.getUserMedia = (c) => { window.__gum++; return _g2(c); };
   HTMLVideoElement.prototype.requestVideoFrameCallback = function () { return 0; };`;
+// Duas câmeras traseiras (principal e ultra-angular) como o iOS informa; registra o que o app pediu.
+const LENS = `
+  window.__cons = [];
+  const _gl = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+  navigator.mediaDevices.getUserMedia = (c) => {
+    window.__cons.push(JSON.stringify(c.video));
+    const v = { ...c.video }; delete v.deviceId;
+    return _gl({ video: v, audio: c.audio });
+  };
+  navigator.mediaDevices.enumerateDevices = async () => [
+    { kind: 'videoinput', deviceId: 'back-main', label: 'Back Camera' },
+    { kind: 'videoinput', deviceId: 'back-ultra', label: 'Back Ultra Wide Camera' },
+  ];`;
 const DENY = `navigator.mediaDevices.getUserMedia = () => Promise.reject(Object.assign(new Error('denied'), { name: 'NotAllowedError' }));`;
 
 let failed = 0;
@@ -135,9 +157,12 @@ try {
     await page.waitForTimeout(600);
     check((await page.evaluate(() => window.__starts)) === 0, 'voz: não escuta antes do toque em Iniciar');
     await page.click('#btnIntro');
-    // A escuta começa logo depois de a câmera ser liberada (sem competir com o pedido de permissão da câmera).
+    // A escuta nasce dentro do toque e abre ANTES da câmera (os dois pedidos de permissão não competem).
     await page.waitForFunction(() => window.__starts >= 1, null, { timeout: 5000 });
-    ok('voz: começa depois que a câmera é liberada');
+    check(
+      await page.evaluate(() => window.__ord.join() === 'voice,gum'),
+      'voz: liga dentro do toque, antes de a câmera pedir permissão',
+    );
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 8000,
     });
@@ -151,14 +176,12 @@ try {
       (await page.evaluate(() => window.__starts)) === 1,
       'voz: câmera pronta não reinicia a escuta viva',
     );
-    // Começou fora de um toque real: o primeiro toque na tela a reinicia dentro do gesto, e só ele.
+    // Começou dentro do toque em Iniciar: toques seguintes não mexem na escuta.
     await page.mouse.click(5, 5);
     check(
-      (await page.evaluate(() => window.__starts)) === 2,
-      'voz: primeiro toque reinicia a escuta iniciada fora do gesto',
+      (await page.evaluate(() => window.__starts)) === 1,
+      'voz: iniciada no toque, toques seguintes não reiniciam',
     );
-    await page.mouse.click(5, 5);
-    check((await page.evaluate(() => window.__starts)) === 2, 'voz: toques seguintes não reiniciam de novo');
 
     await page.evaluate(() => window.__say('Ei Felipe'));
     check(
@@ -202,6 +225,19 @@ try {
     const base = await page.evaluate(() => window.__starts);
     await page.waitForFunction((n) => window.__starts > n, base, { timeout: 4000 });
     ok('voz: reconhecedor religa sozinho depois de encerrar');
+    // Religada sem toque (fora do gesto): o primeiro toque na tela a reinicia dentro do gesto, e só ele.
+    await page.waitForTimeout(300);
+    const beforeTap = await page.evaluate(() => window.__starts);
+    await page.mouse.click(5, 5);
+    check(
+      (await page.evaluate(() => window.__starts)) === beforeTap + 1,
+      'voz: primeiro toque reinicia a escuta religada fora do gesto',
+    );
+    await page.mouse.click(5, 5);
+    check(
+      (await page.evaluate(() => window.__starts)) === beforeTap + 1,
+      'voz: toques seguintes não reiniciam de novo',
+    );
 
     // "Ei cli" (começo da frase) já inicia a gravação, depois do intervalo mínimo entre comandos.
     await page.waitForTimeout(3200);
@@ -226,6 +262,82 @@ try {
     ok('voz: botão desliga a escuta');
     check(errs.length === 0, 'voz: sem erros de JavaScript ' + errs.join(';'));
     await page.close();
+  }
+
+  // 1b2) A câmera espera a voz responder ao pedido de microfone; se a voz for recusada, a câmera abre mesmo assim.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript('window.__audioDelay = 1500;' + STUBS + VOICE);
+    await page.goto(URL_);
+    await page.click('#btnIntro');
+    await page.waitForTimeout(700);
+    check(
+      await page.evaluate(() => window.__ord.join() === 'voice'),
+      'voz lenta: a câmera espera o pedido de microfone da voz',
+    );
+    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 8000,
+    });
+    check(await page.evaluate(() => window.__ord.join() === 'voice,gum'), 'voz lenta: câmera abre depois');
+    await page.close();
+
+    const page2 = await (await browser.newContext()).newPage();
+    await page2.addInitScript("window.__voiceErr = 'not-allowed';" + STUBS + VOICE);
+    await page2.goto(URL_);
+    await page2.click('#btnIntro');
+    await page2.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 8000,
+    });
+    ok('voz recusada: a câmera abre mesmo assim');
+    await page2.close();
+  }
+
+  // 1f) Lente 0,5×: botão só aparece com ultra-angular; troca sem fechar a captura antes; lembra a escolha.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript(STUBS + LENS);
+    await page.goto(URL_);
+    check(!(await page.isVisible('#btnLens')), 'lente: botão escondido antes da câmera');
+    await page.click('#btnIntro');
+    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 8000,
+    });
+    await page.waitForFunction(() => !document.querySelector('#btnLens').hidden, null, { timeout: 3000 });
+    check((await page.textContent('#btnLens')) === '1×', 'lente: começa na 1×');
+    await page.click('#btnLens');
+    await page.waitForFunction(() => window.__cons.length >= 2, null, { timeout: 5000 });
+    check(
+      await page.evaluate(
+        () => window.__cons[1].includes('"exact":"back-ultra"') && !window.__cons[1].includes('facingMode'),
+      ),
+      'lente: 0,5× pede a câmera ultra-angular pelo deviceId',
+    );
+    check((await page.textContent('#btnLens')) === '0,5×', 'lente: botão mostra 0,5×');
+    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 8000,
+    });
+    await page.click('#btnLens');
+    await page.waitForFunction(() => window.__cons.length >= 3, null, { timeout: 5000 });
+    check(
+      await page.evaluate(() => window.__cons[2].includes('facingMode')),
+      'lente: voltar para 1× usa a câmera principal',
+    );
+    await page.close();
+
+    // Escolha lembrada: abre na principal (ainda não sabe qual é a ultra) e troca sozinho uma vez.
+    const page2 = await (await browser.newContext()).newPage();
+    await page2.addInitScript("localStorage.setItem('clip.lens','0.5');" + STUBS + LENS);
+    await page2.goto(URL_);
+    await page2.click('#btnIntro');
+    await page2.waitForFunction(() => window.__cons.length >= 2, null, { timeout: 8000 });
+    await page2.waitForTimeout(1500);
+    check(
+      await page2.evaluate(
+        () => window.__cons.length === 2 && window.__cons[1].includes('"exact":"back-ultra"'),
+      ),
+      'lente: escolha lembrada troca sozinha para a 0,5× uma vez',
+    );
+    await page2.close();
   }
 
   // 1c) Câmera muda ao abrir: se liberar logo, segue com uma só captura; se nunca liberar, refaz uma vez e segue.

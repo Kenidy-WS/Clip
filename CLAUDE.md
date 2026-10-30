@@ -61,6 +61,11 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Dois pedidos de permissão:** o iOS pede (1) "Câmera e Microfone" (`getUserMedia`) e, quando a escuta de voz inicia, (2) "Microfone"
   de novo, só para o reconhecimento de voz (Web Speech). Não há como juntar os dois em código. No Safari, "aA → Ajustes do Site →
   Câmera/Microfone: Permitir" pode eliminar ambos (a confirmar se vale para o pedido da voz); o app instalado não tem esses ajustes.
+- **Ordem de início (v0.7.0):** no toque em "Iniciar", `start(false, true)` liga a voz **primeiro** (`startVoice('tap')`, dentro do gesto)
+  e só abre a câmera depois de `voiceSettled` (microfone da voz aberto/recusado/20 s). Ligar voz e câmera ao mesmo tempo dava
+  tela preta + 3 pedidos. Reinícios mantêm a captura antiga aberta até a nova chegar (senão o iOS pede permissão de novo).
+- **Lente 0,5×:** o iOS só informa os nomes das câmeras depois da permissão; a ultra-angular é a câmera cujo nome casa `/ultra/i`
+  (`deviceId: {exact}`); sem ela, tenta `zoom` < 1. Detalhes em `refreshLenses` (`camera.ts`).
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)

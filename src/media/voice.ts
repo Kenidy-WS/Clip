@@ -62,9 +62,36 @@ let awaitingTap = false; // a escuta só começa dentro de um toque do usuário 
 
 /** Registro curto dos eventos da escuta, mostrado no painel de diagnóstico (botão "i"). */
 function logVoice(msg: string): void {
-  const t = ((performance.now() - S.startedAt) / 1000).toFixed(1);
+  const t = (performance.now() / 1000).toFixed(1); // mesma origem do registro da câmera, para comparar os dois
   S.voiceLog.push(`${t}s ${msg}`);
   if (S.voiceLog.length > LOG_LINES) S.voiceLog.shift();
+}
+
+/** Quem está esperando a escuta se definir (ficar viva, ser recusada ou desistir) antes de abrir a câmera. */
+let waiters: Array<() => void> = [];
+function settle(): void {
+  const list = waiters;
+  waiters = [];
+  list.forEach((f) => f());
+}
+
+/**
+ * Espera a escuta de voz se definir: microfone aberto, permissão recusada, parada ou `ms` esgotados. A câmera só abre depois,
+ * para o pedido de permissão da voz e o da câmera não aparecerem juntos (o iOS deixava a câmera muda e refazia a captura).
+ */
+export function voiceSettled(ms: number): Promise<void> {
+  if (!wanted || fatal || S.voice !== 'starting' || (!rec && !restartTimer)) return Promise.resolve();
+  return new Promise((resolve) => {
+    const done = (): void => {
+      clearTimeout(timer);
+      resolve();
+    };
+    const timer = window.setTimeout(() => {
+      logVoice('espera da escuta esgotada; abrindo a câmera');
+      done();
+    }, ms);
+    waiters.push(done);
+  });
 }
 
 function setVoice(state: typeof S.voice): void {
@@ -77,6 +104,7 @@ function setVoice(state: typeof S.voice): void {
 function markAlive(): void {
   retries = 0;
   setVoice('listening');
+  settle();
   if (deafHinted && inGesture) {
     deafHinted = false;
     notify(S.note, S.note ? 'warn' : ''); // tira o aviso "Toque na tela…"
@@ -139,6 +167,7 @@ function begin(fromTap: boolean): void {
     if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed') {
       fatal = true;
       setVoice('off');
+      settle();
       notify(T.voiceDenied, 'warn');
     }
     // 'no-speech', 'aborted' e 'network' são passageiros: o reinício em onend cuida deles.
@@ -150,6 +179,7 @@ function begin(fromTap: boolean): void {
     if (!wanted || fatal) return;
     setVoice('starting');
     quickEnds = performance.now() - startedAt < 1000 ? quickEnds + 1 : 0;
+    if (quickEnds >= 2) settle(); // encerra logo ao ligar, de novo e de novo: não segura a câmera
     const delay = Math.min(RESTART_MAX_MS, RESTART_MS * 2 ** Math.min(quickEnds, 4));
     restartTimer = window.setTimeout(() => attempt(false), delay);
   };
@@ -170,7 +200,10 @@ function begin(fromTap: boolean): void {
     logVoice(`start recusado: ${(e as Error).name}`);
     setVoice('starting');
     if (retries++ < START_RETRIES) restartTimer = window.setTimeout(() => attempt(fromTap), 300);
-    else setVoice('off');
+    else {
+      setVoice('off');
+      settle();
+    }
   }
 }
 
@@ -241,6 +274,7 @@ export function stopVoice(): void {
   }
   rec = null;
   if (S.voice !== 'unsupported') setVoice('off');
+  settle();
 }
 
 /**

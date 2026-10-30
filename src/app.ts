@@ -25,7 +25,7 @@ function bindControls(): void {
     // Um único gesto liga tudo: o iOS só libera câmera, áudio e escuta de voz dentro de um toque do usuário.
     S.introDone = true;
     updateUI();
-    void start().then(() => {
+    void start(false, true).then(() => {
       if (S.running && S.audioCtx && S.audioCtx.state !== 'running') {
         S.needTap = true;
         setStatus(T.needTap, 'warn');
@@ -36,7 +36,7 @@ function bindControls(): void {
     if (!S.running) {
       S.introDone = true; // qualquer início da câmera esconde a tela inicial
       updateUI();
-      await start();
+      await start(false, true);
     } else if (S.rec) await stopRec();
     else startRec();
   });
@@ -52,6 +52,21 @@ function bindControls(): void {
   });
   els.btnFlip.addEventListener('click', async () => {
     cfg.facing = (cfg.facing === 'environment' ? 'user' : 'environment') as Facing;
+    if (S.running) await start();
+  });
+  try {
+    if (localStorage.getItem('clip.lens') === '0.5') cfg.lens = '0.5';
+  } catch {
+    /* sem localStorage */
+  }
+  els.btnLens.addEventListener('click', async () => {
+    cfg.lens = cfg.lens === '1' ? '0.5' : '1';
+    try {
+      localStorage.setItem('clip.lens', cfg.lens);
+    } catch {
+      /* sem localStorage */
+    }
+    updateUI();
     if (S.running) await start();
   });
   els.btnInfo.addEventListener('click', () => els.info.classList.toggle('open'));

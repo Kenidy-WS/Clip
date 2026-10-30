@@ -23,7 +23,9 @@ export function updateUI(): void {
     b.textContent = T.btnReady(cfg.bufferSec);
     b.className = 'rec ready';
   }
-  els.btnFlip.disabled = els.selQuality.disabled = !!S.rec;
+  els.btnFlip.disabled = els.selQuality.disabled = els.btnLens.disabled = !!S.rec || S.finalizing;
+  els.btnLens.hidden = !(S.running && cfg.facing === 'environment' && S.lensCan);
+  els.btnLens.textContent = cfg.lens === '0.5' ? T.lensWide : T.lensMain;
   els.btnMic.disabled = S.micBusy;
   els.intro.hidden = S.introDone || S.running;
   els.btnRec.hidden = !S.introDone && !S.running; // antes do primeiro "Iniciar" só existe o botão da tela inicial
