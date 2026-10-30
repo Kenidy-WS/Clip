@@ -75,6 +75,8 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   (`deviceId: {exact}`); sem ela, tenta `zoom` < 1. Detalhes em `refreshLenses` (`camera.ts`).
 - **Permissão e capturas (v0.8.4):** o iOS só dispensa o pedido de câmera/microfone enquanto ainda existe uma captura ativa na página; parar todas as faixas e chamar `getUserMedia` de novo pede de novo. Por isso, ao voltar do segundo plano **não** refazemos a captura se as faixas seguem `live` (`returnFromBackground` em `app.ts`).
 - **Prévia (v0.8.4):** ao trocar de lente o iOS pode desenhar o `<video>` menor que o elemento (faixas). O elemento é recriado a cada captura (`renewPreview`); nunca guardar referência ao `<video>`, use `els.video` (getter).
+- **Bipe (v0.9.0):** gerado por `core/beep-wave.ts` e tocado como `AudioBuffer`; com `beepInClip` as mesmas amostras são somadas ao bloco de áudio em `audio.ts` (`mixBeepInto`). O microfone fica mudo durante o bipe do alto-falante para não captá-lo em dobro.
+- **Qualidade (v0.9.0):** resolução, fps e taxa vêm de `cfg` e de `core/video-profile.ts` (tabelas de taxa, nível H.264, duração máxima do clipe). Não usar mais constantes `FPS`/`VIDEO_*` em `config.ts`.
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)

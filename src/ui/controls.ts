@@ -1,4 +1,4 @@
-import { MAX_REC_SEC } from '../config';
+import { maxRecSec } from '../core/video-profile';
 import { formatDuration } from '../core/format';
 import { notify } from '../events';
 import { sampleFps } from '../media/video';
@@ -7,6 +7,7 @@ import { cfg, S } from '../state';
 import { T } from '../strings';
 import { diagnosticsText } from './diagnostics';
 import { els } from './dom';
+import { showView } from './transitions';
 
 /** Depois de quanto tempo sem câmera aparece o botão "Ligar câmera" (reinícios rápidos não devem piscar o botão). */
 const RETRY_DELAY_MS = 1500;
@@ -23,9 +24,7 @@ function paintSegment(group: HTMLElement, value: string, locked: boolean): void 
 /** Estado das telas e dos controles conforme o estado do motor. */
 export function updateUI(): void {
   // Telas
-  els.screenHome.hidden = S.view !== 'home';
-  els.screenCamera.hidden = S.view !== 'camera';
-  els.screenGallery.hidden = S.view !== 'gallery';
+  showView(S.view, { home: els.screenHome, camera: els.screenCamera, gallery: els.screenGallery });
   document.body.dataset.view = S.view;
 
   // Botão de gravar
@@ -51,7 +50,11 @@ export function updateUI(): void {
 
   // Ajustes
   paintSegment(els.segQuality, cfg.quality, locked);
+  paintSegment(els.segFps, String(cfg.fps), locked);
+  paintSegment(els.segImageQuality, cfg.imageQuality, locked);
   paintSegment(els.segBuffer, String(cfg.bufferSec), false);
+  paintSegment(els.segBeepVol, S.beepVol, !S.soundOn); // sem som no alto-falante, o volume não tem o que ajustar
+  els.swBeepClip.setAttribute('aria-checked', String(S.beepInClip));
   els.swVoice.setAttribute('aria-checked', String(S.voiceEnabled));
   els.swSound.setAttribute('aria-checked', String(S.soundOn));
   els.rowVoice.hidden = S.voice === 'unsupported';
@@ -68,7 +71,7 @@ export function tick(): void {
   if (S.rec) {
     const live = (now - S.rec.startMs) / 1000;
     els.bufTxt.textContent = T.recording(formatDuration(S.rec.preSec + live));
-    if (live + S.rec.preSec > MAX_REC_SEC && !S.finalizing) void stopRec();
+    if (live + S.rec.preSec > maxRecSec(S.bitrate) && !S.finalizing) void stopRec();
   } else {
     els.bufTxt.textContent = T.bufferFill(shown, cfg.bufferSec);
   }

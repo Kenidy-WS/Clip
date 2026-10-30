@@ -2,6 +2,17 @@
 
 **Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.8.1 (Onda 3a, correções) · aguardando teste no iPhone
 
+## v0.9.0 — transições, bipe configurável e mais opções de vídeo
+
+Feedback do Kenidy sobre a v0.8.4: troca de lente com tela cheia OK, menos pedidos de permissão ao minimizar, arrastar na Galeria OK.
+
+- **Transições:** Início → Câmera/Galeria desliza e some com fade; voltar ao Início faz o inverso; Câmera ↔ Galeria só fade. Ajustes sobem/descem como folha; player aparece com leve zoom. Respeita "Reduzir movimento" do iPhone (`src/ui/transitions.ts`, CSS no fim de `styles.css`).
+- **Bipe:** "Sons de gravação" (toca no alto-falante), **"Volume do bipe"** (Normal/Alto/Máximo, padrão Alto; tom mais agudo, 1,5–2 kHz, porque o alto-falante do iPhone reproduz mal graves e o agudo se destaca no ruído) e **"Bipe no vídeo"** (liga = o bipe é somado digitalmente ao áudio do clipe, início e fim; desligado = comportamento anterior, bipe fora do clipe). Ao ligar o bipe no vídeo, o corte espera o bipe de fim terminar (~0,4 s). Mudar o volume toca uma amostra. O volume fica desligado se os sons estiverem desligados.
+- **Vídeo:** "Resolução" 720p/1080p/**4K**, "Fluidez" 30/**60 fps** e "Qualidade" Padrão/Alta/Máxima (taxa de bits; teto 60 Mbps; 60 fps usa ×1,5). Padrão continua 1080p/30/16 Mbps. Perfil H.264 sobe de nível sozinho (4.2 → 5.1 em 4K30 → 5.2 em 4K60). Duração máxima do clipe cai com a taxa para não estourar a memória (`maxRecSec`, 90 s → ~34 s em 4K a 60 Mbps).
+- **Risco a verificar no iPhone (experimental):** 4K e 60 fps passam por `drawImage` em canvas e usam muita memória; o iOS pode entregar menos que o pedido (o Diagnóstico mostra "Vídeo … (pedido …)" e "Fonte … track WxH@fps") ou o encoder pode recusar (aparece erro de H.264). Se a página recarregar, ver a linha "Cargas da página".
+- Correção: no modo deitado a coluna de controles tampava o botão de Ajustes (agora só os botões recebem toque).
+- Testar: (1) transições sem engasgo; (2) bipe: volume nos 3 níveis, ouvir em ambiente barulhento, e com "Bipe no vídeo" ligado conferir se o bipe aparece no clipe salvo (início e fim); (3) 1080p/60, depois 4K/30, depois 4K/60: imagem, fps real, memória (o app recarrega?), tamanho do clipe.
+
 ## v0.8.4 — prévia recriada, voltar do app sem novo pedido, seleção por arrasto
 
 - Logs do Kenidy (v0.8.3): a página **não recarregou** (relógio do Diagnóstico contínuo entre prints). O pedido de permissão vem de uma **nova captura** (`getUserMedia`) dentro da mesma página: o iOS só dispensa o pedido enquanto ainda há uma captura ativa. Antes, `visibilitychange` refazia a captura sempre que ficava >1,5 s fora.

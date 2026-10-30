@@ -140,10 +140,26 @@
             <button class="btn-icon" id="btnSheetClose" data-icon="close" aria-label="Fechar"></button>
           </div>
           <div class="row">
-            <span>Qualidade</span>
+            <span>Resolução</span>
             <div class="seg" id="segQuality">
-              <button data-v="1080">1080p</button>
               <button data-v="720">720p</button>
+              <button data-v="1080">1080p</button>
+              <button data-v="2160">4K</button>
+            </div>
+          </div>
+          <div class="row">
+            <span>Fluidez</span>
+            <div class="seg" id="segFps">
+              <button data-v="30">30 fps</button>
+              <button data-v="60">60 fps</button>
+            </div>
+          </div>
+          <div class="row">
+            <span>Qualidade</span>
+            <div class="seg" id="segImageQuality">
+              <button data-v="std">Padrão</button>
+              <button data-v="high">Alta</button>
+              <button data-v="max">Máxima</button>
             </div>
           </div>
           <div class="row">
@@ -171,6 +187,24 @@
               role="switch"
               aria-checked="true"
               aria-label="Sons de gravação"
+            ></button>
+          </div>
+          <div class="row">
+            <span>Volume do bipe</span>
+            <div class="seg" id="segBeepVol">
+              <button data-v="normal">Normal</button>
+              <button data-v="high">Alto</button>
+              <button data-v="max">Máximo</button>
+            </div>
+          </div>
+          <div class="row">
+            <span>Bipe no vídeo</span>
+            <button
+              class="switch"
+              id="swBeepClip"
+              role="switch"
+              aria-checked="false"
+              aria-label="Bipe no vídeo"
             ></button>
           </div>
           <div class="row">

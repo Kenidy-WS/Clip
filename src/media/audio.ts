@@ -118,6 +118,22 @@ async function configureAudio(nChIn: number): Promise<void> {
   }
 }
 
+/** Soma o bipe pendente ao bloco de áudio do clipe (planar, `frames` amostras por canal). */
+function mixBeepInto(planar: Float32Array, frames: number, nCh: number): void {
+  const m = S.beepMix;
+  if (!m) return;
+  const n = Math.min(frames, m.data.length - m.pos);
+  for (let i = 0; i < n; i++) {
+    const v = m.data[m.pos + i]!;
+    for (let c = 0; c < nCh; c++) {
+      const k = c * frames + i;
+      planar[k] = Math.max(-1, Math.min(1, planar[k]! + v));
+    }
+  }
+  m.pos += n;
+  if (m.pos >= m.data.length) S.beepMix = null;
+}
+
 async function onAudioBlock(ev: MessageEvent<{ ch: Float32Array[]; frames: number }>): Promise<void> {
   const { ch, frames } = ev.data;
   let pk = 0;
@@ -141,6 +157,7 @@ async function onAudioBlock(ev: MessageEvent<{ ch: Float32Array[]; frames: numbe
     // janela de silêncio durante os bipes, para o som do app não entrar no clipe
     for (let c = 0; c < nCh; c++) planar.set(ch[Math.min(c, ch.length - 1)].subarray(0, frames), c * frames);
   }
+  if (S.rec) mixBeepInto(planar, frames, nCh); // bipe de gravação dentro do clipe (opção dos Ajustes)
   // Relógio do áudio = contador de amostras ancorado no relógio do vídeo. Se o iOS suspender o áudio
   // (ex.: compartilhar/salvar), o contador atrasa; sem reancorar, o buffer descartaria o áudio para sempre.
   const arrival = performance.now() * 1000 - (frames / S.sampleRate) * 1e6;

@@ -1,4 +1,5 @@
-import { FPS, KEYFRAME_EVERY_MS, VIDEO_BITRATE, VIDEO_CODECS } from '../config';
+import { KEYFRAME_EVERY_MS } from '../config';
+import { avcCodecs, videoBitrate } from '../core/video-profile';
 import { notify } from '../events';
 import { cfg, S } from '../state';
 import { els } from '../ui/dom';
@@ -30,7 +31,7 @@ function pump(now: number): void {
   const v = els.video;
   if (v.readyState < 2 || !v.videoWidth || S.configuring) return;
   // Com rVFC cada callback já é um quadro novo: filtrar por intervalo derrubava o fps (jitter do 'now').
-  if (!HAS_RVFC && now - S.lastPump < (1000 / FPS) * 0.8) return;
+  if (!HAS_RVFC && now - S.lastPump < (1000 / cfg.fps) * 0.8) return;
   const w = v.videoWidth & ~1;
   const h = v.videoHeight & ~1;
   if (!S.vEnc || ((w !== S.W || h !== S.H) && !S.rec)) {
@@ -52,7 +53,7 @@ function pump(now: number): void {
   let frame: VideoFrame;
   try {
     S.ctx2d.drawImage(v, 0, 0, S.W, S.H);
-    frame = new VideoFrame(S.canvas, { timestamp: ts, duration: Math.round(1e6 / FPS) });
+    frame = new VideoFrame(S.canvas, { timestamp: ts, duration: Math.round(1e6 / cfg.fps) });
   } catch {
     S.dropped++;
     return;
@@ -71,15 +72,15 @@ function pump(now: number): void {
 async function configureVideo(w: number, h: number): Promise<void> {
   S.configuring = true;
   try {
-    const bitrate = VIDEO_BITRATE[cfg.quality];
+    const bitrate = videoBitrate(cfg.quality, cfg.fps, cfg.imageQuality);
     let chosen: VideoEncoderConfig | null = null;
-    for (const codec of VIDEO_CODECS) {
+    for (const codec of avcCodecs(w, h, cfg.fps)) {
       const c: VideoEncoderConfig = {
         codec,
         width: w,
         height: h,
         bitrate,
-        framerate: FPS,
+        framerate: cfg.fps,
         latencyMode: 'realtime',
         avc: { format: 'avc' },
         hardwareAcceleration: 'prefer-hardware',
@@ -138,7 +139,7 @@ function onVideoChunk(chunk: EncodedVideoChunk, meta?: EncodedVideoChunkMetadata
     data,
     key: chunk.type === 'key',
     ts: chunk.timestamp,
-    dur: chunk.duration || Math.round(1e6 / FPS),
+    dur: chunk.duration || Math.round(1e6 / cfg.fps),
   };
   if (item.ts < S.lastOutTs) S.reorders++; // saída fora de ordem = encoder usando B-frames
   S.lastOutTs = Math.max(S.lastOutTs, item.ts);

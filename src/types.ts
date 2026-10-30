@@ -18,7 +18,12 @@ export interface Recording {
 }
 
 export type StatusKind = '' | 'ok' | 'warn' | 'err';
-export type Quality = '1080' | '720';
+export type Quality = '2160' | '1080' | '720';
+export type Fps = 30 | 60;
+/** Taxa de bits do vídeo: Padrão, Alta ou Máxima. */
+export type ImageQuality = 'std' | 'high' | 'max';
+/** Volume do bipe de gravação. */
+export type BeepVol = 'normal' | 'high' | 'max';
 export type Facing = 'environment' | 'user';
 /** Lente traseira: '1' = principal (1×), '0.5' = ultra-angular (0,5×). */
 export type Lens = '1' | '0.5';
@@ -28,6 +33,8 @@ export type Screen = 'home' | 'camera' | 'gallery';
 export interface Config {
   bufferSec: number;
   quality: Quality;
+  fps: Fps;
+  imageQuality: ImageQuality;
   facing: Facing;
   lens: Lens;
 }

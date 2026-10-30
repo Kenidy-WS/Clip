@@ -1,4 +1,4 @@
-import { VIDEO_SIZE, FPS } from '../config';
+import { VIDEO_SIZE } from '../core/video-profile';
 import { notify, stateChanged } from '../events';
 import { cfg, S } from '../state';
 import { T } from '../strings';
@@ -262,7 +262,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
     return;
   }
   const q = VIDEO_SIZE[cfg.quality];
-  const sizeC = { width: { ideal: q.w }, height: { ideal: q.h }, frameRate: { ideal: FPS } };
+  const sizeC = { width: { ideal: q.w }, height: { ideal: q.h }, frameRate: { ideal: cfg.fps } };
   const wantUltra = cfg.facing === 'environment' && cfg.lens === '0.5' && !!S.lensId;
   const videoC: MediaTrackConstraints = wantUltra
     ? { deviceId: { exact: S.lensId }, ...sizeC }
@@ -384,6 +384,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   S.lastOutTs = 0;
   S.buffer.dropBeforeTs = 0;
   S.muteUntil = 0;
+  S.beepMix = null;
   S.aInfo = '';
   S.startedAt = performance.now();
 

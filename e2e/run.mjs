@@ -137,6 +137,9 @@ const check = (cond, m) => {
 const browser = await chromium.launch({
   args: ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream'],
 });
+// Por padrão os testes rodam com "reduzir movimento" (sem esperar animações); a seção de transições liga o movimento.
+const newContextRaw = browser.newContext.bind(browser);
+browser.newContext = (o = {}) => newContextRaw({ reducedMotion: 'reduce', ...o });
 try {
   // 1) A câmera só inicia depois do toque em "Abrir câmera" no Início.
   {
@@ -700,6 +703,59 @@ try {
       timeout: 8000,
     });
     ok('"Abrir câmera" na Galeria liga a câmera de novo');
+    await page.close();
+  }
+
+  // 3b) Ajustes: resolução/fluidez/qualidade, volume e bipe no vídeo; transições de tela.
+  {
+    const page = await (await browser.newContext({ reducedMotion: 'no-preference' })).newPage();
+    await page.addInitScript(STUBS + LENS);
+    await page.goto(URL_);
+    // Transição: ao abrir a câmera, o Início sai por baixo e só depois some.
+    await page.click('#btnOpen');
+    check(
+      await page.evaluate(() => document.querySelector('#screenHome').className.includes('out-fwd')),
+      'transição: o Início sai com animação ao abrir a câmera',
+    );
+    await page.waitForFunction(() => document.querySelector('#screenHome').hidden, null, { timeout: 2000 });
+    ok('transição: o Início some depois da animação');
+    check(
+      await page.evaluate(() => !document.querySelector('#screenCamera').className.includes('in-')),
+      'transição: a câmera termina sem classe de animação',
+    );
+    // Ajustes
+    await page.click('#btnSettingsCam');
+    check(await page.isVisible('#sheet'), 'Ajustes abrem');
+    await page.click('#segQuality button[data-v="2160"]');
+    await page.click('#segFps button[data-v="60"]');
+    await page.click('#segImageQuality button[data-v="max"]');
+    await page.click('#segBeepVol button[data-v="max"]');
+    await page.click('#swBeepClip');
+    check(
+      await page.evaluate(
+        () =>
+          localStorage.getItem('clip.quality') === '2160' &&
+          localStorage.getItem('clip.fps') === '60' &&
+          localStorage.getItem('clip.imageQuality') === 'max' &&
+          localStorage.getItem('clip.beepVol') === 'max' &&
+          localStorage.getItem('clip.beepClip') === '1',
+      ),
+      'Ajustes: escolhas de vídeo e bipe são guardadas',
+    );
+    await page.waitForFunction(
+      () => window.__cons.some((c) => c.includes('"frameRate":{"ideal":60}') && c.includes('3840')),
+      null,
+      { timeout: 6000 },
+    );
+    ok('Ajustes: 4K e 60 fps chegam ao pedido da câmera');
+    await page.click('#swSound');
+    check(
+      await page.locator('#segBeepVol button[data-v="normal"]').isDisabled(),
+      'com os sons desligados o volume do bipe fica desligado',
+    );
+    await page.click('#btnSheetClose');
+    await page.waitForFunction(() => document.querySelector('#sheet').hidden, null, { timeout: 2000 });
+    ok('Ajustes fecham depois da animação');
     await page.close();
   }
 

@@ -1,7 +1,7 @@
 import { onClipsChange, onStateChange, onStatus, onVoiceCommand, notify } from './events';
 import { acquireWake, enableMic, logCam, start, tapRecover } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
-import { beep } from './media/beep';
+import { previewBeep } from './media/beep';
 import { restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
 import { trySetupAudio } from './media/audio';
 import { cfg, S } from './state';
@@ -17,8 +17,9 @@ import { mountIcons } from './ui/icons';
 import { openCamera, showScreen } from './ui/navigation';
 import { setStatus } from './ui/status';
 import { initLifecycleLog } from './ui/lifecycle-log';
+import { hideAnimated, showAnimated } from './ui/transitions';
 import { initViewport } from './ui/viewport';
-import type { Facing, Lens, Quality } from './types';
+import type { BeepVol, Facing, Fps, ImageQuality, Lens, Quality } from './types';
 import { APP_VERSION } from './config';
 
 async function paintStorage(): Promise<void> {
@@ -29,7 +30,13 @@ async function paintStorage(): Promise<void> {
 /** Lê as preferências guardadas (qualidade, tempo antes do toque, lente, sons e voz). */
 function loadPrefs(): void {
   const quality = getPref('quality');
-  if (quality === '1080' || quality === '720') cfg.quality = quality as Quality;
+  if (quality === '2160' || quality === '1080' || quality === '720') cfg.quality = quality as Quality;
+  if (getPref('fps') === '60') cfg.fps = 60;
+  const iq = getPref('imageQuality');
+  if (iq === 'high' || iq === 'max') cfg.imageQuality = iq;
+  const bv = getPref('beepVol');
+  if (bv === 'normal' || bv === 'max') S.beepVol = bv;
+  S.beepInClip = getPref('beepClip') === '1';
   const buffer = getPref('buffer');
   if (buffer === '15' || buffer === '30') cfg.bufferSec = Number(buffer);
   S.buffer.windowSec = cfg.bufferSec;
@@ -39,11 +46,11 @@ function loadPrefs(): void {
 }
 
 function openSheet(): void {
-  els.sheet.hidden = false;
+  showAnimated(els.sheet);
 }
 
 function closeSheet(): void {
-  els.sheet.hidden = true;
+  hideAnimated(els.sheet);
 }
 
 /** Liga ou desliga o comando de voz (chamar de dentro de um toque). */
@@ -115,6 +122,29 @@ function bindSettings(): void {
     updateUI();
     if (S.running) await start();
   });
+  bindSegment(els.segFps, async (v) => {
+    cfg.fps = Number(v) as Fps;
+    setPref('fps', v);
+    updateUI();
+    if (S.running) await start();
+  });
+  bindSegment(els.segImageQuality, async (v) => {
+    cfg.imageQuality = v as ImageQuality;
+    setPref('imageQuality', v);
+    updateUI();
+    if (S.running) await start();
+  });
+  bindSegment(els.segBeepVol, (v) => {
+    S.beepVol = v as BeepVol;
+    setPref('beepVol', v);
+    updateUI();
+    previewBeep(); // toca como amostra no novo volume
+  });
+  els.swBeepClip.addEventListener('click', () => {
+    S.beepInClip = !S.beepInClip;
+    setPref('beepClip', S.beepInClip ? '1' : '0');
+    updateUI();
+  });
   bindSegment(els.segBuffer, (v) => {
     cfg.bufferSec = Number(v);
     setPref('buffer', v);
@@ -127,7 +157,7 @@ function bindSettings(): void {
     S.soundOn = !S.soundOn;
     setPref('sound', S.soundOn ? '1' : '0');
     updateUI();
-    if (S.soundOn) beep('start');
+    previewBeep();
   });
   els.btnInfo.addEventListener('click', () => {
     els.info.classList.toggle('open');

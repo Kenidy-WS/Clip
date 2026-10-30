@@ -1,12 +1,19 @@
 import { ReplayBuffer } from './core/replay-buffer';
-import type { Clip, Config, Recording, Screen } from './types';
+import type { BeepVol, Clip, Config, Recording, Screen } from './types';
 
 export interface AacMeta {
   decoderConfig: { codec: string; sampleRate: number; numberOfChannels: number; description: Uint8Array };
 }
 
 /** Preferências atuais (mudam pela interface). */
-export const cfg: Config = { bufferSec: 15, quality: '1080', facing: 'environment', lens: '1' };
+export const cfg: Config = {
+  bufferSec: 15,
+  quality: '1080',
+  fps: 30,
+  imageQuality: 'std',
+  facing: 'environment',
+  lens: '1',
+};
 
 /** Estado do motor de captura. Compartilhado entre os módulos de media/; a interface só lê. */
 export interface AppState {
@@ -61,6 +68,10 @@ export interface AppState {
   needTap: boolean;
   muteUntil: number;
   soundOn: boolean;
+  beepVol: BeepVol;
+  /** Bipe misturado no áudio do clipe (em vez de só tocar no alto-falante). */
+  beepInClip: boolean;
+  beepMix: { data: Float32Array; pos: number } | null;
   aInfo: string;
   aErr: string;
   aErrCount: number;
@@ -143,6 +154,9 @@ export const S: AppState = {
   needTap: false,
   muteUntil: 0,
   soundOn: true,
+  beepVol: 'high',
+  beepInClip: false,
+  beepMix: null,
   aInfo: '',
   aErr: '',
   aErrCount: 0,

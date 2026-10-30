@@ -1,7 +1,7 @@
 import { APP_NAME } from '../strings';
 import { support } from '../media/support';
 import { APP_VERSION } from '../config';
-import { S } from '../state';
+import { cfg, S } from '../state';
 import { lifecycleInfo } from './lifecycle-log';
 import { viewportInfo } from './viewport';
 
@@ -17,7 +17,7 @@ export function diagnosticsText(): string {
     S.micErr ? `Erro do microfone: ${S.micErr}` : '',
     `VideoEncoder ${ok(sp.VideoEncoder)}  AudioEncoder ${ok(sp.AudioEncoder)}  AudioWorklet ${ok(sp.AudioWorklet)}`,
     `rVFC ${ok(sp.rVFC)}  WakeLock ${ok(sp.WakeLock)}  Share(arquivos) ${ok(sp.Share)}`,
-    `Vídeo: ${S.W}x${S.H} ${S.codec} ${(S.bitrate / 1e6).toFixed(0)} Mbps`,
+    `Vídeo: ${S.W}x${S.H} ${S.codec} ${(S.bitrate / 1e6).toFixed(0)} Mbps (pedido ${cfg.quality}p ${cfg.fps} fps ${cfg.imageQuality})`,
     `Áudio: ${S.nCh ? S.sampleRate + ' Hz, ' + S.nCh + ' canal(is), AAC' : S.audioDisabled ? 'desativado' : 'aguardando'}`,
     S.aInfo ? `AAC: ${S.aInfo}` : '',
     `Áudio fluxo: chunks ${S.aOut}, fila ${S.aEnc ? S.aEnc.encodeQueueSize : '-'}, encoder ${S.aEnc ? S.aEnc.state : 'nenhum'}, ressincs ${S.aResyncs}, erros ${S.aErrCount}${S.aErr ? ' (' + S.aErr + ')' : ''}`,

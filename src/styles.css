@@ -556,6 +556,14 @@ p {
     gap: 14px;
     padding: calc(var(--sat) + 12px) calc(var(--sar) + 16px) calc(var(--sab) + 12px) 0;
   }
+  /* A coluna de controles cobre a altura toda; só os botões dela recebem toque (não tampa os botões do topo). */
+  .cam-bottom {
+    pointer-events: none;
+  }
+  .cam-bottom button,
+  .cam-bottom .lens {
+    pointer-events: auto;
+  }
   .cam-row {
     width: auto;
     max-width: none;
@@ -820,4 +828,115 @@ pre.info {
 }
 pre.info.open {
   display: block;
+}
+
+/* ───────── Transições ───────── */
+:root {
+  --t-screen: 280ms;
+  --ease-out: cubic-bezier(0.22, 0.8, 0.26, 1);
+}
+.screen.in-fwd,
+.screen.in-back,
+.screen.in-fade {
+  z-index: 2;
+}
+.screen.out-fwd,
+.screen.out-back,
+.screen.out-fade {
+  z-index: 1;
+  pointer-events: none;
+}
+.screen.in-fwd {
+  animation: in-from-right var(--t-screen) var(--ease-out) both;
+}
+.screen.out-fwd {
+  animation: out-to-left var(--t-screen) var(--ease-out) both;
+}
+.screen.in-back {
+  animation: in-from-left var(--t-screen) var(--ease-out) both;
+}
+.screen.out-back {
+  animation: out-to-right var(--t-screen) var(--ease-out) both;
+}
+.screen.in-fade {
+  animation: fade-in var(--t-screen) ease both;
+}
+.screen.out-fade {
+  animation: fade-out var(--t-screen) ease both;
+}
+@keyframes in-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(36px);
+  }
+}
+@keyframes out-to-left {
+  to {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+@keyframes in-from-left {
+  from {
+    opacity: 0;
+    transform: translateX(-36px);
+  }
+}
+@keyframes out-to-right {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+/* Ajustes (folha que sobe) e player (aparece com leve zoom) */
+.sheet-backdrop:not([hidden]) {
+  animation: fade-in 200ms ease both;
+}
+.sheet-backdrop:not([hidden]) .sheet {
+  animation: sheet-up 300ms var(--ease-out) both;
+}
+.sheet-backdrop.closing {
+  animation: fade-out 200ms ease both;
+}
+.sheet-backdrop.closing .sheet {
+  animation: sheet-down 200ms ease-in both;
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(40%);
+    opacity: 0.4;
+  }
+}
+@keyframes sheet-down {
+  to {
+    transform: translateY(40%);
+    opacity: 0;
+  }
+}
+.player:not([hidden]) {
+  animation: player-in 220ms var(--ease-out) both;
+}
+@keyframes player-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .screen,
+  .sheet-backdrop,
+  .sheet,
+  .player {
+    animation: none !important;
+  }
 }

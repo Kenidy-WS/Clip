@@ -6,6 +6,7 @@ import { T } from '../strings';
 import type { Clip } from '../types';
 import { els } from './dom';
 import { icon } from './icons';
+import { showAnimated } from './transitions';
 
 /** Quantos clipes aparecem no Início. */
 const RECENT_COUNT = 4;
@@ -95,7 +96,7 @@ export function openPlayer(c: Clip): void {
     mb: c.blob.size / 1048576,
     withAudio: c.withAudio,
   });
-  els.player.hidden = false;
+  showAnimated(els.player);
   void els.playerVideo.play().catch(() => {
     /* se o iOS exigir, é só tocar em play */
   });

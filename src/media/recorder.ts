@@ -2,7 +2,7 @@ import { addClip } from '../clips';
 import { notify, stateChanged } from '../events';
 import { S, cfg } from '../state';
 import { T } from '../strings';
-import { beep } from './beep';
+import { beep, beepMs } from './beep';
 import { buildMp4 } from './mp4';
 
 /** Começa a gravar: pega o buffer a partir do último keyframe antes do corte e continua acumulando. */
@@ -30,8 +30,10 @@ export async function stopRec(): Promise<void> {
   stateChanged();
   // Sem flush(): ele reinicia o estado do encoder (principalmente o AAC) e gera
   // timestamps fora de ordem nos clipes seguintes. Esperamos os chunks já enviados saírem.
+  beep('stop'); // toca já no toque
+  // Bipe dentro do clipe: o corte espera o bipe terminar; senão o que vier depois de stopTs fica fora do clipe.
+  if (S.beepInClip && S.beepMix) await new Promise((r) => setTimeout(r, beepMs('stop') + 80));
   const stopTs = S.lastInTs;
-  beep('stop'); // toca já no toque; o que vier depois de stopTs fica fora do clipe
   await drainEncoders();
   const r = S.rec;
   S.rec = null;
