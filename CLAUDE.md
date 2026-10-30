@@ -56,6 +56,9 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   na v0.5.0: ícone verde e nenhum comando reconhecido até desligar/ligar o botão). Por isso o indicador só fica verde depois de
   `onaudiostart`/resultado, e o primeiro toque na tela reinicia a escuta dentro do gesto (`voiceTap`). Eventos da escuta ficam no
   painel "i" (linha "Voz").
+- **Dois pedidos de permissão:** o iOS pede (1) "Câmera e Microfone" (`getUserMedia`) e, quando a escuta de voz inicia, (2) "Microfone"
+  de novo, só para o reconhecimento de voz (Web Speech). Não há como juntar os dois em código. No Safari, "aA → Ajustes do Site →
+  Câmera/Microfone: Permitir" pode eliminar ambos (a confirmar se vale para o pedido da voz); o app instalado não tem esses ajustes.
 - O app precisa ficar aberto com a tela ligada (Wake Lock); em segundo plano o iOS suspende a câmera.
 
 ## Ambiente de desenvolvimento (Claude)

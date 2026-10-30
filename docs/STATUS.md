@@ -83,6 +83,16 @@ de testar e mandar o print do "i" de novo.
 4. Ao ar livre: vento, motor de barco, distância de ~2 m.
 5. Sessão longa (10+ min) com a câmera aberta: o botão 🎙️ deve continuar com a borda verde.
 
+## Dois pedidos de permissão (apurado na v0.5.4)
+
+Prints do Kenidy: aparece "Câmera e Microfone" (getUserMedia) e, com a câmera já rodando, um segundo "Microfone" (reconhecimento de
+voz do iOS). Opções: (A) Safari → aA → Ajustes do Site → Câmera e Microfone = Permitir (sem código; a confirmar se elimina também o
+pedido da voz; não existe no app instalado). (B) Trocar o reconhecedor do iOS por detector de palavra de ativação dentro do app,
+sobre o mesmo microfone (1 pedido só, resposta mais rápida, sem reinícios): **Porcupine** exige AccessKey e, segundo um post da
+comunidade Home Assistant citando e-mail da Picovoice, o plano gratuito foi descontinuado em 30/06/2026 (não consegui abrir a página
+oficial de preços; verificar antes de decidir); alternativa de código aberto seria Vosk (WASM, modelo pt pequeno, offline), pesada
+para rodar junto do encoder de vídeo: precisaria de teste de viabilidade (Onda 4).
+
 ## Pendências e perguntas em aberto
 
 - **Pre-roll:** mantido o comportamento atual (zera depois de cada clipe, sem repetir imagens).
