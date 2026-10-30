@@ -1,11 +1,28 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.14 · aguardando teste no iPhone (ver as seções v0.12.7 a v0.12.14 no FIM do arquivo)
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.13.5 · `estavel` = 0.13.2 · aguardando teste no iPhone (bloco de robustez, abaixo)
+
+## Bloco de robustez da gravação (30/10) — v0.13.3 a v0.13.5, aguardando teste no iPhone
+
+Decisão esclarecida pelo Kenidy: **voz e botão manual evoluem juntos**; o botão é a válvula de escape se a voz falhar, então nada pode perder gravação. Revisão do caminho de gravar/parar/salvar/compartilhar (3 versões, cada uma um commit, `check` + `e2e` verdes). A voz e o microfone não foram tocados.
+
+- **v0.13.3:** se o MP4 com áudio falhar, tenta só com vídeo e avisa ("sem áudio"); se o codificador de vídeo morrer gravando, o trecho já gravado vira clipe (antes sumia); `stopRec` com `try/finally` (um erro não deixa o app preso em "Finalizando"); gravação no IndexedDB com 3 tentativas antes de avisar. Código novo: `core/salvage.ts`, `core/retry.ts` (com testes).
+- **v0.13.4:** sair do app gravando (outro app, tela bloqueada, chamada) guarda o trecho na hora (`ui/rec-guard.ts` → `salvageRecording`), e reiniciar a captura no meio da gravação também (`stopAll` em `camera.ts`, uma linha). O e2e ganhou um codificador de vídeo falso que entrega dados (`EMIT`): gravar/parar, sair do app e falha do codificador agora rodam com MP4 e IndexedDB de verdade (conferido: sem a proteção o teste falha).
+- **v0.13.5:** se a folha de compartilhar do iOS falhar, o clipe é baixado como arquivo e o app avisa; fechar a folha sem escolher não faz nada.
+
+**O que o Kenidy precisa testar no iPhone:**
+
+1. Gravar e parar pelo botão: "Clipe salvo", aparece na Galeria e toca com áudio.
+2. Gravando, ir para outro app e voltar: o trecho gravado está na Galeria ("Gravação interrompida. O trecho gravado foi salvo.") e a câmera pede o toque normal para retomar.
+3. **Puxar a Central de Controle ou receber uma notificação gravando: NÃO deve cortar.** Se cortar, o gatilho (`visibilitychange`/`pagehide` em `rec-guard.ts`) é mais sensível no iOS do que o esperado: reverter só a v0.13.4.
+4. Compartilhar um clipe: a folha abre, "Salvar Vídeo" leva ao Rolo da Câmera; fechar a folha sem escolher não gera aviso.
+
+**Limites conhecidos (ideias para a próxima onda):** a gravação ainda vive só na memória até parar (se o iOS encerrar a página sem nenhum aviso, o trecho se perde); clipe salvo ao sair do app fica sem miniatura (mostra o ícone padrão); o plano B "sem áudio" só foi testado em teste unitário, não no iPhone.
 
 ## Fim do bloco (30/10) — v0.13.2 validada
 
 - v0.13.2 validada pelo Kenidy; `estavel` = v0.13.2. Bloco encerrado: voz ao voltar da Galeria/segundo plano, clipe mudo por padrão, aviso falso, miniaturas.
-- **Decisão de produto:** a base do app é a **pré-gravação (buffer) + botão vermelho manual**; o comando de voz é **bônus**. Falha da voz nunca pode atrapalhar o botão. Próximo bloco: revisar o caminho manual (buffer, gravar, parar, salvar/compartilhar) como prioridade.
+- **Decisão de produto:** a base do app é a **pré-gravação (buffer) + botão vermelho manual**; o comando de voz é **bônus**. Falha da voz nunca pode atrapalhar o botão. Próximo bloco: revisar o caminho manual (buffer, gravar, parar, salvar/compartilhar) como prioridade. (Esclarecimento do Kenidy: não é abandonar a voz; os dois evoluem juntos e o botão é a válvula de escape. Feito na v0.13.3 a v0.13.5, acima.)
 - Kenidy vai mandar o link a amigos para testar. Pedir a eles: instalar na Tela de Início, copiar o Diagnóstico ("i") logo após um problema, salvar clipes importantes no Rolo da Câmera. Qualquer push na `main` chega a todos (banner "Nova versão"): só publicar com `check` + `e2e` verdes.
 - Pendências abertas: prévia encolhida por <1 s ao voltar do app (adiado), microfone mudo depois de ligar o som (só vale se o som for ligado de propósito).
 

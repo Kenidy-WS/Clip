@@ -31,6 +31,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Publicação:** push na `main` roda `.github/workflows/deploy.yml` (checks + GitHub Pages). Base de caminhos é `./`.
 - **Fluxo de entrega (pedido do Kenidy):** quando uma feature estiver pronta e `npm run check` + `npm run e2e` passarem,
   suba direto na `main` (sem esperar aprovação do merge) para ele validar no iPhone. Avise a versão publicada e o que testar.
+- **Gravação nunca é descartada:** qualquer caminho que encerre a captura com `S.rec` ativo passa por `salvageRecording()` (`media/recorder.ts`); `ui/rec-guard.ts` a chama ao sair do app. Não zere `S.rec` direto. A montagem do MP4 tem plano B só com vídeo (`core/salvage.ts`).
 - Commits: mensagens em português, curtas, no formato "vX.Y.Z: o que mudou".
 - Trabalho em **ondas** (ver roadmap): uma onda por chat, o Kenidy testa no iPhone e aprova antes da próxima.
 
@@ -97,7 +98,8 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 ## Ambiente de desenvolvimento (Claude)
 
 - Não há Mac nem iPhone na sandbox: o que depende de WebCodecs/H.264/AAC reais só se confirma no iPhone do Kenidy.
-  Os testes automáticos cobrem lógica pura, montagem do MP4 e o fluxo da interface (com codificadores falsos).
+  Os testes automáticos cobrem lógica pura, montagem do MP4 e o fluxo da interface (com codificadores falsos). O e2e tem um
+  codificador de vídeo falso que entrega dados (`EMIT` em `e2e/run.mjs`): grava, para e guarda de verdade (MP4 + IndexedDB), só sem áudio.
 - Não é possível alterar configurações do GitHub (Pages, tags) por aqui; peça ao Kenidy.
 - O Kenidy tem conhecimento básico de front-end e quer que o Claude escreva o código; explique decisões em português
   simples, direto ao ponto. Comparações em listas curtas (tela de celular).
