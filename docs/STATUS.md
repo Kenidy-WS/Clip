@@ -104,6 +104,17 @@ aparece em religamentos sem toque (voltar de segundo plano). **Não confirmado n
 iniciada junto do pedido de permissão da câmera (pode virar 2 pedidos em sequência, ou conflito). Se der conflito: iniciar a voz
 logo que a câmera entregar o primeiro quadro, ainda no mesmo gesto, ou voltar ao toque pós-permissão.
 
+## Teste da v0.7.0 (resultado) e próximo passo
+
+Kenidy testou a `v0.7.0` no iPhone: **funcional**. Agora são só **2 pedidos**, e ao aceitar o segundo a câmera já abre e tudo
+funciona (voz + gravação). **Troca de lente 1×/0,5× funciona e a gravação na 0,5× também.** Pendência visual: na 0,5× o preview
+fica menor, com faixas pretas laterais (tratar na Onda 3). Ainda sem confirmação: áudio dos clipes com a voz ouvindo, teste ao
+ar livre/vento, sessão longa.
+
+**Próximo chat: Onda 3a (estrutura de telas)**, conforme o plano em `docs/ROADMAP.md` ("Plano da Onda 3"). Kenidy grava em pé
+(principalmente) e deitado; vai mandar prints de apps de referência (câmera e galeria). Começar pedindo/olhando os prints e
+confirmando o desenho das três telas (Início, Câmera, Galeria) antes de codar. Manter o fluxo: `check` + `e2e` verdes → `main`.
+
 ## v0.6.1 com defeito → v0.7.0 (voz primeiro + lente 0,5×)
 
 Teste da `v0.6.1` (relato): **3 pedidos** (câmera+mic → mic → câmera+mic), tela preta entre eles, e só então funcionou. Leitura:

@@ -25,6 +25,26 @@ Uma onda por chat. Em cada uma: Claude entrega, o Kenidy testa no iPhone e aprov
 - Proporção/layout: o preview deve ocupar os espaços corretos (hoje sobra espaço), principalmente no web app instalado.
 - Favicon/ícone próprio e marca "Ei Clip".
 
+### Plano da Onda 3 (combinado em 2026-10-29; Kenidy vai mandar prints de apps de referência)
+
+Três telas, **sem rolagem** em nenhuma (hoje é uma página só com a galeria embaixo):
+
+1. **Início** (abre com o app, a câmera não liga sozinha): nome, botão grande "Abrir câmera" (é o gesto que liga voz+câmera+áudio),
+   últimos clipes em miniaturas, ícone de **Ajustes** (qualidade, buffer 15/30 s, som, voz; diagnóstico "i" escondido aqui).
+   Qualidade/buffer saem da tela de câmera.
+2. **Câmera** (só gravação, estilo app Câmera do iPhone): imagem em **tela cheia** (`object-fit: cover`/área segura), botão de
+   gravar grande embaixo no centro, bolinha de lente 0,5/1× sobre a imagem, trocar câmera e voltar nos cantos, miniatura da
+   última gravação (abre a galeria), indicador discreto de buffer e de voz no topo.
+3. **Galeria**: grade de clipes; toque abre o player (Salvar/Compartilhar/Excluir). Como é tela própria, parar a captura ao
+   assistir (limite do áudio no iOS) vira comportamento natural.
+
+Também na Onda 3: **bloquear zoom** (viewport `user-scalable=no`, `touch-action: manipulation`, `gesturestart` com preventDefault
+— hoje o pinch/duplo toque desconfigura a tela), **funcionar em pé e deitado** (Kenidy grava nos dois, principalmente em pé:
+layout da câmera precisa girar os controles sem girar o vídeo gravado), imagem da 0,5× hoje aparece menor com faixas pretas
+(preview em `contain`; provável causa, confirmar no iPhone), ícone/marca/cores/tipografia (3b, com as referências dele).
+Sugestão de divisão: **3a estrutura** (telas, tela cheia, zoom, orientação) e **3b visual** (identidade). Remover textos
+técnicos/avisos que o usuário final não precisa ver.
+
 ## Ideias futuras
 
 - App nativo em Swift (4K60, estabilização, escolha de lente), compilado por GitHub Actions macOS; expira em 7 dias com Apple ID gratuito.
