@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.6 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.12.7 · aguardando teste no iPhone (ver a seção v0.12.7 no FIM do arquivo)
 
 ## LEIA PRIMEIRO — resumo da sessão de 30/10 (v0.8.1 → v0.12.6)
 
@@ -547,3 +547,11 @@ pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
 - Diagnóstico (v0.12.5): mesmo sem `setAudioSession('play-and-record')` e **com** recarregamento, o microfone da câmera nasceu mudo (pico 0.0000), o reinício automático não o recuperou e a voz ficou esperando toque. Ou seja: o recarregamento não evita o problema; só causa o piscar. Removido (`closePlayer` volta a só fechar; fora também a restauração da tela e o fade `body.resumed`).
 - Ficam: reinício automático do microfone mudo (3 s), a voz aguarda um toque depois dele, `setAudioSession` 'playback'/'auto' só no player, e o teste sem `play-and-record` no `start()`.
 - Ainda sem causa raiz do microfone mudo ao abrir a câmera. Hipóteses abertas: (1) a ordem voz→câmera (a voz abre o microfone antes do `getUserMedia`); (2) o reinício extra por troca de lente ("start #2"); (3) o `MediaStreamAudioSourceNode` com a faixa entregando zeros no iOS 27. Próximo experimento sugerido: câmera primeiro e voz logo depois no mesmo toque, e pedir o ultra-angular já no 1º `getUserMedia`.
+
+## v0.12.7 — Voz não é derrubada na recuperação do microfone mudo
+
+- Relato: Câmera → Galeria → tocar um clipe → voltar à câmera: o app volta a pedir um toque para ativar microfone e voz.
+- Causa (investigada no código, sem mudar nada antes): não é a navegação. Sair da câmera para a Galeria para a voz de propósito (`showScreen` → `stopAll` → `stopVoice`) e ao voltar `openCamera` a religa dentro do toque (funciona). O pedido de toque vem da **recuperação do microfone mudo** (`camera.ts`, ~3 s depois de abrir): ela chamava `stopVoice()` e reabria a câmera sem gesto; sem gesto, `startVoice('wait')` cai em `waitForTap` (aviso "Toque na tela"). O Diagnóstico da v0.12.5 já mostrava essa sequência. A v0.12.4 tentou religar a voz sozinha (`'auto'`) e ela ficou surda → desfeito na v0.12.5.
+- Mudança: removido o `stopVoice()` dessa recuperação. A escuta (Web Speech) tem captura própria e `start()` já a preserva nos reinícios (`stopAll(…, keepVoice)`); `startVoice('wait')` sai sem fazer nada se a escuta está viva. Se ela ficar surda, o aviso de toque (som alto sem fala ouvida) continua como rede de segurança. **Hipótese não confirmada:** que a escuta não precise ser recriada junto com o microfone.
+- Testar no iPhone: Câmera → Galeria → tocar um clipe com som → voltar à câmera. A voz continua funcionando sem pedir toque? Se pedir, copie o Diagnóstico (pela tela da câmera): em "Câmera: início" procure "microfone mudo … reabrindo" e em "Comando de voz" o que veio depois (`aguardando toque na tela` ou `microfone com som, mas a escuta não ouviu fala`).
+- Não resolve a causa raiz do microfone nascer mudo. Próximo experimento: câmera primeiro e voz logo depois, no mesmo toque.

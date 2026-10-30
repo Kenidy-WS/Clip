@@ -423,8 +423,8 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
       audioRetried = true;
       logCam(`microfone mudo (pico ${S.audioPeak.toFixed(4)}): liberando a captura e reabrindo`);
       // Solta o microfone de verdade (a captura antiga mantida pelo reinício continuaria presa à sessão de áudio ruim).
-      // A escuta de voz também fica presa ao microfone antigo: para e volta a esperar um toque (aviso na tela).
-      stopVoice();
+      // v0.12.7: a escuta de voz NÃO é derrubada aqui. Ela tem a própria captura (Web Speech) e `start()` já a preserva
+      // (`stopAll(…, keepVoice)`). Derrubá-la e religar sem toque a deixava surda (v0.12.4) e, sem toque, só restava esperar um toque.
       S.stream?.getAudioTracks().forEach((t) => t.stop());
       setAudioSession('auto');
       setTimeout(() => void start(), 450);
