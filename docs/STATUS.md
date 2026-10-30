@@ -374,3 +374,15 @@ para rodar junto do encoder de vídeo: precisaria de teste de viabilidade (Onda 
 
 Kenidy testa a `v0.8.1` (lista acima). Com o resultado, abrir chat novo para a Onda 3b (ajustes do visual, ícone e marca):
 pedir ao Claude para ler o repositório (`CLAUDE.md` e `docs/STATUS.md`).
+
+## v0.9.9 — 4K seguro, recuperação do encoder, microfone
+
+**Relato (v0.9.8):** 4K/60/Máxima deu "Encoding task did not complete", o app travou e reabriu; depois os clipes saíam com vídeo preto (só áudio) mesmo em 1080p; microfone mudo após ver um clipe continuava.
+
+**Feito**
+- Canvas de captura é recriado a cada configuração do encoder (hipótese: o iOS estraga o canvas 4K e `drawImage` sai preto).
+- Erro do encoder de vídeo: o app reduz sozinho (4K → 1080p, 60 → 30 fps, senão qualidade Padrão), grava a preferência, avisa e reabre a câmera (até 3 vezes).
+- 4K só a 30 fps (o iOS entregou 4K a 30); escolher 4K muda o fluxo para 30; escolher 60 fps tira do 4K; 4K salvo com 60 vira 30 ao abrir. Taxas de 4K reduzidas (30/38/45) e teto 50 Mbps.
+- Microfone: 3 s após abrir a câmera, se a faixa está muda/sem blocos, reinicia a sessão de áudio e reabre a câmera uma vez (linha "microfone mudo" no Diagnóstico).
+
+**Testar no iPhone:** 1080p gravar e ver na Galeria (vídeo preto sumiu?); abrir um clipe, voltar à câmera e testar a voz; 4K a 30 só se quiser. Se ainda sair preto, mandar o Diagnóstico logo após gravar.

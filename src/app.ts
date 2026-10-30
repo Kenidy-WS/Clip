@@ -1,4 +1,4 @@
-import { onClipsChange, onStateChange, onStatus, onVoiceCommand, notify } from './events';
+import { onEncoderFail, onClipsChange, onStateChange, onStatus, onVoiceCommand, notify } from './events';
 import { acquireWake, enableMic, logCam, refreshPreview, start, tapRecover } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { previewBeep } from './media/beep';
@@ -31,7 +31,7 @@ async function paintStorage(): Promise<void> {
 function loadPrefs(): void {
   const quality = getPref('quality');
   if (quality === '2160' || quality === '1080' || quality === '720') cfg.quality = quality as Quality;
-  if (getPref('fps') === '60') cfg.fps = 60;
+  if (getPref('fps') === '60' && quality !== '2160') cfg.fps = 60; // 4K a 60 não é entregue pelo iOS
   const iq = getPref('imageQuality');
   if (iq === 'high' || iq === 'max') cfg.imageQuality = iq;
   const bv = getPref('beepVol');
@@ -119,12 +119,20 @@ function bindSettings(): void {
   bindSegment(els.segQuality, async (v) => {
     cfg.quality = v as Quality;
     setPref('quality', v);
+    if (v === '2160' && cfg.fps === 60) {
+      cfg.fps = 30; // o iOS entrega 4K a 30 quadros
+      setPref('fps', '30');
+    }
     updateUI();
     if (S.running) await start();
   });
   bindSegment(els.segFps, async (v) => {
     cfg.fps = Number(v) as Fps;
     setPref('fps', v);
+    if (v === '60' && cfg.quality === '2160') {
+      cfg.quality = '1080'; // 4K a 60 não existe no iOS
+      setPref('quality', '1080');
+    }
     updateUI();
     if (S.running) await start();
   });
@@ -254,6 +262,10 @@ export function initApp(): void {
   loadPrefs();
   onStatus(setStatus);
   onStateChange(updateUI);
+  onEncoderFail(() => {
+    updateUI();
+    if (S.running) void start();
+  });
   onClipsChange(renderClips);
   onStorageChange(() => void paintStorage());
   onVoiceCommand(onVoice);

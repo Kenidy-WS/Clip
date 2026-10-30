@@ -21,6 +21,7 @@ export const T = {
   needTap: 'Toque na tela para ativar o áudio.',
   videoOnly: 'Este navegador não suporta AudioEncoder: clipes só com vídeo.',
   h264Unsupported: (w: number, h: number) => `Nenhuma configuração H.264 suportada para ${w}x${h}.`,
+  encoderFallback: 'A câmera foi ajustada para Full HD a 30 quadros para manter a gravação estável.',
   videoEncoderError: (msg: string) => `Erro no encoder de vídeo: ${msg}`,
   aacUnsupported: 'AAC não suportado neste navegador: clipes só com vídeo.',
   audioUnavailable: (msg: string) => `Áudio indisponível: ${msg}`,

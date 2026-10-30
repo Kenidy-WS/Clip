@@ -9,8 +9,8 @@ describe('videoBitrate', () => {
     expect(videoBitrate('1080', 30, 'high')).toBeGreaterThan(videoBitrate('1080', 30, 'std'));
     expect(videoBitrate('1080', 60, 'std')).toBe(24e6);
   });
-  it('respeita o teto de 60 Mbps', () => {
-    expect(videoBitrate('2160', 60, 'max')).toBe(60e6);
+  it('respeita o teto de 50 Mbps', () => {
+    expect(videoBitrate('2160', 60, 'max')).toBe(50e6);
   });
 });
 

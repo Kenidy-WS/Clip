@@ -1,6 +1,7 @@
 import { KEYFRAME_EVERY_MS } from '../config';
 import { avcCodecs, videoBitrate } from '../core/video-profile';
-import { notify } from '../events';
+import { encoderFailed, notify } from '../events';
+import { setPref } from '../storage/prefs';
 import { cfg, S } from '../state';
 import { els } from '../ui/dom';
 import { T } from '../strings';
@@ -105,15 +106,19 @@ async function configureVideo(w: number, h: number): Promise<void> {
     } catch {
       /* já fechado */
     }
-    S.vEnc = new VideoEncoder({
+    const enc: VideoEncoder = new VideoEncoder({
       output: onVideoChunk,
-      error: (e) => notify(T.videoEncoderError(e.message), 'err'),
+      error: (e) => onEncoderError(e, enc),
     });
-    S.vEnc.configure(chosen);
-    if (!S.canvas) {
-      S.canvas = document.createElement('canvas');
-      S.ctx2d = S.canvas.getContext('2d', { alpha: false });
+    S.vEnc = enc;
+    enc.configure(chosen);
+    // Canvas novo a cada configuração: o iOS pode deixar um canvas grande (4K) estragado e o drawImage passa a sair preto.
+    if (S.canvas) {
+      S.canvas.width = 0;
+      S.canvas.height = 0;
     }
+    S.canvas = document.createElement('canvas');
+    S.ctx2d = S.canvas.getContext('2d', { alpha: false });
     S.canvas.width = w;
     S.canvas.height = h;
     const tr = S.stream?.getVideoTracks()[0];
@@ -129,6 +134,35 @@ async function configureVideo(w: number, h: number): Promise<void> {
   } finally {
     S.configuring = false;
   }
+}
+
+/** Falha do codificador (visto no iPhone com 4K/60 fps): reduz para um perfil seguro e pede a reabertura da câmera. */
+function onEncoderError(e: DOMException, enc: VideoEncoder): void {
+  if (enc !== S.vEnc) return; // erro de um encoder antigo, já substituído
+  S.encFails++;
+  notify(T.videoEncoderError(e.message), 'err');
+  let changed = false;
+  if (cfg.quality === '2160') {
+    cfg.quality = '1080';
+    setPref('quality', '1080');
+    changed = true;
+  }
+  if (cfg.fps === 60) {
+    cfg.fps = 30;
+    setPref('fps', '30');
+    changed = true;
+  }
+  if (!changed && cfg.imageQuality !== 'std') {
+    cfg.imageQuality = 'std';
+    setPref('imageQuality', 'std');
+    changed = true;
+  }
+  S.note = changed ? T.encoderFallback : '';
+  S.rec = null; // clipe em andamento é perdido: o encoder morreu
+  S.finalizing = false;
+  S.vEnc = null; // o próximo quadro reconfigura
+  S.buffer.clear();
+  if (S.encFails <= 3) encoderFailed();
 }
 
 function onVideoChunk(chunk: EncodedVideoChunk, meta?: EncodedVideoChunkMetadata): void {

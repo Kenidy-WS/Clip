@@ -11,10 +11,10 @@ export const VIDEO_SIZE = {
 const BASE_MBPS: Record<Quality, [number, number, number]> = {
   '720': [8, 12, 16],
   '1080': [16, 24, 32],
-  '2160': [35, 45, 55],
+  '2160': [30, 38, 45],
 };
 /** Teto de taxa: acima disso o buffer na memória do Safari fica grande demais. */
-const MAX_BITRATE = 60e6;
+const MAX_BITRATE = 50e6;
 /** Tamanho máximo estimado de um clipe na memória (o que o clipe ocupa antes de ser salvo). */
 const MAX_REC_BYTES = 260e6;
 

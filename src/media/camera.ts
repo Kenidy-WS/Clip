@@ -65,6 +65,8 @@ let watchdog = 0;
 let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
 
 /** Registro curto das etapas de início da câmera, mostrado no painel de diagnóstico (botão "i"). */
+let audioRetried = false;
+
 export function logCam(msg: string): void {
   S.camLog.push(`${(performance.now() / 1000).toFixed(1)}s ${msg}`);
   if (S.camLog.length > 14) S.camLog.shift();
@@ -414,6 +416,15 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
     logCam(
       `áudio após 3 s: contexto ${S.audioCtx?.state ?? '-'}, faixa ${at ? (at.muted ? 'MUDA' : at.readyState) : 'nenhuma'}, ${S.audioBlocks} blocos, pico ${S.audioPeak.toFixed(3)}`,
     );
+    // Microfone mudo depois de ver um clipe no player: tenta uma vez reabrir só com a sessão de áudio reiniciada.
+    const dead = !!at && (at.muted || S.audioBlocks === 0 || (S.audioBlocks > 20 && S.audioPeak === 0));
+    if (dead && !audioRetried) {
+      audioRetried = true;
+      logCam('microfone mudo: reiniciando a sessão de áudio');
+      setAudioSession('auto');
+      setTimeout(() => void start(), 250);
+      setTimeout(() => (audioRetried = false), 15000);
+    }
   }, 3000);
 }
 

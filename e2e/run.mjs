@@ -732,7 +732,13 @@ try {
     // Ajustes
     await page.click('#btnSettingsCam');
     check(await page.isVisible('#sheet'), 'Ajustes abrem');
-    await page.click('#segQuality button[data-v="2160"]');
+    await page.click('#segFps button[data-v="60"]');
+    await page.click('#segQuality button[data-v="2160"]'); // 4K força 30 fps (o iOS não entrega 4K a 60)
+    check(
+      await page.evaluate(() => localStorage.getItem('clip.fps') === '30'),
+      'Ajustes: 4K volta o fluxo para 30 fps',
+    );
+    await page.click('#segQuality button[data-v="1080"]');
     await page.click('#segFps button[data-v="60"]');
     await page.click('#segImageQuality button[data-v="max"]');
     await page.click('#segBeepVol button[data-v="max"]');
@@ -740,7 +746,7 @@ try {
     check(
       await page.evaluate(
         () =>
-          localStorage.getItem('clip.quality') === '2160' &&
+          localStorage.getItem('clip.quality') === '1080' &&
           localStorage.getItem('clip.fps') === '60' &&
           localStorage.getItem('clip.imageQuality') === 'max' &&
           localStorage.getItem('clip.beepVol') === 'max' &&
@@ -749,11 +755,11 @@ try {
       'Ajustes: escolhas de vídeo e bipe são guardadas',
     );
     await page.waitForFunction(
-      () => window.__cons.some((c) => c.includes('"frameRate":{"ideal":60}') && c.includes('3840')),
+      () => window.__cons.some((c) => c.includes('"frameRate":{"ideal":60}') && c.includes('1920')),
       null,
       { timeout: 6000 },
     );
-    ok('Ajustes: 4K e 60 fps chegam ao pedido da câmera');
+    ok('Ajustes: 1080p e 60 fps chegam ao pedido da câmera');
     await page.click('#swSound');
     check(
       await page.locator('#segBeepVol button[data-v="normal"]').isDisabled(),

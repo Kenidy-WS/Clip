@@ -8,6 +8,7 @@ let statusHandler: StatusHandler = () => {};
 let stateHandler: VoidHandler = () => {};
 let clipsHandler: VoidHandler = () => {};
 let voiceHandler: VoidHandler = () => {};
+let encoderFailHandler: VoidHandler = () => {};
 
 export const onStatus = (fn: StatusHandler): void => void (statusHandler = fn);
 export const onStateChange = (fn: VoidHandler): void => void (stateHandler = fn);
@@ -22,3 +23,7 @@ export const clipsChanged = (): void => clipsHandler();
 
 /** Disparado pelo motor de voz quando "Ei Clip" é reconhecido. */
 export const voiceCommand = (): void => voiceHandler();
+
+/** O codificador de vídeo falhou e as preferências foram reduzidas: quem escuta reabre a câmera com o perfil seguro. */
+export const onEncoderFail = (fn: VoidHandler): void => void (encoderFailHandler = fn);
+export const encoderFailed = (): void => encoderFailHandler();

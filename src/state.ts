@@ -52,6 +52,8 @@ export interface AppState {
   framesOut: number;
   dropped: number;
   reorders: number;
+  /** Quantas vezes o codificador de vídeo falhou nesta abertura do app. */
+  encFails: number;
   outFps: number;
   fpsMark: number;
   fpsCount: number;
@@ -138,6 +140,7 @@ export const S: AppState = {
   framesOut: 0,
   dropped: 0,
   reorders: 0,
+  encFails: 0,
   outFps: 0,
   fpsMark: 0,
   fpsCount: 0,
