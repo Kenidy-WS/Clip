@@ -372,3 +372,7 @@ section h2 {
   font-weight: 700;
   background: #2f6feb;
 }
+
+button.rec[hidden] {
+  display: none;
+}

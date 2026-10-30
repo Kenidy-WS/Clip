@@ -2,7 +2,7 @@ import { onClipsChange, onStateChange, onStatus, onVoiceCommand } from './events
 import { acquireWake, enableMic, start, tapRecover } from './media/camera';
 import { startRec, stopRec } from './media/recorder';
 import { beep } from './media/beep';
-import { restartVoice, resumeVoice, setVoiceEnabled, startVoice, voiceTap } from './media/voice';
+import { restartVoice, resumeVoice, setVoiceEnabled, voiceTap } from './media/voice';
 import { trySetupAudio } from './media/audio';
 import { cfg, S } from './state';
 import { T } from './strings';
@@ -31,13 +31,12 @@ function bindControls(): void {
         setStatus(T.needTap, 'warn');
       }
     });
-    startVoice(true);
   });
   els.btnRec.addEventListener('click', async () => {
     if (!S.running) {
-      const starting = start();
-      startVoice(true); // religa a escuta dentro deste toque (ela foi parada ao assistir um clipe)
-      await starting;
+      S.introDone = true; // qualquer início da câmera esconde a tela inicial
+      updateUI();
+      await start();
     } else if (S.rec) await stopRec();
     else startRec();
   });

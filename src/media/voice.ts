@@ -55,6 +55,9 @@ let startedAt = 0;
 let fatal = false; // erro de permissão: não adianta insistir
 let inGesture = false; // a instância atual foi iniciada dentro de um toque do usuário
 let retries = 0;
+let lastSpeechAt = 0; // último sinal de fala visto pelo reconhecedor (speechstart ou texto)
+let loudSince = 0; // desde quando o microfone capta som alto
+let deafHinted = false; // já avisamos que a escuta parece surda
 let awaitingTap = false; // a escuta só começa dentro de um toque do usuário (sem toque o iOS a deixa surda, sem dar erro)
 
 /** Registro curto dos eventos da escuta, mostrado no painel de diagnóstico (botão "i"). */
@@ -74,6 +77,10 @@ function setVoice(state: typeof S.voice): void {
 function markAlive(): void {
   retries = 0;
   setVoice('listening');
+  if (deafHinted && inGesture) {
+    deafHinted = false;
+    notify(S.note, S.note ? 'warn' : ''); // tira o aviso "Toque na tela…"
+  }
 }
 
 /** Quando cada fala foi vista pela primeira vez (para medir quanto o reconhecedor demora). */
@@ -81,6 +88,7 @@ const firstSeen = new Map<string, number>();
 
 function onResult(ev: SpeechEventLike, id: number): void {
   markAlive();
+  lastSpeechAt = performance.now();
   const now = performance.now();
   for (let i = ev.resultIndex; i < ev.results.length; i++) {
     const result = ev.results[i];
@@ -118,7 +126,9 @@ function begin(fromTap: boolean): void {
     markAlive();
   };
   r.onspeechstart = () => {
-    if (id === session) logVoice('speechstart');
+    if (id !== session) return;
+    lastSpeechAt = performance.now();
+    logVoice('speechstart');
   };
   r.onresult = (ev) => {
     if (id === session) onResult(ev, id);
@@ -146,6 +156,10 @@ function begin(fromTap: boolean): void {
   rec = r;
   inGesture = fromTap;
   startedAt = performance.now();
+  loudSince = 0;
+  if (fromTap) deafHinted = false;
+  const ua = (navigator as unknown as { userActivation?: { isActive: boolean } }).userActivation;
+  logVoice(`gesto ativo: ${ua ? (ua.isActive ? 'sim' : 'não') : '?'}`);
   try {
     r.start();
     logVoice(fromTap ? 'iniciando (toque)' : 'iniciando');
@@ -185,7 +199,7 @@ function restartNow(): void {
 }
 
 /** Liga a escuta contínua (se o usuário não a desligou). Chamar com a câmera já ligada. */
-export function startVoice(fromTap = false): void {
+export function startVoice(mode: 'tap' | 'auto' | 'wait' = 'wait'): void {
   if (!recognizerCtor()) {
     setVoice('unsupported');
     return;
@@ -199,7 +213,10 @@ export function startVoice(fromTap = false): void {
   gate.reset();
   S.voiceLog.length = 0;
   setVoice('starting');
-  if (fromTap) attempt(true);
+  // 'tap': dentro de um toque do usuário. 'auto': logo depois de a permissão da câmera ser dada (o iOS pode ou não tratar
+  // como gesto; se ficar surda, o primeiro toque a reinicia). 'wait': só quando houver um toque.
+  if (mode === 'tap') attempt(true);
+  else if (mode === 'auto') attempt(false);
   else waitForTap();
 }
 
@@ -256,6 +273,31 @@ export function restartVoice(): void {
 export function setVoiceEnabled(on: boolean): void {
   S.voiceEnabled = on;
   if (!on) stopVoice();
-  else if (S.running) startVoice(true); // já estamos dentro do toque no botão
+  else if (S.running) startVoice('tap'); // já estamos dentro do toque no botão
   stateChanged();
 }
+
+/**
+ * Escuta que não foi iniciada dentro de um toque pode ficar surda sem avisar. Se o microfone capta som alto por um tempo e o
+ * reconhecedor não viu fala nenhuma, avisamos para tocar na tela (o toque reinicia a escuta dentro do gesto).
+ */
+const SOUND_PEAK = 0.05;
+const DEAF_AFTER_MS = 1500;
+window.setInterval(() => {
+  const now = performance.now();
+  if (!rec || !wanted || inGesture || deafHinted || awaitingTap) {
+    loudSince = 0;
+    return;
+  }
+  if (S.audioPeak < SOUND_PEAK) {
+    loudSince = 0;
+    return;
+  }
+  if (!loudSince) loudSince = now;
+  if (now - loudSince > DEAF_AFTER_MS && lastSpeechAt < loudSince) {
+    deafHinted = true;
+    logVoice('microfone com som, mas a escuta não ouviu fala: aguardando toque');
+    setVoice('starting');
+    notify(T.needTap, 'warn');
+  }
+}, 300);

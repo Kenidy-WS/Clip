@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.6.0 · aguardando teste no iPhone
+**Atualizado em:** 2026-10-29 · **No ar (`main`):** 0.6.1 · aguardando teste no iPhone
 
 ## Feito
 
@@ -104,7 +104,24 @@ aparece em religamentos sem toque (voltar de segundo plano). **Não confirmado n
 iniciada junto do pedido de permissão da câmera (pode virar 2 pedidos em sequência, ou conflito). Se der conflito: iniciar a voz
 logo que a câmera entregar o primeiro quadro, ainda no mesmo gesto, ou voltar ao toque pós-permissão.
 
-## O que o Kenidy precisa testar no iPhone (`v0.6.0`)
+## v0.6.0 com defeitos → v0.6.1
+
+Teste da `v0.6.0` (print + relato): (1) o botão azul de baixo ("Iniciar câmera") ligava a câmera mas **a tela inicial continuava por
+cima** ("gravando" sem imagem) — `introDone` só era marcado pelo botão de cima; (2) **2 pedidos de permissão**: a escuta de voz
+iniciava junto com `getUserMedia` (concorrência: o iOS pediu o microfone da voz separado); (3) voz não funcionou. Na `v0.6.1`:
+a tela inicial some sempre que a câmera estiver rodando ou for iniciada (qualquer botão); o botão de baixo fica escondido até o
+primeiro "Iniciar"; a escuta de voz liga **logo depois que a câmera é liberada** (`startVoice('auto')` em `start()`, sem novo
+pedido, como na v0.5.6), não mais no clique; como pode nascer fora de um gesto real, ficou a rede de segurança: o primeiro toque
+na tela a reinicia dentro do gesto, e se o microfone captar som por 1,5 s sem a escuta ouvir fala, o ícone fica âmbar e aparece
+"Toque na tela uma vez…". O "i" (linha "Voz") registra `gesto ativo: sim/não/?` (`navigator.userActivation`) a cada início, para
+sabermos se o iOS conta o momento pós-permissão como gesto. Tudo isso é hipótese: o e2e usa reconhecedor falso.
+
+## O que o Kenidy precisa testar no iPhone (`v0.6.1`)
+
+0. Abrir → **Iniciar** → permitir (deve ser **1 pedido**) → imagem sem tela preta → falar "Ei Clip" **sem tocar em mais nada**.
+   Se a voz não responder: tocar uma vez na tela e tentar de novo; mandar print do "i" (linha "Voz", com "gesto ativo").
+
+## Anterior (`v0.6.0`)
 
 0. Abrir o app → tela "Ei Clip / Iniciar" → tocar em **Iniciar** → permitir → conferir: imagem aparece sem tela preta? quantos
    pedidos de permissão? o 🎙️ fica verde sozinho? "Ei Clip" grava/para sem tocar em mais nada? Print do "i" se algo falhar.

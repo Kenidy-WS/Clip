@@ -98,7 +98,7 @@ function armWatchdog(my: number): void {
       logCam('vídeo ok');
       noVideoRetries = 0;
       try {
-        startVoice(); // a escuta de voz nunca pode impedir a câmera de funcionar
+        startVoice('wait'); // só age se a escuta não estiver viva; nunca pode impedir a câmera de funcionar
       } catch (e) {
         logCam(`voz falhou: ${(e as Error).message}`);
       }
@@ -226,6 +226,12 @@ export async function start(isRetry = false): Promise<void> {
     return;
   }
   S.stream = stream;
+  // A permissão da câmera acabou de ser dada: ligamos a escuta de voz já (sem novo pedido e o mais perto possível do toque).
+  try {
+    startVoice('auto');
+  } catch (e) {
+    logCam(`voz falhou: ${(e as Error).message}`);
+  }
   logCam(
     `stream ok: ${stream
       .getTracks()

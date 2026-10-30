@@ -108,6 +108,7 @@ try {
     await page.goto(URL_);
     await page.waitForTimeout(600);
     check(await page.isVisible('#intro'), 'tela inicial aparece ao abrir');
+    check(!(await page.isVisible('#btnRec')), 'botão de baixo escondido antes do primeiro Iniciar');
     check(
       (await page.textContent('#btnRec')).startsWith('Iniciar'),
       'a câmera não abre sozinha antes do toque',
@@ -118,6 +119,7 @@ try {
     });
     ok('câmera iniciou depois do toque em Iniciar');
     check(!(await page.isVisible('#intro')), 'tela inicial some depois do toque');
+    check(await page.isVisible('#btnRec'), 'botão de baixo aparece depois do Iniciar');
     check((await page.textContent('#ver')).startsWith('v'), 'versão exibida no rodapé');
     check(errs.length === 0, 'sem erros de JavaScript ao abrir ' + errs.join(';'));
     await page.close();
@@ -133,8 +135,9 @@ try {
     await page.waitForTimeout(600);
     check((await page.evaluate(() => window.__starts)) === 0, 'voz: não escuta antes do toque em Iniciar');
     await page.click('#btnIntro');
-    // A escuta começa dentro do mesmo toque que liga a câmera (o iOS a deixaria surda sem gesto).
-    check((await page.evaluate(() => window.__starts)) === 1, 'voz: começa junto com o toque em Iniciar');
+    // A escuta começa logo depois de a câmera ser liberada (sem competir com o pedido de permissão da câmera).
+    await page.waitForFunction(() => window.__starts >= 1, null, { timeout: 5000 });
+    ok('voz: começa depois que a câmera é liberada');
     await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
       timeout: 8000,
     });
@@ -146,10 +149,16 @@ try {
     ok('voz: verde só depois do áudio da escuta abrir');
     check(
       (await page.evaluate(() => window.__starts)) === 1,
-      'voz: câmera pronta não reinicia a escuta que já está viva',
+      'voz: câmera pronta não reinicia a escuta viva',
+    );
+    // Começou fora de um toque real: o primeiro toque na tela a reinicia dentro do gesto, e só ele.
+    await page.mouse.click(5, 5);
+    check(
+      (await page.evaluate(() => window.__starts)) === 2,
+      'voz: primeiro toque reinicia a escuta iniciada fora do gesto',
     );
     await page.mouse.click(5, 5);
-    check((await page.evaluate(() => window.__starts)) === 1, 'voz: toques seguintes não reiniciam de novo');
+    check((await page.evaluate(() => window.__starts)) === 2, 'voz: toques seguintes não reiniciam de novo');
 
     await page.evaluate(() => window.__say('Ei Felipe'));
     check(
@@ -269,6 +278,19 @@ try {
     await page.mouse.click(5, 5);
     await page.waitForFunction(() => window.__gum >= 4, null, { timeout: 5000 });
     ok('sem quadros: toque na tela reinicia a câmera');
+    await page.close();
+  }
+
+  // 1e) Qualquer início da câmera (mesmo pelo botão de baixo) esconde a tela inicial.
+  {
+    const page = await (await browser.newContext()).newPage();
+    await page.addInitScript(STUBS);
+    await page.goto(URL_);
+    await page.evaluate(() => document.querySelector('#btnRec').click());
+    await page.waitForFunction(() => document.querySelector('#btnRec').textContent.startsWith('●'), null, {
+      timeout: 8000,
+    });
+    check(!(await page.isVisible('#intro')), 'início pelo botão de baixo: tela inicial não cobre a imagem');
     await page.close();
   }
 
