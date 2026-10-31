@@ -1,3 +1,4 @@
+import { pickUltraLens } from '../core/lens';
 import { VIDEO_SIZE } from '../core/video-profile';
 import { notify, stateChanged } from '../events';
 import { cfg, S } from '../state';
@@ -69,6 +70,7 @@ const VOICE_WAIT_MS = 20000;
 const MIN_REOPEN_MS = 3000;
 let leftCameraAt = 0; // quando o usuário saiu da câmera pela última vez (0 = já reaberta ou nunca saiu)
 let lensSwitched = false; // a troca automática para a ultra-angular (1ª abertura) só acontece uma vez
+const badLensIds = new Set<string>(); // câmeras escolhidas como 0,5× que o iOS abriu como frontal (v0.16.5)
 let watchdog = 0;
 let startSeq = 0; // cada chamada de start() tem um número; a mais recente vence se houver duas ao mesmo tempo
 
@@ -293,8 +295,9 @@ function waitUnmute(track: MediaStreamTrack, ms: number): Promise<boolean> {
 async function refreshLenses(stream: MediaStream): Promise<void> {
   try {
     const cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
-    const ultra = cams.find((d) => /ultra/i.test(d.label));
-    if (ultra) S.lensId = ultra.deviceId;
+    // v0.16.5: a frontal de alguns iPhones (ex.: 17) também se chama "Ultra Wide"; só vale a traseira.
+    const ultraId = pickUltraLens(cams, badLensIds);
+    S.lensId = ultraId;
     S.lensInfo = cams.map((d) => d.label || '?').join(' | ');
   } catch {
     /* sem lista de câmeras */
@@ -401,6 +404,24 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
       logCam(`câmera recusada: ${err2.name}`);
       stopTracks(previous);
       notify(T.cameraOpenFail(err2.name || err2.message), 'err');
+      return;
+    }
+  }
+  // v0.16.5: pediu a 0,5× traseira e o iOS entregou uma câmera frontal (iPhone 17): descarta essa lente e abre a traseira.
+  if (S.lensActive === '0.5' && stream.getVideoTracks()[0]?.getSettings?.().facingMode === 'user') {
+    logCam(`lente 0,5× abriu como frontal (${S.lensId}); descartada`);
+    badLensIds.add(S.lensId);
+    S.lensId = '';
+    S.lensCan = false;
+    cfg.lens = '1';
+    S.lensActive = '1';
+    S.note = T.lensFail;
+    stream.getTracks().forEach((t) => t.stop());
+    try {
+      stream = await gum({ facingMode: { ideal: cfg.facing }, ...sizeC }, true);
+    } catch (e3) {
+      stopTracks(previous);
+      notify(T.cameraOpenFail((e3 as Error).name || (e3 as Error).message), 'err');
       return;
     }
   }

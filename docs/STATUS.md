@@ -1,6 +1,14 @@
 # Status
 
-**Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.16.1 · `estavel` = 0.15.7 (validada no iPhone; avançar para a 0.16.1 só depois da confirmação dele)
+**Atualizado em:** 2026-10-31 · **No ar (`main`):** 0.16.5 · `estavel` = 0.15.7 (validada no iPhone; avançar para a 0.16.5 só depois da confirmação dele)
+
+## v0.16.5 — 0,5× abria a câmera frontal (iPhone 17)
+
+- Relato (31/10): no iPhone 15 do Kenidy a 0,5× funciona; no iPhone 17 de um amigo, tocar em 0,5× virava a frontal.
+- Causa provável: `refreshLenses` escolhia a **primeira câmera com "ultra" no nome**, sem excluir a frontal, e a frontal do iPhone 17 também se chama "Ultra Wide" (ordem da lista varia por aparelho). Hipótese: não foi visto o Diagnóstico do iPhone 17.
+- Correção: `core/lens.ts` (`pickUltraLens`, com testes em `tests/lens.test.ts`) ignora nomes de frontal (inglês/português) e prefere os que dizem "back/traseira". Segunda proteção em `start()` (`camera.ts`): se a 0,5× abrir com `facingMode === 'user'`, a lente é descartada (`badLensIds`), volta para a 1× traseira e avisa `lensFail`. Fora da área protegida de voz/microfone.
+- Testar no iPhone 15 (regressão): 0,5× e 1× continuam como antes. No iPhone 17 (amigo): 0,5× deve abrir a traseira ultra-angular. Se ainda virar frontal ou o botão 0,5× sumir, pedir o Diagnóstico ("i" → Copiar): linhas "Lentes" e "Câmera: início" (mostram os nomes das câmeras e a linha "lente 0,5× abriu como frontal").
+- Se der problema, `git revert` desta versão.
 
 ## v0.16.4 — bipes em duas notas
 
