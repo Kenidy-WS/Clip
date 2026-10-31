@@ -1,4 +1,13 @@
-import { beepDrive, beepDurationSec, beepGain, beepSustain, beepTones, renderBeep } from '../core/beep-wave';
+import {
+  beepDrive,
+  beepDurationSec,
+  beepGain,
+  beepSustain,
+  beepTones,
+  renderBeep,
+  toneAttackSec,
+  toneReleaseSec,
+} from '../core/beep-wave';
 import type { BeepKind } from '../core/beep-wave';
 import { S } from '../state';
 import { ensureAudioCtx } from './audio';
@@ -58,8 +67,8 @@ export function beep(kind: BeepKind): void {
       if (sustain) {
         // Volume cheio com bordas lineares a partir do zero (a subida exponencial a partir de 0,0001 estalava).
         g.gain.setValueAtTime(0, t0 + off);
-        g.gain.linearRampToValueAtTime(peak, t0 + off + 0.02);
-        g.gain.setValueAtTime(peak, t0 + off + d - 0.07);
+        g.gain.linearRampToValueAtTime(peak, t0 + off + toneAttackSec(d));
+        g.gain.setValueAtTime(peak, t0 + off + d - toneReleaseSec(d));
         g.gain.linearRampToValueAtTime(0, t0 + off + d);
       } else {
         // Normal: o bipe original.

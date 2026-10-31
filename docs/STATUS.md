@@ -2,6 +2,13 @@
 
 **Atualizado em:** 2026-10-30 · **No ar (`main`):** 0.16.1 · `estavel` = 0.15.7 (validada no iPhone; avançar para a 0.16.1 só depois da confirmação dele)
 
+## v0.16.4 — bipes em duas notas
+
+- Os bipes (880 Hz início, 660 Hz ×2 fim) soavam estridentes. Agora o início sobe (523 → 659 Hz) e o fim desce (659 → 523 Hz); durações totais iguais (0,12 s e 0,25 s), então `beepMs`/espera ao parar não mudam. Câmera e microfone não são afetados.
+- `core/beep-wave.ts`: tons novos e entrada/saída proporcionais à nota (`toneAttackSec`/`toneReleaseSec`), também usadas no alto-falante (`media/beep.ts`), porque notas de 60 ms não cabiam na rampa fixa de 20 + 70 ms.
+- Testar no iPhone: som de início e fim com o microfone ligado; se ainda incomodar, as alternativas ouvidas foram B (mais grave), C (suave).
+- Se der problema, `git revert` desta versão volta aos bipes antigos.
+
 ## v0.16.3 — texto da marca menor
 
 - Na Início, o texto "Ei Clip" passou de 180 para 150 px (marca segue em 96 px). Só CSS/atributos; decisão do Kenidy após comparar 180/150/120.

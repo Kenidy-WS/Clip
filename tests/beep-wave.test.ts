@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { beepDrive, beepDurationSec, beepGain, beepSustain, renderBeep } from '../src/core/beep-wave';
+import {
+  beepDrive,
+  beepDurationSec,
+  beepGain,
+  beepSustain,
+  beepTones,
+  renderBeep,
+  toneAttackSec,
+  toneReleaseSec,
+} from '../src/core/beep-wave';
 
 const peak = (a: Float32Array): number => a.reduce((m, v) => Math.max(m, Math.abs(v)), 0);
 
@@ -25,5 +34,25 @@ describe('renderBeep', () => {
     expect([beepSustain('normal'), beepSustain('high'), beepSustain('max')]).toEqual([false, true, true]);
     expect([beepDrive('normal'), beepDrive('high')]).toEqual([0, 0]);
     expect(beepDrive('max')).toBe(0);
+  });
+
+  it('mantém as durações de sempre (0,12 s e 0,25 s): a espera ao parar depende delas', () => {
+    expect(beepDurationSec('start')).toBeCloseTo(0.12, 5);
+    expect(beepDurationSec('stop')).toBeCloseTo(0.25, 5);
+  });
+  it('início sobe e fim desce, com notas que não se sobrepõem', () => {
+    const s = beepTones('start');
+    const e = beepTones('stop');
+    expect(s[1]![0]).toBeGreaterThan(s[0]![0]);
+    expect(e[1]![0]).toBeLessThan(e[0]![0]);
+    for (const tones of [s, e]) {
+      for (let i = 1; i < tones.length; i++)
+        expect(tones[i]![1]).toBeGreaterThanOrEqual(tones[i - 1]![1] + tones[i - 1]![2]);
+    }
+  });
+  it('entrada e saída cabem em cada nota', () => {
+    for (const k of ['start', 'stop'] as const) {
+      for (const [, , d] of beepTones(k)) expect(toneAttackSec(d) + toneReleaseSec(d)).toBeLessThan(d);
+    }
   });
 });

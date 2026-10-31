@@ -2,14 +2,25 @@ import type { BeepVol } from '../types';
 
 export type BeepKind = 'start' | 'stop';
 
-/** [frequência Hz, início s, duração s]. Os tons originais do app (o Kenidy achou 2 kHz agudo demais): 880 Hz no início, 660 Hz duas vezes no fim. */
+/**
+ * [frequência Hz, início s, duração s]. Duas notas (v0.16.4; os tons de 880/660 Hz soavam estridentes no iPhone):
+ * o início sobe (C5 → E5) e o fim desce (E5 → C5). As durações totais (0,12 s e 0,25 s) são as de sempre:
+ * `beepMs` e a espera ao parar a gravação dependem delas.
+ */
 const TONES: Record<BeepKind, Array<[number, number, number]>> = {
-  start: [[880, 0, 0.12]],
+  start: [
+    [523, 0, 0.06],
+    [659, 0.06, 0.06],
+  ],
   stop: [
-    [660, 0, 0.09],
-    [660, 0.16, 0.09],
+    [659, 0, 0.09],
+    [523, 0.16, 0.09],
   ],
 };
+
+/** Entrada e saída de cada nota: nunca maiores que uma fração da nota (notas curtas não cabem em 20 + 70 ms). */
+export const toneAttackSec = (dur: number): number => Math.min(0.02, dur / 4);
+export const toneReleaseSec = (dur: number): number => Math.min(0.07, dur / 3);
 
 /**
  * Perfis de volume. Só aumentar o pico não adianta: o iOS limita a saída enquanto o microfone está ligado e o bipe original
@@ -42,8 +53,8 @@ export function renderBeep(kind: BeepKind, sampleRate: number, gain: number): Fl
   for (const [freq, off, dur] of TONES[kind]) {
     const i0 = Math.floor(off * sampleRate);
     const len = Math.floor(dur * sampleRate);
-    const atk = Math.max(1, Math.min(Math.floor(0.02 * sampleRate), Math.floor(len / 4)));
-    const rel = Math.max(1, Math.min(Math.floor(0.07 * sampleRate), Math.floor(len / 3)));
+    const atk = Math.max(1, Math.floor(toneAttackSec(dur) * sampleRate));
+    const rel = Math.max(1, Math.floor(toneReleaseSec(dur) * sampleRate));
     for (let i = 0; i < len; i++) {
       const p = (2 * Math.PI * freq * i) / sampleRate;
       const wave = Math.sin(p);
