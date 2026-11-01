@@ -1,6 +1,18 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.17.0 · `estavel` = 0.16.5 (validada no iPhone: o Kenidy confirmou que a correção da lente funcionou; avançar para a 0.17.0 só depois da confirmação dele)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.18.0 · `estavel` = 0.16.5 (validada no iPhone: o Kenidy confirmou que a correção da lente funcionou; avançar só depois da confirmação dele: a 0.17.0 é a voz, a 0.18.0 é só visual)
+
+## v0.18.0 — player estilo Fotos (vidro) e cuidado com o notch (só visual, não toca na voz nem no microfone)
+
+- **Pedido (01/11, com prints do player do app e da Fotos do iPhone):** deixar a reprodução igual à Fotos, com Liquid Glass onde fizer sentido, botões maiores e melhor posicionados (acessibilidade) e menos "colado" no notch (o topo ficava a 8 px da barra de status e "embaçava").
+- **Player (`#player`):** vídeo em **tela cheia** (`object-fit: contain`), sem os controles nativos (pequenos). Barra de cima de vidro: botão **voltar** (chevron, 52 px), pílula central com **data/hora** e **duração · MB**. Barra de baixo: pílula de vidro com **reproduzir/pausar**, tempo, **barra de posição** (área de toque 44 px, marcador 24 px) e **som**; embaixo o botão **Salvar / Compartilhar** (56 px, pílula branca) e **Excluir** (círculo de vidro, 56 px) e a dica do "Salvar vídeo". **Tocar no vídeo esconde/mostra as barras.** Degradês sob as barras mantêm o texto legível sobre vídeo claro. Arrastar para baixo continua fechando (não vale a partir das barras).
+- **Som:** o clipe continua abrindo **mudo**. O botão de som só alterna `muted`; o caminho é o mesmo de antes (`volumechange` → `onPlayerVolume`: captura desligada, áudio em reprodução, "Ligar câmera" ao voltar). Nada de voz/áudio foi alterado, mas **vale testar** (abaixo).
+- **Topo/notch:** o topo do player fica a `área segura + 22 px` (igual à câmera). Alvos de toque: `.btn-icon` e `.btn-glass` passaram de 40 para **44 px** (mínimo da Apple). Hipótese para o "embaçado": o iOS desenha o próprio desfoque na borda de cima; manter os botões mais afastados e com degradê resolve o legível, mas **não foi visto no aparelho**; se persistir em outra tela, mandar print dela.
+- **Vidro (`.glass`, `.btn-glass`, `.pill`):** gradiente translúcido + `backdrop-filter: blur(24px) saturate(180%)` + borda e brilho finos. Usado só onde há imagem por trás (câmera e player); em fundo preto liso (Início/Galeria) não há o que refratar.
+- **Testes:** e2e novo do player (sem controles nativos, botões ≥ 44 px, topo afastado, título/subtítulo, tocar esconde/mostra as barras, botão de som liga o som e desliga a câmera estacionada). `check` e `e2e` verdes; conferido em captura de tela de 393×852 com notch simulado.
+- **Testar no iPhone:** (1) abrir um clipe: visual, tamanhos e espaço do topo; (2) tocar/pausar, arrastar a barra de posição (clipe curto e um longo em disco); (3) tocar no vídeo esconde as barras; (4) **ligar o som pelo botão**: o som sai, ao voltar aparece "Ligar câmera" e o toque religa câmera e voz (igual à v0.13.0); (5) Salvar / Compartilhar e Excluir; (6) arrastar para baixo fecha; (7) o aspecto do vidro sobre a câmera (pílula do buffer e botões).
+- **Se der problema:** `git revert` do commit da 0.18.0.
+- **Próximo (0.19.0):** Ajustes condensados em tópicos.
 
 ## v0.17.0 — palavra de ativação à escolha (Ei Clip, Câmera ação, Ei Câmera)
 

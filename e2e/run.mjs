@@ -989,8 +989,53 @@ try {
       (await page.evaluate(() => !!document.querySelector('#playerVideo').getAttribute('src'))) === true,
       'player carrega o vídeo',
     );
-    // Ligar o som: desliga a captura; ao voltar, a câmera espera um toque em "Ligar câmera".
-    await page.evaluate(() => (document.querySelector('#playerVideo').muted = false));
+    // Controles próprios (estilo Fotos): sem controles nativos, botões grandes, topo afastado do notch, toque esconde as barras.
+    check(
+      (await page.evaluate(() => document.querySelector('#playerVideo').controls)) === false,
+      'player: sem os controles nativos do vídeo (pequenos)',
+    );
+    const small = await page.evaluate(() =>
+      ['#btnPlayerClose', '#btnPlayPause', '#btnPlayerMute', '#btnShare', '#btnDelete']
+        .map((s) => [s, document.querySelector(s).getBoundingClientRect()])
+        .filter(([, r]) => r.width < 44 || r.height < 44)
+        .map(([s]) => s),
+    );
+    check(small.length === 0, 'player: botões com pelo menos 44 px de toque ' + small.join(','));
+    check(
+      (await page.locator('#btnPlayerClose').boundingBox()).y >= 20,
+      'player: botão do topo afastado da borda superior (notch)',
+    );
+    check(
+      (await page.getAttribute('#btnPlayerMute', 'aria-label')) === 'Ligar o som',
+      'player: botão de som mostra "Ligar o som" (clipe abre mudo)',
+    );
+    check(
+      (await page.textContent('#playerTitle')).length > 0 &&
+        (await page.textContent('#playerSub')).includes('MB'),
+      'player: título (data e hora) e subtítulo (duração e tamanho)',
+    );
+    await page.evaluate(() => document.querySelector('#playerVideo').click());
+    check(
+      await page.evaluate(() => document.querySelector('#player').classList.contains('chrome-off')),
+      'player: tocar no vídeo esconde as barras',
+    );
+    await page.evaluate(() => document.querySelector('#playerVideo').click());
+    check(
+      !(await page.evaluate(() => document.querySelector('#player').classList.contains('chrome-off'))),
+      'player: tocar de novo mostra as barras',
+    );
+    // Ligar o som pelo botão: desliga a captura; ao voltar, a câmera espera um toque em "Ligar câmera".
+    await page.click('#btnPlayerMute');
+    check(
+      (await page.evaluate(() => document.querySelector('#playerVideo').muted)) === false,
+      'player: botão de som liga o som do clipe',
+    );
+    await page.waitForFunction(
+      () => document.querySelector('#btnPlayerMute').getAttribute('aria-label') === 'Desligar o som',
+      null,
+      { timeout: 3000 },
+    );
+    ok('player: botão de som passa a "Desligar o som"');
     await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'idle', null, {
       timeout: 5000,
     });

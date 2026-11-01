@@ -70,8 +70,10 @@ export const T = {
     `Excluir ${n} clipes? Os que ainda não foram salvos no Rolo da Câmera serão perdidos.`,
   clipsCount: (n: number) => (n === 1 ? '1 clipe' : `${n} clipes`),
   clipOpen: (when: string) => `Abrir clipe de ${when}`,
-  clipMeta: (c: { when: string; durText: string; mb: number; withAudio: boolean }) =>
-    `${c.when} · ${c.durText} · ${c.mb.toFixed(1)} MB${c.withAudio ? '' : ' · sem áudio'}`,
+  clipSub: (c: { durText: string; mb: number; withAudio: boolean }) =>
+    `${c.durText} · ${c.mb.toFixed(1)} MB${c.withAudio ? '' : ' · sem áudio'}`,
+  playLabel: { play: 'Reproduzir', pause: 'Pausar' },
+  soundLabel: { on: 'Desligar o som', off: 'Ligar o som' },
   removeConfirm: 'Excluir este clipe? Se ainda não salvou no Rolo da Câmera, ele será perdido.',
   downloadStarted: 'Arquivo pronto. Abra-o e escolha “Salvar vídeo” para guardar no Rolo da Câmera.',
   shareFallback: 'O compartilhamento não abriu. O arquivo foi baixado.',

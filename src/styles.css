@@ -99,8 +99,8 @@ p {
   font-weight: 600;
 }
 .btn-icon {
-  width: 40px;
-  height: 40px;
+  width: 44px; /* alvo de toque mínimo recomendado pela Apple */
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -108,15 +108,24 @@ p {
 .btn-icon:active {
   background: var(--surface-2);
 }
+/* "Vidro" (estilo Liquid Glass do iOS): translúcido com desfoque e saturação, borda e brilho finos em cima. Só para elementos que
+   flutuam sobre imagem (câmera, player); em fundo preto liso ele não tem o que refratar. */
+.glass,
 .btn-glass {
-  width: 40px;
-  height: 40px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 6px 20px rgba(0, 0, 0, 0.3);
+}
+.btn-glass {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
 }
 .btn-glass.big {
   width: 52px;
@@ -446,9 +455,11 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--glass);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
   font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -760,43 +771,157 @@ p {
 }
 
 /* ───────── Player ───────── */
+/* Como a Fotos do iPhone: vídeo em tela cheia, barras de vidro flutuando por cima (toque no vídeo esconde/mostra) e botões grandes. */
 .player {
   position: absolute;
   inset: 0;
   z-index: 25;
-  display: flex;
-  flex-direction: column;
-  padding: var(--sat) var(--sar) var(--sab) var(--sal);
+  overflow: hidden;
   background: #000;
 }
-.player-bar {
-  flex: none;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 12px;
-}
-.player-bar span {
-  color: var(--mut);
-  font-size: 14px;
-}
 .player video {
-  flex: 1;
-  min-height: 0;
+  position: absolute;
+  inset: 0;
   width: 100%;
+  height: 100%;
   object-fit: contain;
   background: #000;
 }
-.player-actions {
-  flex: none;
+.player-top,
+.player-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  transition: opacity 0.2s;
+}
+/* Degradê sob as barras: o texto e os botões continuam legíveis sobre vídeo claro. */
+.player-top {
+  top: 0;
+  display: grid;
+  grid-template-columns: 52px 1fr 52px;
+  align-items: center;
+  gap: 12px;
+  /* Bem afastado do notch e da barra de status (antes ficava a 8 px e parecia colado). */
+  padding: calc(var(--sat) + 22px) calc(var(--sar) + 16px) 30px calc(var(--sal) + 16px);
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+}
+.player-title {
+  justify-self: center;
+  max-width: 100%;
+  min-height: 52px;
+  padding: 6px 22px;
+  border-radius: 26px;
   display: flex;
-  gap: 10px;
-  padding: 12px 16px 4px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.25;
+}
+.player-title strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+.player-title span {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.78);
+  font-variant-numeric: tabular-nums;
+}
+.player-title strong,
+.player-title span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.player-bottom {
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 36px calc(var(--sar) + 16px) calc(var(--sab) + 12px) calc(var(--sal) + 16px);
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7));
+}
+.player.chrome-off .player-top,
+.player.chrome-off .player-bottom {
+  opacity: 0;
+  pointer-events: none;
+}
+.player-ctl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 64px;
+  padding: 0 8px;
+  border-radius: 32px;
+}
+.btn-ctl {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+.btn-ctl:active {
+  background: rgba(255, 255, 255, 0.18);
+}
+.btn-ctl svg {
+  width: 28px;
+  height: 28px;
+}
+.player-time {
+  flex: none;
+  min-width: 36px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.85);
+}
+/* Barra de posição: faixa fina visível, mas com área de toque alta (44 px) e marcador grande. */
+.player-seek {
+  --p: 0%;
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.player-seek::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, #fff var(--p), rgba(255, 255, 255, 0.28) var(--p));
+}
+.player-seek::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -9px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
+}
+.player-actions {
+  display: flex;
+  gap: 12px;
 }
 .player-actions .btn-primary {
   flex: 1;
   width: auto;
+  height: 56px;
+  border-radius: 28px;
+}
+.player-actions .btn-square {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+}
+.player-bottom .hint {
+  padding: 0 8px;
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* ───────── Ajustes ───────── */

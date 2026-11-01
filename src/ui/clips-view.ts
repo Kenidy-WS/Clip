@@ -141,16 +141,85 @@ export function openPlayer(c: Clip): void {
   els.playerVideo.src = c.url;
   els.playerVideo.muted = true;
   els.playerVideo.volume = 1;
-  els.playerMeta.textContent = T.clipMeta({
-    when: whenText(c),
+  els.playerTitle.textContent = whenText(c);
+  els.playerSub.textContent = T.clipSub({
     durText: formatDuration(c.durSec),
     mb: c.blob.size / 1048576,
     withAudio: c.withAudio,
   });
+  els.player.classList.remove('chrome-off');
+  seeking = false;
+  paintPlayer();
   showAnimated(els.player);
   void els.playerVideo.play().catch(() => {
     /* se o iOS exigir, é só tocar em play */
   });
+}
+
+/** Duração do clipe: a do vídeo quando o iOS a informa; senão a gravada (MP4 fragmentado às vezes não informa). */
+function playerDuration(): number {
+  const d = els.playerVideo.duration;
+  return Number.isFinite(d) && d > 0 ? d : (current?.durSec ?? 0);
+}
+
+/** O usuário está arrastando a barra de posição (a barra não deve pular com o `timeupdate`). */
+let seeking = false;
+
+/** Redesenha os controles próprios do player (reproduzir/pausar, posição, tempo e som). */
+function paintPlayer(): void {
+  const v = els.playerVideo;
+  const dur = playerDuration();
+  const p = dur > 0 ? Math.min(1, v.currentTime / dur) : 0;
+  if (!seeking) {
+    els.playerSeek.value = String(Math.round(p * 1000));
+    els.playerSeek.style.setProperty('--p', `${p * 100}%`);
+  }
+  els.playerTime.textContent = formatDuration(v.currentTime);
+  const playing = !v.paused && !v.ended;
+  els.btnPlayPause.innerHTML = icon(playing ? 'pause' : 'play');
+  els.btnPlayPause.setAttribute('aria-label', playing ? T.playLabel.pause : T.playLabel.play);
+  const silent = v.muted || v.volume === 0;
+  els.btnPlayerMute.innerHTML = icon(silent ? 'volumeOff' : 'volume');
+  els.btnPlayerMute.setAttribute('aria-label', silent ? T.soundLabel.off : T.soundLabel.on);
+}
+
+/** Liga os controles próprios do player (substituem os controles nativos do vídeo, pequenos e difíceis de tocar). */
+function bindPlayerControls(): void {
+  const v = els.playerVideo;
+  for (const ev of [
+    'timeupdate',
+    'play',
+    'pause',
+    'ended',
+    'loadedmetadata',
+    'durationchange',
+    'volumechange',
+  ]) {
+    v.addEventListener(ev, paintPlayer);
+  }
+  els.btnPlayPause.addEventListener('click', () => {
+    if (v.paused || v.ended) void v.play().catch(() => {});
+    else v.pause();
+  });
+  // Ligar o som passa por `muted`/`volumechange`, o mesmo caminho de antes (`onPlayerVolume`): captura desligada, áudio em reprodução.
+  els.btnPlayerMute.addEventListener('click', () => {
+    if (v.volume === 0) v.volume = 1;
+    v.muted = !v.muted;
+  });
+  els.playerSeek.addEventListener('input', () => {
+    seeking = true;
+    const dur = playerDuration();
+    const p = Number(els.playerSeek.value) / 1000;
+    els.playerSeek.style.setProperty('--p', `${p * 100}%`);
+    if (dur > 0) v.currentTime = p * dur;
+    els.playerTime.textContent = formatDuration(p * dur);
+  });
+  els.playerSeek.addEventListener('change', () => {
+    seeking = false;
+    paintPlayer();
+  });
+  // Tocar no vídeo mostra ou esconde as barras (como na Fotos).
+  v.addEventListener('click', () => els.player.classList.toggle('chrome-off'));
 }
 
 /**
@@ -382,9 +451,8 @@ function bindPlayerSwipeDown(): void {
     'touchstart',
     (e) => {
       const el = e.target as HTMLElement;
-      const r = els.playerVideo.getBoundingClientRect();
       const t = e.touches[0];
-      const onControls = t.clientY > r.bottom - 72; // barra de controles nativa do vídeo
+      const onControls = !!el.closest('.player-top, .player-bottom'); // barras com botões e a barra de posição
       if (e.touches.length !== 1 || el.closest('button') || onControls) return void (t0 = null);
       t0 = { x: t.clientX, y: t.clientY, at: performance.now() };
       dy = 0;
@@ -444,6 +512,7 @@ function bindPlayerSwipeDown(): void {
 export function bindPlayer(): void {
   bindSelection();
   bindPlayerSwipeDown();
+  bindPlayerControls();
   els.playerVideo.addEventListener('volumechange', onPlayerVolume);
   els.playerVideo.addEventListener('error', () => {
     const e = els.playerVideo.error;
