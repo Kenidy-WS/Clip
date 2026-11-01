@@ -141,12 +141,18 @@ export function openPlayer(c: Clip): void {
   els.playerVideo.src = c.url;
   els.playerVideo.muted = true;
   els.playerVideo.volume = 1;
-  els.playerTitle.textContent = whenText(c);
-  els.playerSub.textContent = T.clipSub({
-    durText: formatDuration(c.durSec),
-    mb: c.blob.size / 1048576,
-    withAudio: c.withAudio,
+  // Na pílula só a data e a hora (como na Fotos); o resto fica no botão de detalhes.
+  els.playerTitle.textContent = new Date(c.at).toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: 'short',
   });
+  els.playerSub.textContent = new Date(c.at).toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  fillInfo(c);
+  setInfoOpen(false);
+  els.playerVideo.playbackRate = 1;
   els.player.classList.remove('chrome-off');
   seeking = false;
   paintPlayer();
@@ -165,6 +171,48 @@ function playerDuration(): number {
 /** O usuário está arrastando a barra de posição (a barra não deve pular com o `timeupdate`). */
 let seeking = false;
 
+/** Velocidades do botão do player (cada toque passa para a próxima). */
+const RATES = [1, 1.5, 2, 0.5];
+const rateText = (r: number): string => `${String(r).replace('.', ',')}×`;
+
+/** Detalhes do clipe (botão de informações): o que antes ficava na pílula do topo e mais um pouco. */
+function fillInfo(c: Clip): void {
+  const rows: Array<[string, string]> = [
+    [
+      T.info.date,
+      new Date(c.at).toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    ],
+    [T.info.duration, formatDuration(c.durSec)],
+    [T.info.size, `${(c.blob.size / 1048576).toFixed(1).replace('.', ',')} MB`],
+    [T.info.dims, c.dims],
+    [T.info.rate, `${c.mbps.toFixed(1).replace('.', ',')} Mbps`],
+    [T.info.pre, `${Math.round(c.preSec)} s`],
+    [T.info.audio, c.withAudio ? T.info.audioYes : T.info.audioNo],
+  ];
+  els.playerInfo.replaceChildren(
+    ...rows.map(([k, v]) => {
+      const row = document.createElement('div');
+      const a = document.createElement('span');
+      const b = document.createElement('strong');
+      a.textContent = k;
+      b.textContent = v;
+      row.append(a, b);
+      return row;
+    }),
+  );
+}
+
+function setInfoOpen(open: boolean): void {
+  els.playerInfo.hidden = !open;
+  els.btnPlayerInfo.setAttribute('aria-expanded', String(open));
+}
+
 /** Redesenha os controles próprios do player (reproduzir/pausar, posição, tempo e som). */
 function paintPlayer(): void {
   const v = els.playerVideo;
@@ -181,6 +229,7 @@ function paintPlayer(): void {
   const silent = v.muted || v.volume === 0;
   els.btnPlayerMute.innerHTML = icon(silent ? 'volumeOff' : 'volume');
   els.btnPlayerMute.setAttribute('aria-label', silent ? T.soundLabel.off : T.soundLabel.on);
+  els.btnPlayerSpeed.textContent = rateText(v.playbackRate);
 }
 
 /** Liga os controles próprios do player (substituem os controles nativos do vídeo, pequenos e difíceis de tocar). */
@@ -194,9 +243,15 @@ function bindPlayerControls(): void {
     'loadedmetadata',
     'durationchange',
     'volumechange',
+    'ratechange',
   ]) {
     v.addEventListener(ev, paintPlayer);
   }
+  els.btnPlayerSpeed.addEventListener('click', () => {
+    const i = RATES.indexOf(v.playbackRate);
+    v.playbackRate = RATES[(i + 1) % RATES.length];
+  });
+  els.btnPlayerInfo.addEventListener('click', () => setInfoOpen(els.playerInfo.hidden));
   els.btnPlayPause.addEventListener('click', () => {
     if (v.paused || v.ended) void v.play().catch(() => {});
     else v.pause();
@@ -219,7 +274,10 @@ function bindPlayerControls(): void {
     paintPlayer();
   });
   // Tocar no vídeo mostra ou esconde as barras (como na Fotos).
-  v.addEventListener('click', () => els.player.classList.toggle('chrome-off'));
+  v.addEventListener('click', () => {
+    if (!els.playerInfo.hidden) return setInfoOpen(false); // com os detalhes abertos, o toque só os fecha
+    els.player.classList.toggle('chrome-off');
+  });
 }
 
 /**
@@ -452,7 +510,7 @@ function bindPlayerSwipeDown(): void {
     (e) => {
       const el = e.target as HTMLElement;
       const t = e.touches[0];
-      const onControls = !!el.closest('.player-top, .player-bottom'); // barras com botões e a barra de posição
+      const onControls = !!el.closest('.player-top, .player-bottom, .player-info'); // barras com botões e a barra de posição
       if (e.touches.length !== 1 || el.closest('button') || onControls) return void (t0 = null);
       t0 = { x: t.clientX, y: t.clientY, at: performance.now() };
       dy = 0;

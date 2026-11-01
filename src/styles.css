@@ -108,17 +108,15 @@ p {
 .btn-icon:active {
   background: var(--surface-2);
 }
-/* "Vidro" (estilo Liquid Glass do iOS): translúcido com desfoque e saturação, borda e brilho finos em cima. Só para elementos que
-   flutuam sobre imagem (câmera, player); em fundo preto liso ele não tem o que refratar. */
+/* "Vidro" (estilo Liquid Glass do iOS, como na Fotos): cinza escuro translúcido com desfoque, borda e brilho bem finos.
+   Só para elementos que flutuam sobre imagem (câmera, player); em fundo preto liso ele não tem o que refratar. */
 .glass,
 .btn-glass {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 6px 20px rgba(0, 0, 0, 0.3);
+  background: rgba(58, 58, 60, 0.5);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.18);
 }
 .btn-glass {
   width: 44px;
@@ -455,11 +453,11 @@ p {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  background: rgba(58, 58, 60, 0.5);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border: 0.5px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 0.5px 0 rgba(255, 255, 255, 0.18);
   font-size: 14px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -771,7 +769,7 @@ p {
 }
 
 /* ───────── Player ───────── */
-/* Como a Fotos do iPhone: vídeo em tela cheia, barras de vidro flutuando por cima (toque no vídeo esconde/mostra) e botões grandes. */
+/* Como a Fotos do iPhone: vídeo em tela cheia, barras de vidro discretas por cima (toque no vídeo esconde/mostra). */
 .player {
   position: absolute;
   inset: 0;
@@ -794,134 +792,148 @@ p {
   right: 0;
   transition: opacity 0.2s;
 }
-/* Degradê sob as barras: o texto e os botões continuam legíveis sobre vídeo claro. */
+/* Degradê leve sob as barras: o texto continua legível sobre vídeo claro. */
 .player-top {
   top: 0;
   display: grid;
-  grid-template-columns: 52px 1fr 52px;
+  grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  gap: 12px;
-  /* Bem afastado do notch e da barra de status (antes ficava a 8 px e parecia colado). */
-  padding: calc(var(--sat) + 22px) calc(var(--sar) + 16px) 30px calc(var(--sal) + 16px);
-  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+  gap: 10px;
+  padding: calc(var(--sat) + 16px) calc(var(--sar) + 14px) 22px calc(var(--sal) + 14px);
+  background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0));
 }
 .player-title {
   justify-self: center;
-  max-width: 100%;
-  min-height: 52px;
-  padding: 6px 22px;
-  border-radius: 26px;
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 .player-title strong {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
 }
 .player-title span {
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
   font-variant-numeric: tabular-nums;
-}
-.player-title strong,
-.player-title span {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .player-bottom {
   bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 36px calc(var(--sar) + 16px) calc(var(--sab) + 12px) calc(var(--sal) + 16px);
-  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.7));
+  gap: 10px;
+  padding: 24px calc(var(--sar) + 14px) calc(var(--sab) + 8px) calc(var(--sal) + 14px);
+  background: linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.45));
 }
 .player.chrome-off .player-top,
-.player.chrome-off .player-bottom {
+.player.chrome-off .player-bottom,
+.player.chrome-off .player-info {
   opacity: 0;
   pointer-events: none;
 }
 .player-ctl {
   display: flex;
   align-items: center;
-  gap: 4px;
-  height: 64px;
-  padding: 0 8px;
-  border-radius: 32px;
+  height: 50px;
+  padding: 0 4px;
+  border-radius: 25px;
 }
 .btn-ctl {
   flex: none;
-  width: 52px;
-  height: 52px;
+  width: 44px; /* alvo de toque de 44 px; o desenho dentro dele é pequeno */
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
 }
 .btn-ctl:active {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.14);
 }
 .btn-ctl svg {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
+}
+.btn-speed {
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 .player-time {
   flex: none;
-  min-width: 36px;
-  font-size: 13px;
+  min-width: 30px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   text-align: center;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.8);
 }
-/* Barra de posição: faixa fina visível, mas com área de toque alta (44 px) e marcador grande. */
+/* Barra de posição: faixa fina, com área de toque de 44 px e marcador pequeno. */
 .player-seek {
   --p: 0%;
   flex: 1;
   min-width: 0;
   height: 44px;
-  margin: 0;
+  margin: 0 4px;
   background: transparent;
   -webkit-appearance: none;
   appearance: none;
 }
 .player-seek::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 3px;
+  height: 4px;
+  border-radius: 2px;
   background: linear-gradient(to right, #fff var(--p), rgba(255, 255, 255, 0.28) var(--p));
 }
 .player-seek::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 24px;
-  height: 24px;
-  margin-top: -9px;
+  width: 14px;
+  height: 14px;
+  margin-top: -5px;
   border-radius: 50%;
   background: #fff;
-  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.45);
 }
+/* Salvar (esquerda) e excluir (direita): botões redondos discretos, sem texto. */
 .player-actions {
   display: flex;
-  gap: 12px;
+  justify-content: space-between;
 }
-.player-actions .btn-primary {
-  flex: 1;
-  width: auto;
-  height: 56px;
-  border-radius: 28px;
+.player-actions .btn-glass svg {
+  width: 20px;
+  height: 20px;
 }
-.player-actions .btn-square {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.07));
+.player-actions .danger {
+  color: var(--rec);
 }
-.player-bottom .hint {
-  padding: 0 8px;
-  color: rgba(255, 255, 255, 0.6);
+/* Detalhes do vídeo: cartão de vidro sob o botão de informações. */
+.player-info {
+  position: absolute;
+  top: calc(var(--sat) + 16px + 44px + 8px);
+  right: calc(var(--sar) + 14px);
+  width: min(270px, calc(100% - 28px));
+  padding: 6px 16px;
+  border-radius: 18px;
+  transition: opacity 0.2s;
+}
+.player-info div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 7px 0;
+  font-size: 13px;
+}
+.player-info div + div {
+  border-top: 0.5px solid rgba(255, 255, 255, 0.12);
+}
+.player-info span {
+  color: rgba(255, 255, 255, 0.65);
+}
+.player-info strong {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 /* ───────── Ajustes ───────── */
@@ -940,7 +952,7 @@ p {
   min-height: min(560px, 88%); /* a altura não pula entre a primeira página e as dos tópicos */
   max-height: 88%;
   overflow-y: auto;
-  padding: 8px 16px calc(var(--sab) + 16px);
+  padding: 8px 20px calc(var(--sab) + 20px);
   border-radius: 24px 24px 0 0;
   /* Vidro: sobre a câmera a imagem aparece desfocada atrás da folha. */
   background: rgba(28, 28, 30, 0.9);
@@ -963,8 +975,8 @@ p {
 }
 /* Grupos de linhas em cartões arredondados, como nos Ajustes do iPhone. */
 .group {
-  margin: 0 0 14px;
-  padding: 0 14px;
+  margin: 0 0 16px;
+  padding: 0 20px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.07);
 }

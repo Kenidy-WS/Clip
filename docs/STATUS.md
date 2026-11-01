@@ -1,6 +1,18 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.19.0 · `estavel` = 0.16.5 (validada no iPhone: o Kenidy confirmou que a correção da lente funcionou; avançar só depois da confirmação dele: a 0.17.0 é a voz, a 0.18.0 é só visual)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.0 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+
+## v0.20.0 — player discreto (padrão Fotos) e ajustes de espaço e texto (só visual, não toca na voz nem no microfone)
+
+- **Feedback do Kenidy sobre a 0.18.0 (01/11, com print da Fotos):** o player ficou "grosseiro": itens grandes e desproporcionais, borda pesada, botão Salvar enorme, legenda embaixo desnecessária, pílula do topo com informação demais. Pediu: mais discreto e minimalista, como a Fotos; Salvar como botão pequeno de download; data/hora na pílula e o resto num botão de informações; **velocidade de reprodução de volta** (os controles nativos tinham).
+- **Vidro:** agora cinza escuro translúcido, borda de 0,5 px e brilho quase imperceptível (antes branco com borda e sombra pesadas). Vale também para os botões e a pílula da câmera.
+- **Player:** botões redondos de 44 px com ícones de 20 px; pílula de controles de 50 px (reproduzir/pausar, tempo, barra fina com marcador de 14 px, **velocidade** 1× → 1,5× → 2× → 0,5×, som). Topo: voltar · pílula só com **data e hora** (duas linhas) · **informações**. Baixo: **download** (salvar/compartilhar, ícone de seta) à esquerda e **lixeira** à direita. Sem botão grande e sem a legenda do "Salvar vídeo". Degradês mais leves.
+- **Detalhes (botão "i"):** cartão de vidro com Data, Duração, Tamanho, Resolução, Taxa (Mbps), Pré-gravação e Áudio. Tocar no vídeo com o cartão aberto só o fecha.
+- **Ajustes:** mais respiro nas laterais dos submenus (grupos com 20 px de margem interna, folha com 20 px). Texto do gatilho de voz trocado por "Escolha o gatilho de voz."
+- **`estavel`:** avançou para a **0.17.0** (voz e palavra de ativação validadas pelo Kenidy). Não avança ainda para 0.18+ (visual em ajuste).
+- **Testes:** e2e do player atualizado (botões ≥ 44 px, só data/hora na pílula, detalhes abrem/fecham, velocidade cicla e volta a 1×). `check` e `e2e` verdes; conferido em captura de 393×852.
+- **Testar no iPhone:** (1) o aspecto geral do player (tamanho, borda, vidro) contra a Fotos; (2) botão de informações; (3) velocidade; (4) botão de download abre a folha de compartilhar ("Salvar vídeo") e, em clipe grande, o download; (5) submenus dos Ajustes com mais espaço; (6) o texto do gatilho.
+- **Se der problema:** `git revert` do commit da 0.20.0.
 
 ## v0.19.0 — Ajustes condensados em tópicos (só visual, não toca na voz nem no microfone)
 

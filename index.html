@@ -167,13 +167,20 @@
       <div id="player" class="player" hidden>
         <video id="playerVideo" playsinline></video>
         <div class="player-top">
-          <button class="btn-glass big" id="btnPlayerClose" data-icon="back" aria-label="Voltar"></button>
+          <button class="btn-glass" id="btnPlayerClose" data-icon="back" aria-label="Voltar"></button>
           <div class="player-title glass">
             <strong id="playerTitle"></strong>
             <span id="playerSub"></span>
           </div>
-          <span></span>
+          <button
+            class="btn-glass"
+            id="btnPlayerInfo"
+            data-icon="info"
+            aria-label="Detalhes do vídeo"
+            aria-expanded="false"
+          ></button>
         </div>
+        <div class="player-info glass" id="playerInfo" hidden></div>
         <div class="player-bottom">
           <div class="player-ctl glass">
             <button class="btn-ctl" id="btnPlayPause" aria-label="Pausar"></button>
@@ -188,20 +195,13 @@
               step="1"
               aria-label="Posição do vídeo"
             />
+            <button class="btn-ctl btn-speed" id="btnPlayerSpeed" aria-label="Velocidade">1×</button>
             <button class="btn-ctl" id="btnPlayerMute" aria-label="Ligar o som"></button>
           </div>
           <div class="player-actions">
-            <button class="btn-primary" id="btnShare">
-              <span data-icon="share"></span>Salvar / Compartilhar
-            </button>
-            <button
-              class="btn-square danger glass"
-              id="btnDelete"
-              data-icon="trash"
-              aria-label="Excluir"
-            ></button>
+            <button class="btn-glass" id="btnShare" data-icon="download" aria-label="Salvar"></button>
+            <button class="btn-glass danger" id="btnDelete" data-icon="trash" aria-label="Excluir"></button>
           </div>
-          <p class="hint">Para guardar no Rolo da Câmera, escolha “Salvar vídeo”.</p>
         </div>
       </div>
 
@@ -288,7 +288,7 @@
               <div class="row row-stack" id="rowWake">
                 <span>
                   Palavra de ativação
-                  <small>Com outros celulares por perto, cada um pode usar uma palavra diferente.</small>
+                  <small>Escolha o gatilho de voz.</small>
                 </span>
                 <div class="seg seg-wide" id="segWake">
                   <button data-v="clip">Ei Clip</button>

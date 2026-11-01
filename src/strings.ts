@@ -78,8 +78,19 @@ export const T = {
     `Excluir ${n} clipes? Os que ainda não foram salvos no Rolo da Câmera serão perdidos.`,
   clipsCount: (n: number) => (n === 1 ? '1 clipe' : `${n} clipes`),
   clipOpen: (when: string) => `Abrir clipe de ${when}`,
-  clipSub: (c: { durText: string; mb: number; withAudio: boolean }) =>
-    `${c.durText} · ${c.mb.toFixed(1)} MB${c.withAudio ? '' : ' · sem áudio'}`,
+  // Detalhes do vídeo (botão de informações do player)
+  info: {
+    date: 'Data',
+    duration: 'Duração',
+    size: 'Tamanho',
+    dims: 'Resolução',
+    rate: 'Taxa',
+    pre: 'Pré-gravação',
+    audio: 'Áudio',
+    audioYes: 'Sim',
+    audioNo: 'Sem áudio',
+  },
+  speedLabel: 'Velocidade',
   playLabel: { play: 'Reproduzir', pause: 'Pausar' },
   soundLabel: { on: 'Desligar o som', off: 'Ligar o som' },
   removeConfirm: 'Excluir este clipe? Se ainda não salvou no Rolo da Câmera, ele será perdido.',

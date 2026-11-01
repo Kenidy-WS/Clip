@@ -997,14 +997,22 @@ try {
       'player: sem os controles nativos do vídeo (pequenos)',
     );
     const small = await page.evaluate(() =>
-      ['#btnPlayerClose', '#btnPlayPause', '#btnPlayerMute', '#btnShare', '#btnDelete']
+      [
+        '#btnPlayerClose',
+        '#btnPlayerInfo',
+        '#btnPlayPause',
+        '#btnPlayerSpeed',
+        '#btnPlayerMute',
+        '#btnShare',
+        '#btnDelete',
+      ]
         .map((s) => [s, document.querySelector(s).getBoundingClientRect()])
         .filter(([, r]) => r.width < 44 || r.height < 44)
         .map(([s]) => s),
     );
     check(small.length === 0, 'player: botões com pelo menos 44 px de toque ' + small.join(','));
     check(
-      (await page.locator('#btnPlayerClose').boundingBox()).y >= 20,
+      (await page.locator('#btnPlayerClose').boundingBox()).y >= 14,
       'player: botão do topo afastado da borda superior (notch)',
     );
     check(
@@ -1013,8 +1021,33 @@ try {
     );
     check(
       (await page.textContent('#playerTitle')).length > 0 &&
-        (await page.textContent('#playerSub')).includes('MB'),
-      'player: título (data e hora) e subtítulo (duração e tamanho)',
+        /^\d{2}:\d{2}$/.test(await page.textContent('#playerSub')),
+      'player: a pílula do topo mostra só a data e a hora',
+    );
+    check(!(await page.isVisible('#playerInfo')), 'player: detalhes começam fechados');
+    await page.click('#btnPlayerInfo');
+    check(
+      (await page.isVisible('#playerInfo')) && (await page.textContent('#playerInfo')).includes('MB'),
+      'player: botão de informações mostra os detalhes (duração, tamanho, resolução...)',
+    );
+    await page.evaluate(() => document.querySelector('#playerVideo').click());
+    check(
+      !(await page.isVisible('#playerInfo')) &&
+        !(await page.evaluate(() => document.querySelector('#player').classList.contains('chrome-off'))),
+      'player: com os detalhes abertos, tocar no vídeo só os fecha',
+    );
+    check((await page.textContent('#btnPlayerSpeed')).trim() === '1×', 'player: velocidade começa em 1×');
+    await page.click('#btnPlayerSpeed');
+    await page.waitForFunction(() => document.querySelector('#playerVideo').playbackRate === 1.5, null, {
+      timeout: 2000,
+    });
+    ok('player: botão de velocidade acelera o clipe (1,5×)');
+    await page.click('#btnPlayerSpeed');
+    await page.click('#btnPlayerSpeed');
+    await page.click('#btnPlayerSpeed');
+    check(
+      (await page.evaluate(() => document.querySelector('#playerVideo').playbackRate)) === 1,
+      'player: velocidades 1×, 1,5×, 2×, 0,5× e volta a 1×',
     );
     await page.evaluate(() => document.querySelector('#playerVideo').click());
     check(

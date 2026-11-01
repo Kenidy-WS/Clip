@@ -8,6 +8,8 @@ const svg = (body: string): string =>
 export const ICONS = {
   back: svg('<path d="M15 5l-7 7 7 7"/>'),
   close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6v.1" stroke-width="2.4"/>'),
+  download: svg('<path d="M12 3.5v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>'),
   chevron: svg('<path d="M9 5l7 7-7 7"/>'),
   settings: svg(
     '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
