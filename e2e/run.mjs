@@ -203,6 +203,7 @@ try {
       'nível: desligado por padrão (sem pedido de permissão ao abrir)',
     );
     await page.click('#btnSettingsHome');
+    await page.click('#sheet [data-goto="camera"]'); // o Nível fica na página "Câmera" dos Ajustes
     await page.waitForTimeout(400);
     // Permissão negada (o Chromium de teste nega o pedido): a opção continua desligada e o app avisa.
     await page.click('#swLevel');
@@ -430,6 +431,7 @@ try {
     };
     const pick = async (word) => {
       await page.click('#btnSettingsCam');
+      await page.click('#sheet [data-goto="voice"]');
       await page.click(`#segWake button[data-v="${word}"]`);
       await page.click('#btnSheetClose');
     };
@@ -1182,6 +1184,26 @@ try {
     // Ajustes
     await page.click('#btnSettingsCam');
     check(await page.isVisible('#sheet'), 'Ajustes abrem');
+    check(
+      (await page.isVisible('#segQuality')) && !(await page.isVisible('#swSound')),
+      'Ajustes: a primeira página mostra o essencial (vídeo) e esconde o resto',
+    );
+    check(
+      (await page.textContent('#sumVoice')) === 'Ei Clip',
+      'Ajustes: o tópico de voz mostra a palavra escolhida',
+    );
+    await page.click('#sheet [data-goto="sound"]');
+    check(
+      (await page.textContent('#sheetTitle')) === 'Sons' &&
+        (await page.isVisible('#swSound')) &&
+        !(await page.isVisible('#segQuality')),
+      'Ajustes: o tópico abre a sua página, com o título dela',
+    );
+    await page.click('#btnSheetBack');
+    check(
+      (await page.isVisible('#segQuality')) && (await page.textContent('#sheetTitle')) === 'Ajustes',
+      'Ajustes: voltar leva à primeira página',
+    );
     await page.click('#segFps button[data-v="60"]');
     await page.click('#segQuality button[data-v="2160"]'); // 4K força 30 fps (o iOS não entrega 4K a 60)
     check(
@@ -1191,6 +1213,7 @@ try {
     await page.click('#segQuality button[data-v="1080"]');
     await page.click('#segFps button[data-v="60"]');
     await page.click('#segImageQuality button[data-v="max"]');
+    await page.click('#sheet [data-goto="sound"]');
     await page.click('#swBeepClip');
     check(
       await page.evaluate(

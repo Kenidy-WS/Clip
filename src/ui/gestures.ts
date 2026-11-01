@@ -18,7 +18,8 @@ const visible = (el: HTMLElement): boolean => !el.hidden;
 function goBack(): void {
   if (visible(els.player)) els.btnPlayerClose.click();
   else if (visible(els.diag)) els.btnDiagClose.click();
-  else if (visible(els.sheet)) els.btnSheetClose.click();
+  else if (visible(els.sheet))
+    (els.btnSheetBack.hidden ? els.btnSheetClose : els.btnSheetBack).click(); // volta uma página antes de fechar
   else if (els.screenGallery.classList.contains('selecting')) exitSelection();
   else if (S.view === 'gallery') leaveGallery();
   else if (S.view !== 'home') void showScreen('home');

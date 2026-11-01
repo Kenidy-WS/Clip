@@ -65,8 +65,11 @@ export function updateUI(): void {
   els.swDisk.disabled = locked;
   els.swVoice.setAttribute('aria-checked', String(S.voiceEnabled));
   els.swSound.setAttribute('aria-checked', String(S.soundOn));
-  els.rowVoice.hidden = S.voice === 'unsupported';
-  els.rowWake.hidden = S.voice === 'unsupported';
+  els.navVoice.hidden = S.voice === 'unsupported';
+  // Resumos da primeira página dos Ajustes
+  els.sumVoice.textContent = S.voiceEnabled ? T.wakeLabel[S.wakeWord] : T.sum.off;
+  els.sumSound.textContent = S.soundOn ? T.sum.soundOn : T.sum.soundOff;
+  els.sumCamera.textContent = S.levelOn ? T.sum.levelOn : T.sum.levelOff;
 }
 
 let lastSpaceCheck = 0;

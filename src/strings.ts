@@ -38,6 +38,14 @@ export const T = {
   voiceOn: 'Comando de voz ativado.',
   voiceOff: 'Comando de voz desativado.',
   voiceUnsupported: 'Comando de voz indisponível neste aparelho.',
+  // Resumo de cada tópico na primeira página dos Ajustes
+  sum: {
+    off: 'Desligado',
+    soundOn: 'Ligados',
+    soundOff: 'Desligados',
+    levelOn: 'Nível ligado',
+    levelOff: 'Nível desligado',
+  },
   wakeLabel: { clip: 'Ei Clip', 'camera-acao': 'Câmera, ação', 'ei-camera': 'Ei Câmera' },
   // Gravação
   waitBuffer: 'Aguarde um instante para gravar.',

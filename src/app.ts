@@ -38,6 +38,7 @@ import { APP_VERSION } from './config';
 async function paintStorage(): Promise<void> {
   const info = await storageInfo();
   els.storage.textContent = info ? T.storage(info.usedMb, info.quotaMb, info.persisted) : '—';
+  els.sumStorage.textContent = info ? `${info.usedMb.toFixed(0)} MB` : '';
 }
 
 /** Lê as preferências guardadas (qualidade, tempo antes do toque, lente, sons e voz). */
@@ -61,7 +62,19 @@ function loadPrefs(): void {
   if (isWakeWord(wake)) S.wakeWord = wake;
 }
 
+/** Mostra uma página dos Ajustes ('main' = o essencial e a lista de tópicos); o título e o botão voltar acompanham. */
+function showSheetPage(name: string): void {
+  els.sheet.querySelectorAll<HTMLElement>('.sheet-page').forEach((p) => {
+    const on = p.dataset.page === name;
+    p.hidden = !on;
+    if (on) els.sheetTitle.textContent = p.dataset.title ?? '';
+  });
+  els.btnSheetBack.hidden = name === 'main';
+  els.sheet.querySelector<HTMLElement>('.sheet')?.scrollTo(0, 0);
+}
+
 function openSheet(): void {
+  showSheetPage('main'); // sempre abre na primeira página
   showAnimated(els.sheet);
 }
 
@@ -138,6 +151,10 @@ function bindSettings(): void {
   els.btnSettingsHome.addEventListener('click', openSheet);
   els.btnSettingsCam.addEventListener('click', openSheet);
   els.btnSheetClose.addEventListener('click', closeSheet);
+  els.btnSheetBack.addEventListener('click', () => showSheetPage('main'));
+  els.sheet.querySelectorAll<HTMLElement>('[data-goto]').forEach((b) => {
+    b.addEventListener('click', () => showSheetPage(b.dataset.goto ?? 'main'));
+  });
   els.sheet.addEventListener('click', (e) => {
     if (e.target === els.sheet) closeSheet();
   });

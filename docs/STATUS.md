@@ -1,6 +1,17 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.18.0 · `estavel` = 0.16.5 (validada no iPhone: o Kenidy confirmou que a correção da lente funcionou; avançar só depois da confirmação dele: a 0.17.0 é a voz, a 0.18.0 é só visual)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.19.0 · `estavel` = 0.16.5 (validada no iPhone: o Kenidy confirmou que a correção da lente funcionou; avançar só depois da confirmação dele: a 0.17.0 é a voz, a 0.18.0 é só visual)
+
+## v0.19.0 — Ajustes condensados em tópicos (só visual, não toca na voz nem no microfone)
+
+- **Pedido (01/11):** a folha de Ajustes estava longa; condensar sem perder usabilidade, com o essencial (qualidade etc.) sempre na primeira tela e o resto em tópicos.
+- **Primeira página:** grupo **Vídeo** (Resolução, Fluidez, Qualidade, Pré-gravação, como antes) e lista de tópicos com resumo à direita e seta: **Comando de voz** (mostra a palavra, ou "Desligado"), **Sons** (Ligados/Desligados), **Câmera** (Nível ligado/desligado), **Armazenamento** (MB em uso), mais **Diagnóstico** (para desenvolvimento).
+- **Páginas dos tópicos** (a folha "empurra" a página, com botão voltar e título): **Comando de voz** = ligar/desligar + palavra de ativação; **Sons** = Sons de gravação e Sons no vídeo; **Câmera** = Nível e Espelhar frontal; **Armazenamento** = Gravação longa e espaço em uso. Cada ajuste ganhou uma linha de explicação curta quando útil. A folha sempre abre na primeira página; o gesto de voltar (borda) volta uma página antes de fechar.
+- **Por que assim (análise):** o que se mexe sempre (qualidade) fica à vista; o que se mexe uma vez (voz, sons, espelhar, nível, gravação longa) vai para tópicos, e o resumo à direita mostra o estado sem abrir. Alternativas descartadas: abas (cabem pouco na largura do celular) e acordeão (a folha continuaria longa e rolando). Todos os IDs dos controles foram mantidos (só mudou onde ficam).
+- **Visual:** folha de vidro (`backdrop-filter`) sobre a câmera/Início, grupos em cartões arredondados como nos Ajustes do iPhone, altura estável entre páginas.
+- **Testes:** e2e novo (primeira página só com o essencial, tópico abre a sua página com título, voltar) e os cenários antigos ajustados para navegar até a página do controle. `check` e `e2e` verdes; conferido em captura de 393×852.
+- **Testar no iPhone:** abrir Ajustes pelo Início e pela câmera; entrar e sair de cada tópico; mudar Resolução/Fluidez (a câmera reabre como antes); trocar a palavra de ativação (Comando de voz); ligar o Nível (pede permissão); gesto de voltar pela borda dentro de um tópico; ver se o vidro da folha fica legível sobre a câmera.
+- **Se der problema:** `git revert` do commit da 0.19.0.
 
 ## v0.18.0 — player estilo Fotos (vidro) e cuidado com o notch (só visual, não toca na voz nem no microfone)
 

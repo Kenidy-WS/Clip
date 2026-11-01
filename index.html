@@ -209,115 +209,176 @@
       <div id="sheet" class="sheet-backdrop" hidden>
         <div class="sheet" role="dialog" aria-label="Ajustes">
           <div class="sheet-head">
-            <h2>Ajustes</h2>
+            <button class="btn-icon" id="btnSheetBack" data-icon="back" aria-label="Voltar" hidden></button>
+            <h2 id="sheetTitle">Ajustes</h2>
             <button class="btn-icon" id="btnSheetClose" data-icon="close" aria-label="Fechar"></button>
           </div>
-          <div class="row">
-            <span>Resolução</span>
-            <div class="seg" id="segQuality">
-              <button data-v="720">720p</button>
-              <button data-v="1080">1080p</button>
-              <button data-v="2160">4K</button>
+
+          <!-- Primeira página: o essencial (vídeo) e os tópicos -->
+          <div class="sheet-page" data-page="main" data-title="Ajustes">
+            <div class="group">
+              <div class="row">
+                <span>Resolução</span>
+                <div class="seg" id="segQuality">
+                  <button data-v="720">720p</button>
+                  <button data-v="1080">1080p</button>
+                  <button data-v="2160">4K</button>
+                </div>
+              </div>
+              <div class="row">
+                <span>Fluidez</span>
+                <div class="seg" id="segFps">
+                  <button data-v="30">30 fps</button>
+                  <button data-v="60">60 fps</button>
+                </div>
+              </div>
+              <div class="row">
+                <span>Qualidade</span>
+                <div class="seg" id="segImageQuality">
+                  <button data-v="std">Padrão</button>
+                  <button data-v="high">Alta</button>
+                  <button data-v="max">Máxima</button>
+                </div>
+              </div>
+              <div class="row">
+                <span>Pré-gravação</span>
+                <div class="seg" id="segBuffer">
+                  <button data-v="15">15 s</button>
+                  <button data-v="30">30 s</button>
+                </div>
+              </div>
+            </div>
+            <div class="group">
+              <button class="row row-nav" id="navVoice" data-goto="voice">
+                <span>Comando de voz</span><span class="val" id="sumVoice"></span
+                ><span class="chev" data-icon="chevron"></span>
+              </button>
+              <button class="row row-nav" data-goto="sound">
+                <span>Sons</span><span class="val" id="sumSound"></span
+                ><span class="chev" data-icon="chevron"></span>
+              </button>
+              <button class="row row-nav" data-goto="camera">
+                <span>Câmera</span><span class="val" id="sumCamera"></span
+                ><span class="chev" data-icon="chevron"></span>
+              </button>
+              <button class="row row-nav" data-goto="storage">
+                <span>Armazenamento</span><span class="val" id="sumStorage"></span
+                ><span class="chev" data-icon="chevron"></span>
+              </button>
+            </div>
+            <div class="group">
+              <button class="row row-nav" id="btnInfo">
+                <span>Diagnóstico</span><span class="chev" data-icon="chevron"></span>
+              </button>
             </div>
           </div>
-          <div class="row">
-            <span>Fluidez</span>
-            <div class="seg" id="segFps">
-              <button data-v="30">30 fps</button>
-              <button data-v="60">60 fps</button>
+
+          <div class="sheet-page" data-page="voice" data-title="Comando de voz" hidden>
+            <div class="group">
+              <div class="row" id="rowVoice">
+                <span>Comando de voz</span>
+                <button
+                  class="switch"
+                  id="swVoice"
+                  role="switch"
+                  aria-checked="true"
+                  aria-label="Comando de voz"
+                ></button>
+              </div>
+              <div class="row row-stack" id="rowWake">
+                <span>
+                  Palavra de ativação
+                  <small>Com outros celulares por perto, cada um pode usar uma palavra diferente.</small>
+                </span>
+                <div class="seg seg-wide" id="segWake">
+                  <button data-v="clip">Ei Clip</button>
+                  <button data-v="camera-acao">Câmera, ação</button>
+                  <button data-v="ei-camera">Ei Câmera</button>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="row">
-            <span>Qualidade</span>
-            <div class="seg" id="segImageQuality">
-              <button data-v="std">Padrão</button>
-              <button data-v="high">Alta</button>
-              <button data-v="max">Máxima</button>
+
+          <div class="sheet-page" data-page="sound" data-title="Sons" hidden>
+            <div class="group">
+              <div class="row">
+                <span>Sons de gravação</span>
+                <button
+                  class="switch"
+                  id="swSound"
+                  role="switch"
+                  aria-checked="true"
+                  aria-label="Sons de gravação"
+                ></button>
+              </div>
+              <div class="row">
+                <span>
+                  Sons no vídeo
+                  <small>O som de início e de fim também fica gravado no clipe.</small>
+                </span>
+                <button
+                  class="switch"
+                  id="swBeepClip"
+                  role="switch"
+                  aria-checked="false"
+                  aria-label="Sons no vídeo"
+                ></button>
+              </div>
             </div>
           </div>
-          <div class="row">
-            <span>Pré-gravação</span>
-            <div class="seg" id="segBuffer">
-              <button data-v="15">15 s</button>
-              <button data-v="30">30 s</button>
+
+          <div class="sheet-page" data-page="camera" data-title="Câmera" hidden>
+            <div class="group">
+              <div class="row">
+                <span>
+                  Nível
+                  <small>Linha na tela que mostra se o celular está reto.</small>
+                </span>
+                <button
+                  class="switch"
+                  id="swLevel"
+                  role="switch"
+                  aria-checked="false"
+                  aria-label="Nível"
+                ></button>
+              </div>
+              <div class="row">
+                <span>
+                  Espelhar frontal
+                  <small>O clipe da câmera frontal sai igual à prévia.</small>
+                </span>
+                <button
+                  class="switch"
+                  id="swMirror"
+                  role="switch"
+                  aria-checked="true"
+                  aria-label="Espelhar frontal"
+                ></button>
+              </div>
             </div>
           </div>
-          <div class="row" id="rowVoice">
-            <span>Comando de voz</span>
-            <button
-              class="switch"
-              id="swVoice"
-              role="switch"
-              aria-checked="true"
-              aria-label="Comando de voz"
-            ></button>
-          </div>
-          <div class="row row-stack" id="rowWake">
-            <span>
-              Palavra de ativação
-              <small>Com outros celulares por perto, cada um pode usar uma palavra diferente.</small>
-            </span>
-            <div class="seg seg-wide" id="segWake">
-              <button data-v="clip">Ei Clip</button>
-              <button data-v="camera-acao">Câmera, ação</button>
-              <button data-v="ei-camera">Ei Câmera</button>
+
+          <div class="sheet-page" data-page="storage" data-title="Armazenamento" hidden>
+            <div class="group">
+              <div class="row">
+                <span>
+                  Gravação longa
+                  <small>Grava direto no aparelho, para clipes de vários minutos.</small>
+                </span>
+                <button
+                  class="switch"
+                  id="swDisk"
+                  role="switch"
+                  aria-checked="false"
+                  aria-label="Gravação longa"
+                ></button>
+              </div>
+              <div class="row">
+                <span>Em uso</span>
+                <span class="val" id="storage"></span>
+              </div>
             </div>
           </div>
-          <div class="row">
-            <span>Sons de gravação</span>
-            <button
-              class="switch"
-              id="swSound"
-              role="switch"
-              aria-checked="true"
-              aria-label="Sons de gravação"
-            ></button>
-          </div>
-          <div class="row">
-            <span>Sons no vídeo</span>
-            <button
-              class="switch"
-              id="swBeepClip"
-              role="switch"
-              aria-checked="false"
-              aria-label="Sons no vídeo"
-            ></button>
-          </div>
-          <div class="row">
-            <span>Nível</span>
-            <button
-              class="switch"
-              id="swLevel"
-              role="switch"
-              aria-checked="false"
-              aria-label="Nível"
-            ></button>
-          </div>
-          <div class="row">
-            <span>Espelhar frontal</span>
-            <button
-              class="switch"
-              id="swMirror"
-              role="switch"
-              aria-checked="true"
-              aria-label="Espelhar frontal"
-            ></button>
-          </div>
-          <div class="row">
-            <span>Gravação longa</span>
-            <button
-              class="switch"
-              id="swDisk"
-              role="switch"
-              aria-checked="false"
-              aria-label="Gravação longa"
-            ></button>
-          </div>
-          <div class="row">
-            <span>Armazenamento</span>
-            <span class="val" id="storage"></span>
-          </div>
-          <button class="row row-btn" id="btnInfo"><span>Diagnóstico</span></button>
         </div>
       </div>
 

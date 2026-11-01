@@ -8,6 +8,7 @@ const svg = (body: string): string =>
 export const ICONS = {
   back: svg('<path d="M15 5l-7 7 7 7"/>'),
   close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  chevron: svg('<path d="M9 5l7 7-7 7"/>'),
   settings: svg(
     '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   ),
