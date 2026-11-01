@@ -1,4 +1,4 @@
-import { APP_NAME } from '../strings';
+import { APP_NAME, T } from '../strings';
 import { support } from '../media/support';
 import { APP_VERSION } from '../config';
 import { cfg, S } from '../state';
@@ -142,7 +142,10 @@ export function diagnosticsSections(): DiagSection[] {
   const voice = S.voiceLog.slice(-6);
   sections.push({
     title: 'Comando de voz',
-    rows: [['Estado', voiceState()]],
+    rows: [
+      ['Estado', voiceState()],
+      ['Palavra', T.wakeLabel[S.wakeWord]],
+    ],
     lines: voice,
   });
 

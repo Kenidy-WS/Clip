@@ -868,6 +868,22 @@ p {
 .seg button:disabled {
   opacity: 0.4;
 }
+/* Ajuste com opções longas (palavra de ativação): título em cima e opções na largura toda. */
+.row-stack {
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 0 12px;
+}
+.seg-wide {
+  display: flex;
+}
+.seg-wide button {
+  flex: 1;
+  padding: 8px 4px;
+  white-space: nowrap;
+}
 .switch {
   position: relative;
   flex: none;

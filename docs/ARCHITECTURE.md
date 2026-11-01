@@ -13,7 +13,7 @@ mic ─► AudioWorklet ─► AudioEncoder (AAC) ─┘                        
 
 | Pasta          | Papel                                                                                                                                                                                                                                                                                                             |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/core/`    | Lógica pura e testada: `replay-buffer` (janela, corte, descarte), `timestamps` (rebase), `aac` (ASC/ADTS), `clip-name`, `wake-word` (texto → "Ei Clip" e trava contra disparo duplo)                                                                                                                              |
+| `src/core/`    | Lógica pura e testada: `replay-buffer` (janela, corte, descarte), `timestamps` (rebase), `aac` (ASC/ADTS), `clip-name`, `wake-word` (texto → palavra de ativação "Ei Clip", "Câmera, ação" ou "Ei Câmera" e trava contra disparo duplo), `lens` (qual câmera é a ultra-angular traseira)                          |
 | `src/media/`   | Motor: `camera` (permissões, start/stop), `video` (laço de captura + encoder), `audio` (worklet + AAC + relógio), `recorder` (início/fim do clipe), `mp4`, `disk-rec` (gravação longa em disco: MP4 fragmentado em pedaços no IndexedDB), `rec-sink`, `beep`, `support`, `voice` (escuta contínua por Web Speech) |
 | `src/storage/` | `clip-store`: IndexedDB e estimativa de armazenamento                                                                                                                                                                                                                                                             |
 | `src/ui/`      | Interface: `dom` (elementos), `controls` (telas e controles, tick de 250 ms), `navigation` (abrir câmera/trocar de tela), `clips-view` (galeria, recentes e player), `icons`, `diagnostics`, `status`                                                                                                             |
@@ -40,13 +40,20 @@ mic ─► AudioWorklet ─► AudioEncoder (AAC) ─┘                        
   O comando **alterna** a gravação (inicia com o pre-roll / para e salva); o pre-roll de 15–30 s já cobre a latência.
   A escuta liga com a câmera (`startVoice` no fim de `start()`), para em `stopAll()` e reinicia sozinha quando o iOS a encerra.
   Plano B se falhar em campo: Porcupine Web (roda 100% no aparelho; exige chave e palavra treinada no Picovoice).
+- **Palavra de ativação escolhida (v0.17.0):** `S.wakeWord` (`'clip' | 'camera-acao' | 'ei-camera'`, preferência `wake`) decide só
+  **como o texto da escuta é interpretado** (`wakeMatcher` em `core/wake-word.ts`, usado em `onResult` de `media/voice.ts`); o
+  reconhecedor, os religamentos e o toque não mudam, então trocar a palavra não reinicia nada. Cada palavra tem `full`, `loose` e
+  `early`; só "Ei Clip" tem os atalhos "ei cli" e "clip" solto. "Câmera" é palavra comum: as outras duas exigem a frase completa
+  e "Ei Câmera" não aceita as saudações curtas (`a`, `e`, `eu`, `ai`), senão "a câmera está ligada" dispararia. Motivo: vários celulares
+  perto uns dos outros com o mesmo gatilho disparavam juntos. Para acrescentar uma palavra: tipo em `types.ts`, matcher em
+  `wake-word.ts` com testes de aceitar e de ignorar, botão em `#segWake` (`index.html`) e rótulo em `T.wakeLabel`.
 
 - **Três telas (Início, Câmera, Galeria) em `S.view`:** o iOS só libera áudio, câmera sem ficar muda e escuta de voz dentro de um
   gesto do usuário; o toque em "Abrir câmera" (`openCamera` em `ui/navigation.ts`) liga tudo junto e não pode esperar nada antes de
   `start()`. Reiniciar só a câmera não para a voz (`stopAll(keepTracks, keepVoice)`). Sair da tela da câmera (`showScreen`) cancela
   abertura em andamento (`cancelStart`), para captura, microfone e voz e suspende o áudio: a Galeria nunca tem captura ligada.
 - **Visual em um só lugar:** cores em tokens `:root` (`styles.css`), ícones em `ui/icons.ts` (`data-icon`), textos em `strings.ts`
-  e rótulos fixos no `index.html`. Preferências (qualidade, buffer, lente, sons, voz) em `storage/prefs.ts`.
+  e rótulos fixos no `index.html`. Preferências (qualidade, buffer, lente, sons, voz, palavra de ativação) em `storage/prefs.ts`.
 
 ## Limites conhecidos
 

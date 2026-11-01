@@ -1,7 +1,8 @@
 # Ei Clip
 
 Câmera de ação para iPhone com **gravação retroativa**: o app guarda na memória os últimos 15 ou 30 segundos e, ao tocar
-em gravar, o clipe já começa antes do toque. Roda no navegador (PWA), sem App Store e sem Mac. Em breve: comando de voz "Ei Clip".
+em gravar, o clipe já começa antes do toque. Roda no navegador (PWA), sem App Store e sem Mac. Também grava por comando de voz:
+"Ei Clip" (padrão), "Câmera, ação" ou "Ei Câmera", à escolha nos Ajustes (com vários celulares por perto, cada um usa uma palavra).
 
 ## Usar
 
@@ -23,6 +24,6 @@ Stack: TypeScript, Vite, Vitest, ESLint, Prettier, WebCodecs, mp4-muxer. Publica
 ## Limites conhecidos
 
 - O app precisa ficar aberto com a tela ligada (limitação do iOS).
-- Clipes ficam no IndexedDB do navegador até você excluir; salve no Rolo da Câmera para não depender disso. Máximo de 90 s por gravação.
+- Clipes ficam no IndexedDB do navegador até você excluir; salve no Rolo da Câmera para não depender disso. A gravação longa (padrão) vai direto para o disco, até 30 min; desligada nos Ajustes, o limite volta a ser de cerca de 90 s, na memória.
 - Após cada gravação o buffer é zerado: o pre-roll do próximo clipe só tem imagens posteriores ao anterior.
 - O iOS pede permissão de câmera e microfone a cada abertura do app instalado (bug do WebKit).

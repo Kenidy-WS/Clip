@@ -55,6 +55,7 @@ export function updateUI(): void {
   paintSegment(els.segFps, String(cfg.fps), locked);
   paintSegment(els.segImageQuality, cfg.imageQuality, locked);
   paintSegment(els.segBuffer, String(cfg.bufferSec), false);
+  paintSegment(els.segWake, S.wakeWord, false);
   els.swBeepClip.setAttribute('aria-checked', String(S.beepInClip));
   els.swDisk.setAttribute('aria-checked', String(S.diskRec));
   els.swMirror.setAttribute('aria-checked', String(S.mirrorFront));
@@ -65,6 +66,7 @@ export function updateUI(): void {
   els.swVoice.setAttribute('aria-checked', String(S.voiceEnabled));
   els.swSound.setAttribute('aria-checked', String(S.soundOn));
   els.rowVoice.hidden = S.voice === 'unsupported';
+  els.rowWake.hidden = S.voice === 'unsupported';
 }
 
 let lastSpaceCheck = 0;

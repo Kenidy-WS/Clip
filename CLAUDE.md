@@ -38,7 +38,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 
 ## Proteção contra regressão (pedido do Kenidy: a voz demorou para ficar funcional)
 
-- **Ponto de retorno:** o branch `estavel` guarda a última versão validada no iPhone (hoje v0.15.7). Tags não sobem por aqui, por isso é branch.
+- **Ponto de retorno:** o branch `estavel` guarda a última versão validada no iPhone (hoje v0.16.5, antes de a palavra de ativação ser escolhida, v0.17.0). Tags não sobem por aqui, por isso é branch.
   Só avance o `estavel` (`git push origin <hash>:refs/heads/estavel`) depois que o Kenidy confirmar que a versão nova funciona.
 - **Voltar atrás:** cada versão é um commit só. Para desfazer: `git revert <hash>` (ou `git revert --no-edit estavel..main`), subir versão nova e publicar.
   Nunca reescreva o histórico da `main`.
@@ -83,8 +83,13 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   viewport se a diferença persistir; a linha "Tela" do Diagnóstico mostra os valores. Hipótese a confirmar no iPhone.
 - **Áudio recusado (v0.8.1):** o iOS já respondeu `OverconstrainedError: Invalid constraint` às restrições de áudio e a câmera abria
   sem microfone. `getMedia` (`camera.ts`) pede áudio em 3 níveis (estrito → sem `channelCount` → padrão) e só desce nesse erro.
-- **Lente 0,5×:** o iOS só informa os nomes das câmeras depois da permissão; a ultra-angular é a câmera cujo nome casa `/ultra/i`
-  (`deviceId: {exact}`); sem ela, tenta `zoom` < 1. Detalhes em `refreshLenses` (`camera.ts`).
+- **Lente 0,5×:** o iOS só informa os nomes das câmeras depois da permissão; a ultra-angular **traseira** é escolhida por `pickUltraLens`
+  (`core/lens.ts`, `deviceId: {exact}`); sem ela, tenta `zoom` < 1. Detalhes em `refreshLenses` (`camera.ts`). **No iPhone 17 a frontal também se chama
+  "Ultra Wide"** (v0.16.5): a escolha ignora nomes de frontal e, se a 0,5× abrir com `facingMode === 'user'`, a lente é descartada (`badLensIds`) e volta a traseira 1×.
+- **Palavra de ativação (v0.17.0):** o usuário escolhe nos Ajustes entre "Ei Clip" (padrão), "Câmera, ação" e "Ei Câmera" (vários celulares perto não devem
+  disparar uns aos outros). `S.wakeWord` só muda como o texto é interpretado (`wakeMatcher`, `core/wake-word.ts`); o reconhecedor não reinicia. As duas novas
+  não têm atalhos parciais e "Ei Câmera" usa saudações estritas, porque "câmera" é palavra comum. Falta validar no iPhone o que o iOS escreve para cada frase
+  (linha "Voz" do Diagnóstico) e ajustar as variações. Candidatas guardadas: "Ei Lance", "Ei Replay", "Ei Destaque" (reservas: "Ei Cena", "Ei Captura").
 - **Permissão e capturas (v0.8.4):** o iOS só dispensa o pedido de câmera/microfone enquanto ainda existe uma captura ativa na página; parar todas as faixas e chamar `getUserMedia` de novo pede de novo. Por isso, ao voltar do segundo plano **não** refazemos a captura se as faixas seguem `live` (`returnFromBackground` em `app.ts`).
 - **Prévia (v0.8.4):** ao trocar de lente o iOS pode desenhar o `<video>` menor que o elemento (faixas). O elemento é recriado a cada captura (`renewPreview`); nunca guardar referência ao `<video>`, use `els.video` (getter).
 - **Bipe (v0.9.0):** gerado por `core/beep-wave.ts` e tocado como `AudioBuffer`; com `beepInClip` as mesmas amostras são somadas ao bloco de áudio em `audio.ts` (`mixBeepInto`). O microfone fica mudo durante o bipe do alto-falante para não captá-lo em dobro.

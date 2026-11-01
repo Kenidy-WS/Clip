@@ -15,6 +15,7 @@ import { markVoiceUnverified, restartVoice, resumeVoice, setVoiceEnabled, voiceT
 import { trySetupAudio } from './media/audio';
 import { requestMotionPermission } from './media/orientation';
 import { cfg, S } from './state';
+import { isWakeWord } from './core/wake-word';
 import { T } from './strings';
 import { onStorageChange, recoverTakes, restoreClips } from './clips';
 import { getPref, setPref } from './storage/prefs';
@@ -56,6 +57,8 @@ function loadPrefs(): void {
   if (getPref('lens') === '0.5') cfg.lens = '0.5';
   S.soundOn = getPref('sound') !== '0';
   S.voiceEnabled = getPref('voice') !== '0';
+  const wake = getPref('wake');
+  if (isWakeWord(wake)) S.wakeWord = wake;
 }
 
 function openSheet(): void {
@@ -205,6 +208,13 @@ function bindSettings(): void {
     updateUI();
   });
   els.swVoice.addEventListener('click', toggleVoice);
+  // A palavra só muda como o texto da escuta é interpretado: o reconhecedor continua o mesmo (nada reinicia).
+  bindSegment(els.segWake, (v) => {
+    if (!isWakeWord(v) || v === S.wakeWord) return;
+    S.wakeWord = v;
+    setPref('wake', v);
+    updateUI();
+  });
   els.swSound.addEventListener('click', () => {
     S.soundOn = !S.soundOn;
     setPref('sound', S.soundOn ? '1' : '0');

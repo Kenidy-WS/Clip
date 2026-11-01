@@ -1,6 +1,22 @@
 # Status
 
-**Atualizado em:** 2026-10-31 · **No ar (`main`):** 0.16.5 · `estavel` = 0.15.7 (validada no iPhone; avançar para a 0.16.5 só depois da confirmação dele)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.17.0 · `estavel` = 0.16.5 (validada no iPhone: o Kenidy confirmou que a correção da lente funcionou; avançar para a 0.17.0 só depois da confirmação dele)
+
+## v0.17.0 — palavra de ativação à escolha (Ei Clip, Câmera ação, Ei Câmera)
+
+- **Pedido (01/11):** com amigos usando o app juntos (pescaria, por exemplo), o "Ei Clip" de um disparava o celular dos outros. Ideia do Kenidy: escolher o gatilho. Decisões: as palavras não devem ser do hobby (o app é para qualquer ação); por enquanto **três**: **Ei Clip** (padrão), **Câmera, ação** e **Ei Câmera**. Descartadas por ele: "Ei Peixe", "Ei Capitão", "Ei Anzol". Candidatas para depois: "Ei Lance", "Ei Replay", "Ei Destaque" (ver ROADMAP).
+- **Antes de mexer na voz (área protegida):** `main` 0.16.5 passou em `check` + `e2e` e a `estavel` avançou da 0.15.7 para a **0.16.5**. Para voltar atrás: `git revert` do commit da 0.17.0 (ou `estavel`).
+- **Como funciona:** Ajustes → **Palavra de ativação** (três opções, linha própria com o título em cima por causa do tamanho dos rótulos). A escolha (`S.wakeWord`, preferência `wake`) só muda como o texto da escuta é interpretado (`wakeMatcher` em `core/wake-word.ts`, usado em `onResult` de `media/voice.ts`): o reconhecedor, os religamentos e o toque **não mudam**, e trocar a palavra não reinicia a escuta. Cada palavra só responde à sua ("Ei clipe" não aciona "Câmera, ação" e vice-versa). Diagnóstico: linha "Palavra" na seção "Comando de voz".
+- **"Câmera, ação":** aceita "câmera ação", "câmera e ação", "luz, câmera, ação", "câmara ação" e junto ("cameraacao"). **"Ei Câmera":** aceita ei/hei/hey/ey/oi + câmera (ou câmara) e junto; **não** aceita "a câmera", "e a câmera", "eu câmera" nem "ai câmera", porque "câmera" é palavra comum. As duas só valem com a frase completa: **não têm o atalho "ei cli" nem "clip" solto** do "Ei Clip", então respondem um pouco depois (o iOS entrega a frase inteira ~0,4 a 0,9 s depois da fala). O pré-roll de 15/30 s cobre isso.
+- **Testes:** `tests/wake-word.test.ts` (aceita/ignora cada frase, uma palavra não aciona a outra) e e2e novo "palavra: ..." (trocar pelos Ajustes, cada palavra só responde à sua, não reinicia a escuta, escolha lembrada ao reabrir). `check` e `e2e` verdes. Sem aviso na tela ao trocar (a opção marcada já mostra).
+- **Também nesta versão:** `README.md`, `ARCHITECTURE.md`, `CLAUDE.md` e `ROADMAP.md` atualizados (README estava com "Em breve: comando de voz" e "máximo de 90 s"; `package-lock.json` estava na 0.15.7).
+- **Testar no iPhone (o que só o aparelho confirma):**
+  1. Ajustes → Palavra de ativação: escolher cada uma, fechar e falar. Dizer cada frase ~5 vezes, perto e com ruído, e contar quantas o app reconhece. Se falhar, copiar o Diagnóstico ("i" → Copiar): a linha "Voz" mostra o que o iOS escreveu (`texto "..."`), e eu acrescento essa variação.
+  2. Dois celulares lado a lado, cada um com uma palavra diferente: um não deve disparar o outro.
+  3. Conversar perto do celular (principalmente com "Ei Câmera") e ver se dispara sem querer.
+  4. Fechar e abrir o app: a palavra escolhida continua.
+  5. Regressão: "Ei Clip" continua igual (inclusive o atalho "ei cli") e o botão manual segue funcionando.
+- **Aberto:** filtro "Só minha voz" por volume do próprio microfone; palavra livre com calibração; modo grupo (ver ROADMAP, "Ideias futuras").
 
 ## v0.16.5 — 0,5× abria a câmera frontal (iPhone 17)
 
@@ -9,6 +25,7 @@
 - Correção: `core/lens.ts` (`pickUltraLens`, com testes em `tests/lens.test.ts`) ignora nomes de frontal (inglês/português) e prefere os que dizem "back/traseira". Segunda proteção em `start()` (`camera.ts`): se a 0,5× abrir com `facingMode === 'user'`, a lente é descartada (`badLensIds`), volta para a 1× traseira e avisa `lensFail`. Fora da área protegida de voz/microfone.
 - Testar no iPhone 15 (regressão): 0,5× e 1× continuam como antes. No iPhone 17 (amigo): 0,5× deve abrir a traseira ultra-angular. Se ainda virar frontal ou o botão 0,5× sumir, pedir o Diagnóstico ("i" → Copiar): linhas "Lentes" e "Câmera: início" (mostram os nomes das câmeras e a linha "lente 0,5× abriu como frontal").
 - Se der problema, `git revert` desta versão.
+- **Validada (01/11):** o Kenidy confirmou que a correção deu certo; `estavel` avançou para a 0.16.5.
 
 ## v0.16.4 — bipes em duas notas
 

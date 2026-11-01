@@ -1,4 +1,4 @@
-import { WakeGate, isEarlyWakePhrase, isLooseWakeStart, isWakePhrase } from '../core/wake-word';
+import { WakeGate, wakeMatcher } from '../core/wake-word';
 import { notify, stateChanged, voiceCommand } from '../events';
 import { S } from '../state';
 import { T } from '../strings';
@@ -140,15 +140,15 @@ function onResult(ev: SpeechEventLike, id: number): void {
     if (!firstSeen.has(key)) firstSeen.set(key, now);
     if (firstSeen.size > 30) firstSeen.delete(firstSeen.keys().next().value as string);
     const alternatives = Array.from({ length: result.length }, (_, k) => result[k].transcript);
-    const full = alternatives.some(isWakePhrase);
+    // Cada palavra de ativação tem o seu reconhecimento (v0.17.0); só "Ei Clip" tem os atalhos "ei cli" e "clip" solto.
+    const wake = wakeMatcher(S.wakeWord);
+    const full = alternatives.some(wake.full);
     // "Ei cli" e "clip" solto iniciam a gravação. Para parar, "clip" solto só vale depois de alguns segundos de gravação
     // (o "clip" do próprio "Ei clip" que começou chega repetido e não pode parar logo em seguida).
-    const loose = alternatives.some((a) => isLooseWakeStart(a));
+    const loose = alternatives.some(wake.loose);
     const stopOk = !!S.rec && !S.finalizing && now - S.rec.startMs > LOOSE_STOP_AFTER_MS;
     const early =
-      !full &&
-      !S.finalizing &&
-      ((!S.rec && (loose || alternatives.some(isEarlyWakePhrase))) || (loose && stopOk));
+      !full && !S.finalizing && ((!S.rec && (loose || alternatives.some(wake.early))) || (loose && stopOk));
     logVoice(`texto "${alternatives[0] ?? ''}"${full ? ' ✓' : early ? ' ⚡' : ''}`);
     if (!full && !early) continue;
     if (gate.accept(key, now)) {

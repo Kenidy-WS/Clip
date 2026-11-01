@@ -2,13 +2,13 @@
 
 Uma onda por chat. Em cada uma: Claude entrega, o Kenidy testa no iPhone e aprova, só então começa a próxima.
 
-| Onda | Objetivo                                                                                                      | Estado                                      |
-| ---- | ------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
-| 0    | Protótipo funcional: pre-roll, qualidade, áudio, offline, aviso de atualização                                | Concluída (`v0.3.7`, commit 0e9176b)        |
-| 1    | Base profissional: TypeScript + Vite, módulos, testes, lint, CI/deploy, documentação, nome "Ei Clip"          | Concluída e aprovada (`v0.4.0`)             |
-| 2    | Comando de voz "Ei Clip": teste de viabilidade no iPhone (vento/ruído) e integração                           | Concluída (`v0.7.0`)                        |
-| 3    | Interface, marca e ícone: tela limpa, textos finais, layout ocupando a tela toda, ícone, esconder diagnóstico | 3a feita (`v0.8.0`, em teste); 3b planejada |
-| 4    | Polimento e robustez: áudio, permissões, armazenamento; decidir se vale migrar para app nativo                | Planejada                                   |
+| Onda | Objetivo                                                                                                      | Estado                                                   |
+| ---- | ------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| 0    | Protótipo funcional: pre-roll, qualidade, áudio, offline, aviso de atualização                                | Concluída (`v0.3.7`, commit 0e9176b)                     |
+| 1    | Base profissional: TypeScript + Vite, módulos, testes, lint, CI/deploy, documentação, nome "Ei Clip"          | Concluída e aprovada (`v0.4.0`)                          |
+| 2    | Comando de voz "Ei Clip": teste de viabilidade no iPhone (vento/ruído) e integração                           | Concluída (`v0.7.0`)                                     |
+| 3    | Interface, marca e ícone: tela limpa, textos finais, layout ocupando a tela toda, ícone, esconder diagnóstico | 3a feita (`v0.8.0`); 3b feita (marca e ícone, `v0.16.x`) |
+| 4    | Polimento e robustez: áudio, permissões, armazenamento; decidir se vale migrar para app nativo                | Planejada                                                |
 
 ## Onda 2 — pontos de atenção
 
@@ -46,6 +46,8 @@ Sugestão de divisão: **3a estrutura** (telas, tela cheia, zoom, orientação) 
 técnicos/avisos que o usuário final não precisa ver.
 
 ## Ideias futuras
+
+- **Vários celulares com o mesmo gatilho (pedido do Kenidy, 01/11):** com amigos usando o app juntos, um "Ei Clip" disparava todos. **Feito na `v0.17.0`:** palavra de ativação à escolha nos Ajustes ("Ei Clip", "Câmera, ação", "Ei Câmera"). **Próximos, em ordem:** (1) validar no iPhone o que o iOS escreve para cada frase e ajustar as variações; (2) opção "Só minha voz": exigir que o volume do **próprio** microfone no momento do comando fique bem acima do ruído de fundo (a voz do dono, perto, soa mais alta que a de um amigo longe; a testar com vento e barco); (3) mais palavras, só se faltar: "Ei Lance", "Ei Replay", "Ei Destaque" (reservas "Ei Cena", "Ei Captura"; evitar palavras da pesca, o app não é só para isso); (4) palavra livre com calibração (falar 3 vezes e o app guarda o que o iOS escreveu). Descartados: reconhecer a voz de cada pessoa (o Web Speech do iOS não identifica quem fala) e "Fisgou" (o grupo inteiro grita junto). **Modo grupo** (todos gravam ao mesmo tempo, vários ângulos do mesmo momento) fica como ideia opcional.
 
 - **Câmera (pedidos do Kenidy, 30/10):** (1) nível/horizonte na tela como o app nativo (sensor de movimento; pede permissão no iOS); (2) toque na tela para focar (o Safari só permite em alguns aparelhos: verificar no iPhone antes); (3) analisar a estabilização de vídeo (o que o Safari entrega e o que dá para fazer). **Feito (30/10):** nível (v0.15.0), foco por toque descartado (iOS não expõe `focusMode`), espelhamento da frontal (v0.15.4), orientação deitada OK com a rotação de tela ligada. **Estabilização, análise:** a lista de controles do iPhone não tem nenhum de estabilização (só zoom, torch, whiteBalanceMode, backgroundBlur...), então a web não liga nem desliga. Não sabemos se o iOS já estabiliza o fluxo da câmera para a página: testar andando/balançando e comparar com o app Câmera. Plano B por software (não feito): estabilização digital no canvas (estimar movimento por quadro, cortar ~10% e compensar) custa CPU/calor em 1080p60 e mexe no encoder; compensar só rotação com giroscópio exige a permissão de movimento e não corrige tremor de translação. Plano C: app nativo em Swift.
 - **Espelhamento/posição da câmera (dúvida do Kenidy):** conferir como a imagem sai gravada, em especial com a câmera frontal (prévia espelhada x arquivo), orientação em pé/deitado e a 0,5×. Verificar no código (`pump` desenha via canvas) e testar no iPhone.

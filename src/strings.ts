@@ -38,7 +38,7 @@ export const T = {
   voiceOn: 'Comando de voz ativado.',
   voiceOff: 'Comando de voz desativado.',
   voiceUnsupported: 'Comando de voz indisponível neste aparelho.',
-
+  wakeLabel: { clip: 'Ei Clip', 'camera-acao': 'Câmera, ação', 'ei-camera': 'Ei Câmera' },
   // Gravação
   waitBuffer: 'Aguarde um instante para gravar.',
   noKeyframe: 'Aguarde 1 segundo e tente de novo.',

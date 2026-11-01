@@ -1,5 +1,5 @@
 import { ReplayBuffer } from './core/replay-buffer';
-import type { BeepVol, Clip, Config, Recording, Screen } from './types';
+import type { BeepVol, Clip, Config, Recording, Screen, WakeWord } from './types';
 
 export interface AacMeta {
   decoderConfig: { codec: string; sampleRate: number; numberOfChannels: number; description: Uint8Array };
@@ -96,6 +96,8 @@ export interface AppState {
   voice: 'off' | 'starting' | 'listening' | 'unsupported';
   /** Preferência do usuário (a chave do botão de voz). */
   voiceEnabled: boolean;
+  /** Palavra de ativação escolhida nos Ajustes (padrão "Ei Clip"). */
+  wakeWord: WakeWord;
   /** Últimos eventos da escuta, só para o painel de diagnóstico. */
   voiceLog: string[];
   /** Etapas do início da câmera (permissão, stream, erros), só para o painel de diagnóstico. */
@@ -188,6 +190,7 @@ export const S: AppState = {
   micErr: '',
   voice: 'off',
   voiceEnabled: true,
+  wakeWord: 'clip',
   voiceLog: [],
   camLog: [],
   view: 'home',

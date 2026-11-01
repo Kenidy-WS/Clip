@@ -82,6 +82,8 @@ export const els = {
   btnSheetClose: byId<HTMLButtonElement>('btnSheetClose'),
   segQuality: byId<HTMLElement>('segQuality'),
   segBuffer: byId<HTMLElement>('segBuffer'),
+  segWake: byId<HTMLElement>('segWake'),
+  rowWake: byId<HTMLElement>('rowWake'),
   segFps: byId<HTMLElement>('segFps'),
   segImageQuality: byId<HTMLElement>('segImageQuality'),
   swBeepClip: byId<HTMLButtonElement>('swBeepClip'),

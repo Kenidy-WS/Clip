@@ -1,7 +1,8 @@
 /**
- * Reconhecimento da palavra de ativação "Ei Clip" a partir do texto devolvido pelo reconhecedor de voz.
- * Lógica pura (sem navegador): o motor de voz em `src/media/voice.ts` só entrega o texto e age conforme a resposta.
+ * Reconhecimento da palavra de ativação ("Ei Clip", "Câmera, ação" ou "Ei Câmera") a partir do texto devolvido pelo
+ * reconhecedor de voz. Lógica pura (sem navegador): o motor de voz em `src/media/voice.ts` só entrega o texto e age conforme a resposta.
  */
+import type { WakeWord } from '../types';
 
 /** Tira acentos, pontuação e caixa alta: "Ei, Clipe!" -> "ei clipe". */
 export function normalize(text: string): string {
@@ -64,6 +65,69 @@ export function isEarlyWakePhrase(text: string): boolean {
   const words = normalize(text).split(' ');
   const n = words.length;
   return n >= 2 && words[n - 1] === 'cli' && GREETINGS.has(words[n - 2]);
+}
+
+// ---- Outras palavras de ativação (v0.17.0) ----------------------------------------------------------------------------
+// Com vários celulares perto, cada pessoa usa uma palavra diferente. "câmera" é uma palavra comum, então estas duas são mais
+// estritas que "Ei Clip": só valem a frase completa (sem "clip" solto nem começo parcial) e a saudação de "Ei Câmera" não aceita
+// as variações curtas ("a", "e", "eu", "ai"), que fariam "a câmera está ligada" disparar a gravação.
+
+const CAMERA_WORDS = new Set(['camera', 'camara']);
+const ACAO_WORDS = new Set(['acao', 'acoes', 'action']);
+/** Ligações que o reconhecedor pode inserir: "câmera e ação", "câmera, a ação". */
+const LINK_WORDS = new Set(['a', 'e', 'de']);
+const STRICT_GREETINGS = new Set(['ei', 'hei', 'hey', 'ey', 'eii', 'eei', 'oi']);
+const JOINED_CAMERA_ACAO = /^(?:camera|camara)(?:e|a)?(?:acao|acoes|action)$/;
+const JOINED_EI_CAMERA = /^(?:ei|hei|hey|ey|oi)(?:camera|camara)$/;
+
+/** "Câmera, ação" (também "luz, câmera, ação" e "câmera e ação"). */
+export function isCameraAcaoPhrase(text: string): boolean {
+  const words = normalize(text).split(' ');
+  if (words.some((w) => JOINED_CAMERA_ACAO.test(w))) return true;
+  for (let i = 0; i < words.length - 1; i++) {
+    if (!CAMERA_WORDS.has(words[i])) continue;
+    const next = LINK_WORDS.has(words[i + 1]) ? i + 2 : i + 1;
+    if (ACAO_WORDS.has(words[next] ?? '')) return true;
+  }
+  return false;
+}
+
+/** "Ei câmera" (também "oi câmera", "hey camera"). "A câmera" ou "câmera" soltas não valem. */
+export function isEiCameraPhrase(text: string): boolean {
+  const words = normalize(text).split(' ');
+  if (words.some((w) => JOINED_EI_CAMERA.test(w))) return true;
+  for (let i = 1; i < words.length; i++) {
+    if (CAMERA_WORDS.has(words[i]) && STRICT_GREETINGS.has(words[i - 1])) return true;
+  }
+  return false;
+}
+
+/** Como reconhecer cada palavra de ativação: frase completa e, só para "Ei Clip", os atalhos que apenas COMEÇAM a gravar. */
+export interface WakeMatcher {
+  full(text: string): boolean;
+  /** "clip" solto (o reconhecedor engole o "Ei"). */
+  loose(text: string): boolean;
+  /** Começo parcial da frase ("ei cli"). */
+  early(text: string): boolean;
+}
+
+const NEVER = (): boolean => false;
+
+const MATCHERS: Record<WakeWord, WakeMatcher> = {
+  clip: { full: isWakePhrase, loose: isLooseWakeStart, early: isEarlyWakePhrase },
+  'camera-acao': { full: isCameraAcaoPhrase, loose: NEVER, early: NEVER },
+  'ei-camera': { full: isEiCameraPhrase, loose: NEVER, early: NEVER },
+};
+
+export const WAKE_WORDS: readonly WakeWord[] = ['clip', 'camera-acao', 'ei-camera'];
+export const DEFAULT_WAKE_WORD: WakeWord = 'clip';
+
+export function isWakeWord(value: unknown): value is WakeWord {
+  return typeof value === 'string' && (WAKE_WORDS as readonly string[]).includes(value);
+}
+
+export function wakeMatcher(word: WakeWord): WakeMatcher {
+  return MATCHERS[word] ?? MATCHERS[DEFAULT_WAKE_WORD];
 }
 
 /**

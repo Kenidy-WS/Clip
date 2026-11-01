@@ -400,6 +400,73 @@ try {
     await page.close();
   }
 
+  // 1b1) Palavra de ativação: "Ei Clip" (padrão), "Câmera, ação" e "Ei Câmera"; cada uma só responde à sua, sem reiniciar a escuta.
+  {
+    const page = await (await browser.newContext()).newPage();
+    const errs = [];
+    page.on('pageerror', (e) => errs.push(String(e)));
+    await page.addInitScript(STUBS + VOICE);
+    await page.goto(URL_);
+    await page.waitForTimeout(600);
+    check(
+      (await page.getAttribute('#segWake button[data-v="clip"]', 'aria-checked')) === 'true',
+      'palavra: "Ei Clip" é o padrão',
+    );
+    await page.click('#btnOpen');
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    await page.waitForFunction(
+      () => document.querySelector('#btnVoice').classList.contains('listening'),
+      null,
+      { timeout: 3000 },
+    );
+    const heard = () => page.evaluate(() => document.querySelector('#btnVoice').classList.contains('heard'));
+    const say = async (text) => {
+      await page.evaluate(() => document.querySelector('#btnVoice').classList.remove('heard'));
+      await page.waitForTimeout(3200); // intervalo mínimo entre comandos
+      await page.evaluate((t) => window.__say(t), text);
+      return heard();
+    };
+    const pick = async (word) => {
+      await page.click('#btnSettingsCam');
+      await page.click(`#segWake button[data-v="${word}"]`);
+      await page.click('#btnSheetClose');
+    };
+    const startsBefore = await page.evaluate(() => window.__starts);
+
+    check(await say('Ei clipe'), 'palavra: "Ei clipe" aciona no padrão');
+    check(!(await say('Câmera, ação')), 'palavra: no padrão, "Câmera, ação" não aciona');
+
+    await pick('camera-acao');
+    check(
+      (await page.getAttribute('#segWake button[data-v="camera-acao"]', 'aria-checked')) === 'true',
+      'palavra: "Câmera, ação" fica marcada',
+    );
+    check(!(await say('Ei clipe')), 'palavra: com "Câmera, ação", "Ei clipe" não aciona');
+    check(!(await say('Ei câmera')), 'palavra: com "Câmera, ação", "Ei câmera" não aciona');
+    check(await say('Câmera, ação'), 'palavra: "Câmera, ação" aciona');
+
+    await pick('ei-camera');
+    check(!(await say('Câmera, ação')), 'palavra: com "Ei Câmera", "Câmera, ação" não aciona');
+    check(!(await say('a câmera está ligada')), 'palavra: "a câmera" solta não aciona');
+    check(await say('Ei câmera'), 'palavra: "Ei câmera" aciona');
+    check(
+      (await page.evaluate(() => window.__starts)) === startsBefore,
+      'palavra: trocar a palavra não reinicia a escuta',
+    );
+
+    // A escolha fica guardada: ao reabrir o app continua "Ei Câmera".
+    await page.reload();
+    await page.waitForTimeout(600);
+    check(
+      (await page.getAttribute('#segWake button[data-v="ei-camera"]', 'aria-checked')) === 'true',
+      'palavra: a escolha é lembrada ao reabrir',
+    );
+    check(errs.length === 0, 'palavra: sem erros de JavaScript ' + errs.join(';'));
+    await page.close();
+  }
+
   // 1b2) A câmera espera a voz responder ao pedido de microfone; se a voz for recusada, a câmera abre mesmo assim.
   {
     const page = await (await browser.newContext()).newPage();

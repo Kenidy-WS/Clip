@@ -31,6 +31,8 @@ export type BeepVol = 'normal' | 'high' | 'max';
 export type Facing = 'environment' | 'user';
 /** Lente traseira: '1' = principal (1×), '0.5' = ultra-angular (0,5×). */
 export type Lens = '1' | '0.5';
+/** Palavra de ativação do comando de voz: "Ei Clip" (padrão), "Câmera, ação" ou "Ei Câmera". */
+export type WakeWord = 'clip' | 'camera-acao' | 'ei-camera';
 /** Telas do app: Início, Câmera (só gravação) e Galeria (grade de clipes). */
 export type Screen = 'home' | 'camera' | 'gallery';
 
