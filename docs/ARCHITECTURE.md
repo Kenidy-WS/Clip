@@ -44,7 +44,7 @@ disco ≥ 250 MB saem por download do service worker (`__clip/`), os menores pel
   modo avião (3 min, 0 erros, 0 reinícios). Reconhece "Ei clipe/Oi clipe/Hey clipe"; o texto parcial chega ~0,4 a 0,9 s
   depois do início da fala. Cada fala vale um comando (chave = instância + índice do resultado) e há 3 s de intervalo mínimo.
   O comando **alterna** a gravação (inicia com o pre-roll / para e salva); o pre-roll de 15–30 s já cobre a latência.
-  A escuta liga **primeiro**, dentro do toque em "Abrir câmera" (`startVoice('tap')`; a câmera só abre depois, ver "Ordem de início" em `CLAUDE.md`), para em `stopAll()` e reinicia sozinha quando o iOS a encerra.
+  Até a v0.21.4 a escuta ligava **primeiro**, dentro do toque em "Abrir câmera" (`startVoice('tap')`); na v0.21.5 (experimento, `VOICE_AFTER_CAMERA`) a câmera abre primeiro e a escuta liga logo depois (`startVoice('auto')`; ver "Ordem de início" em `CLAUDE.md`). Ela para em `stopAll()` e reinicia sozinha quando o iOS a encerra.
   Plano B se falhar em campo: Porcupine Web (roda 100% no aparelho; exige chave e palavra treinada no Picovoice).
 - **Palavra de ativação escolhida (v0.17.0):** `S.wakeWord` (`'clip' | 'camera-acao' | 'ei-camera'`, preferência `wake`) decide só
   **como o texto da escuta é interpretado** (`wakeMatcher` em `core/wake-word.ts`, usado em `onResult` de `media/voice.ts`); o

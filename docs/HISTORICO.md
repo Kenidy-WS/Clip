@@ -7,6 +7,14 @@ Cuidados ao consultar:
 - Seções antigas podem estar **desatualizadas** (ex.: "Próximo passo", "LEIA PRIMEIRO", "Pendências"); valem como registro do que se pensava na época.
 - A ordem é mista: das v0.21.x às v0.8.2 em ordem decrescente, depois a fase 0.5.x–0.7.x, e **as v0.9.9 a v0.12.14 ficam no fim do arquivo**.
 
+## v0.21.5 — experimento (a) do microfone mudo: câmera primeiro, voz logo depois
+
+- Hipótese 1 do microfone que nasce mudo: a ordem voz→câmera (a voz abria o microfone antes do `getUserMedia`, desde a v0.7.0). Agora, no toque em "Abrir câmera", `start()` pede a câmera e o microfone **primeiro** e liga a voz **logo depois de o stream chegar** (`startVoice('auto')`, em `camera.ts`), sem esperar a escuta (`voiceSettled` não é mais usado nesse caminho). Chave para desfazer: `VOICE_AFTER_CAMERA = false` em `camera.ts` (volta à ordem antiga).
+- Modo `'auto'` (e não `'tap'`) de propósito: o iOS pode não tratar o fim do pedido de permissão como toque; assim o aviso de surdez continua valendo e o **primeiro toque reinicia a escuta** dentro de um gesto de verdade. Com `'tap'` uma escuta surda ficaria com o ícone verde e sem aviso (já visto na v0.12.7).
+- Risco a observar no iPhone: a v0.7.0 viu tela preta e 3 pedidos de permissão ao abrir voz e câmera juntas; aqui são em sequência (a voz só começa com a câmera já entregue), mas não foi testado em aparelho.
+- Testes e2e ajustados à ordem nova (`gum,voice`; o primeiro toque reinicia a escuta; sair durante a abertura com a câmera lenta). Área protegida: versão só com essa mudança.
+- Como avaliar: abrir a câmera várias vezes (e voltar da Galeria) e ver no Diagnóstico ("i") a linha "áudio após 3 s … pico": **pico 0.0000 = nasceu mudo**; comparar com a frequência de antes. Anotar também se aparece o 3º pedido de permissão e se a voz fica verde e responde.
+
 ## v0.21.4 — desfeitas as v0.21.2 e v0.21.3 (miniatura na troca de clipe)
 
 - A v0.21.2 (miniatura do vizinho atrás do vídeo) tirou a tela preta, mas **a tela piscava** ao trocar; a v0.21.3 (miniatura só sai com o primeiro quadro na tela) **continuou piscando** no iPhone. Decisão do Kenidy: voltar à troca da v0.21.1, com uma tela preta curta e natural, sem piscar. Feito com `git revert` dos commits das duas versões (`8b64165` e `a4ed6be`, ainda no histórico do git).

@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** v0.21.4 · **`estavel`:** v0.21.4 (`9011f10`, validada no iPhone pelo Kenidy em 01/11, inclusive player, Ajustes e troca de clipe)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** v0.21.5 (experimento do microfone mudo, a testar) · **`estavel`:** v0.21.4 (`9011f10`, validada no iPhone pelo Kenidy em 01/11, inclusive player, Ajustes e troca de clipe)
 
 Histórico completo (o que foi feito, testado e descoberto, versão a versão): [`docs/HISTORICO.md`](HISTORICO.md). Arquitetura: [`ARCHITECTURE.md`](ARCHITECTURE.md). Ondas e ideias: [`ROADMAP.md`](ROADMAP.md). Regras e armadilhas do iOS: `CLAUDE.md`.
 
@@ -22,7 +22,7 @@ PWA de câmera de ação para iPhone (uso do Kenidy e de amigos, para filmar pes
 
 ## Pendências abertas (por prioridade)
 
-1. **Microfone nasce mudo (pico 0.0000)** com frequência ao abrir a câmera e ao voltar da Galeria depois de ouvir um clipe. O app reinicia o microfone sozinho (~3 s) e a voz espera um toque. **Causa raiz desconhecida.** Descartados: `setAudioSession('play-and-record')`, recarregar a página, `AudioContext` 'playback'. Experimentos propostos, um por vez: (a) câmera primeiro e voz logo depois, no mesmo toque; (b) pedir a ultra-angular já no 1º `getUserMedia`; (c) reutilizar a faixa de áudio viva nos reinícios só de vídeo. Área protegida.
+1. **Microfone nasce mudo (pico 0.0000)** com frequência ao abrir a câmera e ao voltar da Galeria depois de ouvir um clipe. O app reinicia o microfone sozinho (~3 s) e a voz espera um toque. **Causa raiz desconhecida.** Descartados: `setAudioSession('play-and-record')`, recarregar a página, `AudioContext` 'playback'. Experimentos, um por versão: **(a) câmera primeiro e voz logo depois, no mesmo toque: EM TESTE na v0.21.5** (chave `VOICE_AFTER_CAMERA` em `camera.ts`); (b) pedir a ultra-angular já no 1º `getUserMedia` (evita o "start #2"); (c) reutilizar a faixa de áudio viva nos reinícios só de vídeo. Área protegida.
 2. **Bipe com chiadinho** no começo e no fim, não constante, ao vivo. Some com a voz desligada (a escuta aberta interfere); o arquivo gravado sai limpo. `pauseVoiceFor` e `BEEP_LEAD_SEC` não resolveram. **Em teste na v0.20.4:** volume 0,9 → 0,7. Se não mudar: pausar a voz por mais tempo antes do bipe ou trocar o bipe do alto-falante por vibração/aviso visual.
 3. **Voz às vezes surda** (precisa falar alto): o iOS reconhece pouco e ignora `autoGainControl`. Escuta iniciada sem toque fica muda sem erro; por isso a voz só liga dentro de um toque.
 4. **Prévia encolhida** (faixas pretas por menos de 1 s) ao voltar do segundo plano: adiado por decisão do Kenidy; só retomar se ficar frequente (copiar o Diagnóstico na hora, linha "Prévia da câmera").
@@ -35,18 +35,26 @@ PWA de câmera de ação para iPhone (uso do Kenidy e de amigos, para filmar pes
 
 ## Testar no iPhone agora
 
-O Kenidy validou o visual e os gestos das versões 0.18 a 0.21.4 (player, pílula de data, Ajustes, trocar de clipe com tela preta curta); a `estavel` avançou para a 0.21.4. Falta só confirmar:
+**Experimento v0.21.5 (microfone mudo) — o principal:** abrir a câmera umas 10 vezes (app fechado e aberto, e voltando da Galeria depois de ver um clipe) e anotar:
 
-1. **Bipe (0.20.4):** o chiado no começo/fim diminuiu com o volume em 0,7? O volume mais baixo incomoda? Se o chiado seguir igual, a causa é a escuta de voz aberta (pendência 2).
-2. **Fluidez (0.20.3):** gravar um clipe novo e abrir os detalhes ("i"): "Fluidez: 30 fps/60 fps".
-3. **Download pelo ícone** em clipe pequeno (folha "Salvar vídeo") e grande (download do service worker).
+1. O microfone nasceu mudo? No Diagnóstico ("i" → Copiar), linha "áudio após 3 s … pico": **0.0000 = mudo**. Comparar com antes (acontecia com frequência).
+2. Apareceu um **3º pedido de permissão**, tela preta ou a câmera abriu mais devagar? (risco visto na v0.7.0)
+3. A voz ficou verde e respondeu ao "Ei Clip"? Se ficou surda, o 1º toque na tela deve reiniciá-la.
+4. Se piorar: me diga e volto a chave para a ordem antiga (a `estavel` v0.21.4 continua intacta).
+
+Ainda por confirmar das versões anteriores:
+
+5. **Bipe (0.20.4):** o chiado no começo/fim diminuiu com o volume em 0,7? Se seguir igual, a causa é a escuta de voz aberta (pendência 2).
+6. **Fluidez (0.20.3):** gravar um clipe novo e abrir os detalhes ("i"): "Fluidez: 30 fps/60 fps".
+7. **Download pelo ícone** em clipe pequeno (folha "Salvar vídeo") e grande (download do service worker).
 
 ## Próximo passo sugerido
 
-Onda 4 (ver ROADMAP): atacar a pendência 1 (microfone que nasce mudo) com os experimentos propostos, **um por versão e sozinho** (área protegida), comparando o Diagnóstico; ou, se o Kenidy preferir, começar pela pendência 5 (postar um clipe de gravação longa no TikTok/Instagram) ou pelo item de refatoração do estado `S`. Perguntar a ele a prioridade antes de começar.
+Onda 4: ver o resultado do experimento (a). Se o microfone deixar de nascer mudo, **avançar a `estavel`** para a v0.21.5 e fechar a pendência 1. Se não mudar, voltar `VOICE_AFTER_CAMERA` para `false` (versão própria) e seguir para o experimento (b), depois o (c). Depois: pendência 5 (postar clipe de gravação longa no TikTok/Instagram) ou a refatoração do estado `S`.
 
 ## Últimas versões
 
+- **v0.21.5** — experimento (a) do microfone mudo: câmera abre primeiro e a voz liga logo depois (modo `'auto'`; o 1º toque reinicia a escuta). Só essa mudança (área protegida); testes e2e ajustados.
 - **v0.21.4** — voltou à troca de clipe das v0.21.1 (tela preta curta, sem piscar): as tentativas com miniatura (v0.21.2 e v0.21.3) foram desfeitas.
 - **v0.21.1** — arrasto no player segue a ordem da Galeria (esquerda = próximo, direita = anterior). Correção da 0.21.0.
 - **v0.21.0** — trocar de clipe arrastando para os lados no player (animação de saída/entrada, som continua, pontas com tranco).
