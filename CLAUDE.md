@@ -40,7 +40,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 
 ## Proteção contra regressão (pedido do Kenidy: a voz demorou para ficar funcional)
 
-- **Ponto de retorno:** o branch `estavel` guarda a última versão validada no iPhone (hoje v0.17.0, com a palavra de ativação validada). Tags não sobem por aqui, por isso é branch.
+- **Ponto de retorno:** o branch `estavel` guarda a última versão validada no iPhone (hoje v0.21.4, validada em 01/11). Tags não sobem por aqui, por isso é branch.
   Só avance o `estavel` (`git push origin <hash>:refs/heads/estavel`) depois que o Kenidy confirmar que a versão nova funciona.
 - **Voltar atrás:** cada versão é um commit só. Para desfazer: `git revert <hash>` (ou `git revert --no-edit estavel..main`), subir versão nova e publicar.
   Nunca reescreva o histórico da `main`.

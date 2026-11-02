@@ -19,7 +19,7 @@ Prioridades (detalhes e hipóteses em `docs/STATUS.md`, "Pendências abertas"):
 3. **Postar no TikTok/Instagram** um clipe de gravação longa (MP4 fragmentado), e exercitar os limites da gravação longa (pouco espaço, 30 min, calor e bateria).
 4. **Prévia encolhida** por menos de 1 s ao voltar do app (adiado; só se ficar frequente).
 5. **Refatorar o estado `S`** (`state.ts`) em serviços menores, sem mudar o comportamento (cobertura de testes primeiro).
-6. **Validar no iPhone** as versões visuais 0.18 a 0.21.x e avançar o `estavel`.
+6. ~~Validar no iPhone as versões visuais 0.18 a 0.21.x e avançar o `estavel`~~ **Feito (01/11): `estavel` = v0.21.4.**
 7. **Decisão PWA x app nativo (Swift):** **adiada de propósito** até o web app estar bem feito; reavaliar no fim desta onda, com a lista de limites que só o nativo resolve (4K60, estabilização, escolha de lente, permissão a cada abertura, microfone mudo).
 
 ## Onda 2 — pontos de atenção (concluída; histórico)

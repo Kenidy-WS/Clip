@@ -1,12 +1,12 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** v0.21.4 · **`estavel`:** v0.17.0 (`f9fc8fa`, validada no iPhone pelo Kenidy, com a palavra de ativação)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** v0.21.4 · **`estavel`:** v0.21.4 (`9011f10`, validada no iPhone pelo Kenidy em 01/11, inclusive player, Ajustes e troca de clipe)
 
 Histórico completo (o que foi feito, testado e descoberto, versão a versão): [`docs/HISTORICO.md`](HISTORICO.md). Arquitetura: [`ARCHITECTURE.md`](ARCHITECTURE.md). Ondas e ideias: [`ROADMAP.md`](ROADMAP.md). Regras e armadilhas do iOS: `CLAUDE.md`.
 
 ## Estado atual do produto
 
-PWA de câmera de ação para iPhone (uso do Kenidy e de amigos, para filmar pesca e postar no TikTok/Instagram). Tudo abaixo funciona; só o que está na seção "Testar no iPhone agora" ainda não foi validado por ele.
+PWA de câmera de ação para iPhone (uso do Kenidy e de amigos, para filmar pesca e postar no TikTok/Instagram). Tudo abaixo funciona e foi validado por ele, exceto o que está em "Testar no iPhone agora".
 
 - **Gravação retroativa:** buffer de 15 ou 30 s; botão vermelho manual (base) e comando de voz (bônus). O pre-roll é zerado depois de cada clipe.
 - **Vídeo:** 720p, 1080p ou 4K, 30 ou 60 fps (4K sempre a 30), qualidade de imagem Padrão/Alta/Máxima, lente 1× e 0,5× (traseira ultra-angular, corrigida para o iPhone 17), frontal com espelhamento opcional, nível de horizonte opcional.
@@ -35,14 +35,15 @@ PWA de câmera de ação para iPhone (uso do Kenidy e de amigos, para filmar pes
 
 ## Testar no iPhone agora
 
-As versões **0.18 a 0.21.1** são visuais/gestos e **ainda não foram aprovadas** pelo Kenidy (a `estavel` segue na 0.17.0). Só avance a `estavel` depois da confirmação dele.
+O Kenidy validou o visual e os gestos das versões 0.18 a 0.21.4 (player, pílula de data, Ajustes, trocar de clipe com tela preta curta); a `estavel` avançou para a 0.21.4. Falta só confirmar:
 
-1. **Player (0.18 a 0.20):** tamanho, borda e vidro claro contra a Fotos; ícones brancos; barra de controles com respiro nas laterais e afastada dos botões de baixo; botão "i" (detalhes) e velocidade; botão de download (folha "Salvar vídeo" e, em clipe grande, o download); botão de som (clipe abre mudo; ligar o som desliga a câmera e a volta pede o toque em "Ligar câmera").
-2. **Pílula de data (0.20.2):** "Hoje", "Ontem", dia da semana até 6 dias atrás, depois a data; abrir clipes de dias diferentes.
-3. **Trocar de clipe arrastando (0.21.4):** há uma tela preta curta entre os clipes (decisão do Kenidy: melhor que o piscar das miniaturas); esquerda = próximo da lista (mais antigo), direita = anterior (mais novo); pontas dão só o tranco; com o som ligado ele continua; arrastar para baixo ainda fecha. (A 0.21.0 trocava no sentido invertido.)
-4. **Ajustes (0.19, 0.20.2):** primeira página com o espaçamento original, submenus com respiro em cima e embaixo, texto "Escolha o gatilho de voz.", arrastar para baixo fecha (inclusive em submenu e com a página rolada).
-5. **Fluidez (0.20.3):** gravar um clipe novo e abrir os detalhes: "Fluidez: 30 fps/60 fps".
-6. **Bipe (0.20.4):** o chiado no começo/fim diminuiu? O volume mais baixo incomoda?
+1. **Bipe (0.20.4):** o chiado no começo/fim diminuiu com o volume em 0,7? O volume mais baixo incomoda? Se o chiado seguir igual, a causa é a escuta de voz aberta (pendência 2).
+2. **Fluidez (0.20.3):** gravar um clipe novo e abrir os detalhes ("i"): "Fluidez: 30 fps/60 fps".
+3. **Download pelo ícone** em clipe pequeno (folha "Salvar vídeo") e grande (download do service worker).
+
+## Próximo passo sugerido
+
+Onda 4 (ver ROADMAP): atacar a pendência 1 (microfone que nasce mudo) com os experimentos propostos, **um por versão e sozinho** (área protegida), comparando o Diagnóstico; ou, se o Kenidy preferir, começar pela pendência 5 (postar um clipe de gravação longa no TikTok/Instagram) ou pelo item de refatoração do estado `S`. Perguntar a ele a prioridade antes de começar.
 
 ## Últimas versões
 
