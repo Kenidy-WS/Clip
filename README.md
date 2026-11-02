@@ -7,7 +7,7 @@ em gravar, o clipe já começa antes do toque. Roda no navegador (PWA), sem App 
 ## Usar
 
 Abra o endereço do app no Safari do iPhone → Compartilhar → **Adicionar à Tela de Início**. Permita câmera e microfone.
-Toque em Gravar e depois em Parar e salvar; em "Salvar / Compartilhar" envie o vídeo ao Rolo da Câmera.
+Toque em Gravar e depois em Parar e salvar. Na Galeria, abra o clipe e toque no ícone de download (seta para baixo) para enviá-lo ao Rolo da Câmera ("Salvar Vídeo").
 
 ## Desenvolver
 
@@ -19,7 +19,7 @@ npm run e2e      # fluxo no Chromium (depois de npm run build)
 ```
 
 Stack: TypeScript, Vite, Vitest, ESLint, Prettier, WebCodecs, mp4-muxer. Publicação automática no GitHub Pages
-(`.github/workflows/deploy.yml`). Detalhes em `docs/ARCHITECTURE.md`; continuidade em `CLAUDE.md` e `docs/STATUS.md`.
+(`.github/workflows/deploy.yml`). Detalhes em `docs/ARCHITECTURE.md`; continuidade em `CLAUDE.md` e `docs/STATUS.md` (histórico completo em `docs/HISTORICO.md`).
 
 ## Limites conhecidos
 

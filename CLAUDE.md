@@ -1,15 +1,15 @@
 # Ei Clip — guia para quem continua o desenvolvimento
 
 Câmera de ação para iPhone feita como PWA (sem Mac, sem App Store): grava o que aconteceu **antes** do toque
-(buffer circular de 15/30 s) e, no futuro, dispara por comando de voz ("Ei Clip"). Uso pessoal do Kenidy e de
+(buffer circular de 15/30 s) e também dispara por comando de voz ("Ei Clip", "Câmera, ação" ou "Ei Câmera"). Uso pessoal do Kenidy e de
 amigos, para filmar pesca e postar no TikTok/Instagram.
 
 ## Comece por aqui (troca de chat)
 
-1. Leia `docs/STATUS.md` (onde paramos, o que testar, próximos passos) e `docs/ROADMAP.md` (ondas).
+1. Leia `docs/STATUS.md` (versão no ar, pendências, o que testar, decisões vigentes) e `docs/ROADMAP.md` (ondas). O registro completo versão a versão está em `docs/HISTORICO.md` (consulte só quando precisar saber por que algo foi feito).
 2. Leia `docs/ARCHITECTURE.md` antes de mexer em `src/media/` ou `src/core/`.
 3. Rode `npm ci && npm run check` para confirmar que tudo está verde antes de começar.
-4. Ao terminar a sessão, **atualize `docs/STATUS.md`** (feito, pendente, decisões, o que o Kenidy precisa testar no iPhone).
+4. Ao terminar a sessão, **atualize `docs/STATUS.md`** (versão no ar, pendências, o que o Kenidy precisa testar no iPhone, últimas versões, decisões) e mantenha-o curto: ao passar de ~150 linhas, mova o detalhe das versões antigas para o topo de `docs/HISTORICO.md`.
 
 ## Comandos
 
@@ -22,8 +22,8 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 
 - **Telas:** Início, Câmera e Galeria (`S.view`), sem rolagem da página. Ao sair da câmera (Início ou Galeria) a captura (câmera, microfone, voz) fica **estacionada** 60 s (`parkCamera`/`resumeParked`/`releaseCamera` em `camera.ts`); voltar nesse prazo não reabre nada. Desliga ao ligar o som de um clipe (o clipe abre mudo, v0.13.0), ao fim do prazo ou ao mudar um ajuste de vídeo (`applyCaptureSettings`). Cores só por tokens
   `:root` em `styles.css` (amarelo = ativo, vermelho = gravar, verde = escutando); ícones só em `src/ui/icons.ts`.
-- **Player (v0.18.0, refinado na v0.20.0):** estilo Fotos do iPhone, **discreto**: vídeo em tela cheia **sem controles nativos**; controles próprios em `clips-view.ts` (`bindPlayerControls`/`paintPlayer`: reproduzir/pausar, barra de posição, velocidade, som, detalhes `fillInfo`) e barras de vidro escuro e sutil (`.player-top`, `.player-bottom`, `.player-info`); tocar no vídeo esconde/mostra (`.chrome-off`). Topo: voltar · data/hora · informações; baixo: pílula de controles e, abaixo, download (salvar/compartilhar, `#btnShare`) e lixeira, só ícones (sem botão grande nem legenda). O botão de som só alterna `muted`: o caminho do som (`volumechange` → `onPlayerVolume`) não mudou. Vidro = `.glass`/`.btn-glass`/`.pill` (só sobre imagem). Alvos de toque ≥ 44 px com ícones de 20 px; o Kenidy achou a versão com 52–64 px exagerada.
-- **Ajustes (v0.19.0):** folha com páginas (`.sheet-page[data-page]` em `index.html`; `showSheetPage` em `app.ts`): `main` tem o essencial de vídeo e os tópicos (`[data-goto]`, com resumo em `#sumVoice/#sumSound/#sumCamera/#sumStorage`, preenchidos em `ui/controls.ts`); `voice`, `sound`, `camera` e `storage` guardam os demais controles. Abre sempre em `main`. Controle novo: coloque-o na página do tópico certo (ou crie um tópico) e use grupos (`.group`) de linhas (`.row`).
+- **Player (v0.18.0, refinado na v0.20.0):** estilo Fotos do iPhone, **discreto**: vídeo em tela cheia **sem controles nativos**; controles próprios em `clips-view.ts` (`bindPlayerControls`/`paintPlayer`: reproduzir/pausar, barra de posição, velocidade, som, detalhes `fillInfo`) e barras de vidro claro e translúcido (`.player-top`, `.player-bottom`, `.player-info`; ícones sempre brancos); tocar no vídeo esconde/mostra (`.chrome-off`). Topo: voltar · data/hora (`core/day-label.ts`: "Hoje", "Ontem", dia da semana até 6 dias, depois a data) · informações (inclui "Fluidez", `ClipRecord.fps`); baixo: pílula de controles e, abaixo, download (salvar/compartilhar, `#btnShare`) e lixeira, só ícones (sem botão grande nem legenda). **Arrastar para baixo fecha; arrastar para os lados troca de clipe na ordem da Galeria** (esquerda = próximo da lista, mais antigo; direita = anterior; `bindPlayerSwipeSides`; não vale nas bordas, que são o gesto de voltar). O botão de som só alterna `muted`: o caminho do som (`volumechange` → `onPlayerVolume`) não mudou. Vidro = `.glass`/`.btn-glass`/`.pill` (só sobre imagem). Alvos de toque ≥ 44 px com ícones de 20 px; o Kenidy achou a versão com 52–64 px exagerada.
+- **Ajustes (v0.19.0):** folha com páginas (`.sheet-page[data-page]` em `index.html`; `showSheetPage` em `app.ts`): `main` tem o essencial de vídeo e os tópicos (`[data-goto]`, com resumo em `#sumVoice/#sumSound/#sumCamera/#sumStorage`, preenchidos em `ui/controls.ts`); `voice`, `sound`, `camera` e `storage` guardam os demais controles. Abre sempre em `main`. Arrastar a folha para baixo fecha (`ui/sheet-swipe.ts`). A primeira página tem o espaçamento compacto; o respiro extra em cima e embaixo vale só nos submenus. Controle novo: coloque-o na página do tópico certo (ou crie um tópico) e use grupos (`.group`) de linhas (`.row`).
 - **Textos:** toda frase exibida ao usuário fica em `src/strings.ts` (rótulos fixos de botões/ajustes ficam no `index.html`). Tom simples, formal e profissional; telas limpas, sem
   informação técnica para o usuário final (diagnóstico é só para desenvolvimento).
 - **Camadas:** `src/core/` é lógica pura (sem DOM, sem navegador) e **tem teste** em `tests/`. `src/media/` é o motor
@@ -90,11 +90,11 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
   "Ultra Wide"** (v0.16.5): a escolha ignora nomes de frontal e, se a 0,5× abrir com `facingMode === 'user'`, a lente é descartada (`badLensIds`) e volta a traseira 1×.
 - **Palavra de ativação (v0.17.0):** o usuário escolhe nos Ajustes entre "Ei Clip" (padrão), "Câmera, ação" e "Ei Câmera" (vários celulares perto não devem
   disparar uns aos outros). `S.wakeWord` só muda como o texto é interpretado (`wakeMatcher`, `core/wake-word.ts`); o reconhecedor não reinicia. As duas novas
-  não têm atalhos parciais e "Ei Câmera" usa saudações estritas, porque "câmera" é palavra comum. Falta validar no iPhone o que o iOS escreve para cada frase
-  (linha "Voz" do Diagnóstico) e ajustar as variações. Candidatas guardadas: "Ei Lance", "Ei Replay", "Ei Destaque" (reservas: "Ei Cena", "Ei Captura").
+  não têm atalhos parciais e "Ei Câmera" usa saudações estritas, porque "câmera" é palavra comum. Validada no iPhone pelo Kenidy; se alguma variação falhar,
+  copie a linha "Voz" do Diagnóstico e acrescente o que o iOS escreveu. Candidatas guardadas: "Ei Lance", "Ei Replay", "Ei Destaque" (reservas: "Ei Cena", "Ei Captura").
 - **Permissão e capturas (v0.8.4):** o iOS só dispensa o pedido de câmera/microfone enquanto ainda existe uma captura ativa na página; parar todas as faixas e chamar `getUserMedia` de novo pede de novo. Por isso, ao voltar do segundo plano **não** refazemos a captura se as faixas seguem `live` (`returnFromBackground` em `app.ts`).
 - **Prévia (v0.8.4):** ao trocar de lente o iOS pode desenhar o `<video>` menor que o elemento (faixas). O elemento é recriado a cada captura (`renewPreview`); nunca guardar referência ao `<video>`, use `els.video` (getter).
-- **Bipe (v0.9.0):** gerado por `core/beep-wave.ts` e tocado como `AudioBuffer`; com `beepInClip` as mesmas amostras são somadas ao bloco de áudio em `audio.ts` (`mixBeepInto`). O microfone fica mudo durante o bipe do alto-falante para não captá-lo em dobro.
+- **Bipe (v0.9.0):** gerado por `core/beep-wave.ts` e tocado como `AudioBuffer`; com `beepInClip` as mesmas amostras são somadas ao bloco de áudio em `audio.ts` (`mixBeepInto`). O microfone fica mudo durante o bipe do alto-falante para não captá-lo em dobro. O volume é fixo, sem opção nos Ajustes (`S.beepVol`: hoje `'high'`, pico 0,7; era `'max'` 0,9 até a v0.20.3) e "Sons no vídeo" (`beepInClip`) vem desligado.
 - **Qualidade (v0.9.0):** resolução, fps e taxa vêm de `cfg` e de `core/video-profile.ts` (tabelas de taxa, nível H.264, duração máxima do clipe). Não usar mais constantes `FPS`/`VIDEO_*` em `config.ts`.
 - **Sessão de áudio (v0.9.8):** tocar clipe com som na Galeria pode deixar o microfone mudo ao voltar para a câmera. `setAudioSession` (`media/audio-session.ts`) troca a categoria e o `AudioContext` é fechado ao sair da câmera. Montar o MP4 trava a página: não fazer isso enquanto o bipe de parar toca (`stopRec` espera).
 - **Miniaturas (v0.10.10):** nunca gerar miniatura decodificando clipes grandes (50–160 MB) no iPhone: um `<video>` por clipe derruba a Galeria e um `<video>` solto fora da página não decodifica. A miniatura (JPEG 240×320) é tirada do `S.canvas` ao parar a gravação e vai em `ClipRecord.thumb`.
