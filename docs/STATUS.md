@@ -1,6 +1,14 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.0 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.1 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+
+## v0.20.1 — vidro mais claro, ícones brancos e Ajustes com mais respiro (só visual)
+
+- **Feedback do Kenidy sobre a 0.20.0:** melhorou muito; o cinza escuro dos controles pesava, os ícones deviam ser brancos e padronizados como os do iPhone, e nos Ajustes faltava espaço também em cima e embaixo.
+- **Vidro:** agora claro e translúcido (degradê branco 16%→7%, desfoque 16 px, borda e brilho finos), em vez de cinza escuro.
+- **Ícones:** todos brancos no player (a lixeira deixou de ser vermelha); traço único de 1,9 px; setas de voltar/avançar mais firmes; lixeira redesenhada com tampa e riscos, no estilo SF Symbols.
+- **Ajustes:** grupos com 8 px de respiro em cima e embaixo, linhas de 58 px, mais espaço entre o título e o primeiro cartão, folha com 14 px em cima e 28 px embaixo. Opções do gatilho de voz em 13 px.
+- **Testar no iPhone:** vidro e ícones do player contra a Fotos; submenus dos Ajustes (voz, sons, câmera, armazenamento).
 
 ## v0.20.0 — player discreto (padrão Fotos) e ajustes de espaço e texto (só visual, não toca na voz nem no microfone)
 

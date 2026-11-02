@@ -3,14 +3,14 @@
  * No HTML basta marcar o elemento com `data-icon="nome"`; `mountIcons()` insere o SVG.
  */
 const svg = (body: string): string =>
-  `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  `<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 
 export const ICONS = {
-  back: svg('<path d="M15 5l-7 7 7 7"/>'),
+  back: svg('<path d="M15 5l-7 7 7 7" stroke-width="2.3"/>'),
   close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
   info: svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6v.1" stroke-width="2.4"/>'),
   download: svg('<path d="M12 3.5v12"/><path d="M7 11l5 5 5-5"/><path d="M5 20h14"/>'),
-  chevron: svg('<path d="M9 5l7 7-7 7"/>'),
+  chevron: svg('<path d="M9 5l7 7-7 7" stroke-width="2.3"/>'),
   settings: svg(
     '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   ),
@@ -36,7 +36,7 @@ export const ICONS = {
     '<path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
   ),
   trash: svg(
-    '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+    '<path d="M4 6.5h16"/><path d="M18.5 6.5l-.8 12.2a2 2 0 0 1-2 1.8H8.3a2 2 0 0 1-2-1.8L5.5 6.5"/><path d="M9 6.5V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v1.5"/><path d="M10 10.5v6M14 10.5v6"/>',
   ),
   camera: svg(
     '<path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/>',
