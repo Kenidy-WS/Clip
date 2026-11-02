@@ -1,3 +1,4 @@
+import { bindSheetSwipeDown } from './ui/sheet-swipe';
 import { onEncoderFail, onClipsChange, onStateChange, onStatus, onVoiceCommand, notify } from './events';
 import {
   acquireWake,
@@ -151,6 +152,7 @@ function bindSettings(): void {
   els.btnSettingsHome.addEventListener('click', openSheet);
   els.btnSettingsCam.addEventListener('click', openSheet);
   els.btnSheetClose.addEventListener('click', closeSheet);
+  bindSheetSwipeDown();
   els.btnSheetBack.addEventListener('click', () => showSheetPage('main'));
   els.sheet.querySelectorAll<HTMLElement>('[data-goto]').forEach((b) => {
     b.addEventListener('click', () => showSheetPage(b.dataset.goto ?? 'main'));

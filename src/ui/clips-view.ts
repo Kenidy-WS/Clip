@@ -1,3 +1,4 @@
+import { dayLabel } from '../core/day-label';
 import { removeClip, removeClips } from '../clips';
 import { setAudioSession } from '../media/audio-session';
 import { releaseCamera } from '../media/camera';
@@ -142,10 +143,7 @@ export function openPlayer(c: Clip): void {
   els.playerVideo.muted = true;
   els.playerVideo.volume = 1;
   // Na pílula só a data e a hora (como na Fotos); o resto fica no botão de detalhes.
-  els.playerTitle.textContent = new Date(c.at).toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-  });
+  els.playerTitle.textContent = dayLabel(c.at);
   els.playerSub.textContent = new Date(c.at).toLocaleTimeString('pt-BR', {
     hour: '2-digit',
     minute: '2-digit',

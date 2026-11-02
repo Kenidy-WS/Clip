@@ -1,6 +1,14 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.1 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.2 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+
+## v0.20.2 — barra do player, Ajustes e dia da semana (nada na área protegida)
+
+- **Barra de controles do player:** 36 px mais estreita (respiro nas laterais) e mais alta (18 px de distância dos botões de baixo).
+- **Ajustes:** a primeira página voltou ao espaçamento da 0.20.0; o respiro extra (cima/baixo) vale só nos submenus (`.sheet-page:not([data-page='main'])`).
+- **Arrastar para baixo fecha os Ajustes** (`ui/sheet-swipe.ts`): só começa com o conteúdo no topo; a folha acompanha o dedo e fecha ao soltar além de ~110 px ou rápido.
+- **Pílula do player:** "Hoje", "Ontem", dia da semana ("sexta-feira") até 6 dias atrás e, depois, a data ("30 de out."), como na Fotos (`core/day-label.ts`, com teste).
+- **Testar no iPhone:** o arrasto para baixo nos Ajustes (inclusive num submenu e com a página rolada) e a pílula com clipes de dias diferentes.
 
 ## v0.20.1 — vidro mais claro, ícones brancos e Ajustes com mais respiro (só visual)
 
