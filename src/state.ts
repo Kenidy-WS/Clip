@@ -174,7 +174,7 @@ export const S: AppState = {
   needResume: false,
   muteUntil: 0,
   soundOn: true,
-  beepVol: 'max',
+  beepVol: 'high', // v0.20.4: era 'max' (pico 0,9); teste para reduzir o chiado do bipe
   beepInClip: false,
   diskRec: true,
   mirrorFront: true,

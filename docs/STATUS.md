@@ -1,6 +1,12 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.3 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.4 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+
+## v0.20.4 — volume do bipe de 0,9 para 0,7 (teste; versão isolada)
+
+- O volume do bipe é fixo (não há opção nos Ajustes) e estava em "Máximo" (pico 0,9, sustentado). Passou para "Alto" (pico 0,7, sustentado) em `state.ts`. Vale para o alto-falante e para o bipe somado ao clipe.
+- **Motivo:** chiadinho no começo/fim do bipe, não constante; o Kenidy suspeita da relação com o microfone ativo (um clipe que chiava tocou limpo depois de desativar o microfone, então o arquivo parece estar correto).
+- **Testar:** se o chiado diminui e se a perda de volume incomoda. Se não mudar, a causa é o microfone/voz (ver nota "Voz × bipe × microfone" no CLAUDE.md), não o volume. Voltar atrás: `git revert`.
 
 ## v0.20.3 — fluidez (fps) nos detalhes do clipe
 
