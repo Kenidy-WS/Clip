@@ -1,7 +1,7 @@
 import { ArrayBufferTarget, Muxer } from 'mp4-muxer';
 import { clipFileName } from '../core/clip-name';
 import { rebase } from '../core/timestamps';
-import { S } from '../state';
+import { S, cfg } from '../state';
 import { T } from '../strings';
 import type { Clip, Recording } from '../types';
 import { aacMeta } from './audio';
@@ -46,6 +46,7 @@ export function buildMp4(r: Recording, audio = true): Clip {
     preSec: r.preSec,
     withAudio,
     dims: `${S.W}x${S.H}`,
+    fps: cfg.fps,
     mbps: (blob.size * 8) / durSec / 1e6,
     aCount: as.length,
     aSec,

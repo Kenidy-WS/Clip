@@ -135,6 +135,7 @@ async function commitDiskRecording(r: Recording, thumb?: Blob, partial = false):
       preSec: r.preSec,
       withAudio: res.aCount > 0,
       dims: `${S.W}x${S.H}`,
+      fps: cfg.fps,
       mbps: (res.bytes * 8) / res.durSec / 1e6,
       aCount: res.aCount,
       aSec: res.aSec,

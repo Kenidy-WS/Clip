@@ -84,6 +84,7 @@ export const T = {
     duration: 'Duração',
     size: 'Tamanho',
     dims: 'Resolução',
+    fps: 'Fluidez',
     rate: 'Taxa',
     pre: 'Pré-gravação',
     audio: 'Áudio',

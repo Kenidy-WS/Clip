@@ -189,6 +189,7 @@ function fillInfo(c: Clip): void {
     [T.info.duration, formatDuration(c.durSec)],
     [T.info.size, `${(c.blob.size / 1048576).toFixed(1).replace('.', ',')} MB`],
     [T.info.dims, c.dims],
+    ...(c.fps ? ([[T.info.fps, `${c.fps} fps`]] as Array<[string, string]>) : []),
     [T.info.rate, `${c.mbps.toFixed(1).replace('.', ',')} Mbps`],
     [T.info.pre, `${Math.round(c.preSec)} s`],
     [T.info.audio, c.withAudio ? T.info.audioYes : T.info.audioNo],

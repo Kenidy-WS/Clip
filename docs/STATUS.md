@@ -1,6 +1,10 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.2 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.3 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+
+## v0.20.3 — fluidez (fps) nos detalhes do clipe
+
+- O cartão de detalhes agora mostra "Fluidez: 30 fps / 60 fps". O valor é gravado no clipe (`ClipRecord.fps`). Clipes feitos antes da 0.20.3 e takes recuperados não têm o dado, então a linha some neles.
 
 ## v0.20.2 — barra do player, Ajustes e dia da semana (nada na área protegida)
 

@@ -55,6 +55,8 @@ export interface ClipRecord {
   preSec: number;
   withAudio: boolean;
   dims: string;
+  /** Quadros por segundo da gravação (clipes antigos e recuperados não têm). */
+  fps?: number;
   mbps: number;
   aCount: number;
   aSec: number;

@@ -56,6 +56,7 @@ export const saveClip = (c: ClipRecord): Promise<IDBValidKey> =>
       preSec: c.preSec,
       withAudio: c.withAudio,
       dims: c.dims,
+      fps: c.fps,
       mbps: c.mbps,
       aCount: c.aCount,
       aSec: c.aSec,
