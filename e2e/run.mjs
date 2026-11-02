@@ -1092,6 +1092,59 @@ try {
     await page.click('#clips .tile');
     await page.click('#btnPlayerClose');
     check(!(await page.isVisible('#player')), 'fechar volta para a Galeria');
+    // Trocar de clipe arrastando para os lados (o primeiro da lista é o mais novo).
+    await page.click('#clips .tile >> nth=0');
+    const srcOf = () => page.evaluate(() => document.querySelector('#playerVideo').getAttribute('src'));
+    const side = (x0, x1) =>
+      page.evaluate(
+        async ([a, b]) => {
+          const el = document.querySelector('#playerVideo');
+          const mk = (type, x) => {
+            const t = new Touch({ identifier: 9, target: el, clientX: x, clientY: 400 });
+            el.dispatchEvent(
+              new TouchEvent(type, {
+                touches: type === 'touchend' ? [] : [t],
+                changedTouches: [t],
+                bubbles: true,
+                cancelable: true,
+              }),
+            );
+          };
+          mk('touchstart', a);
+          for (let x = a; b > a ? x < b : x > b; x += b > a ? 20 : -20) {
+            mk('touchmove', x);
+            await new Promise((r) => setTimeout(r, 30));
+          }
+          mk('touchmove', b);
+          mk('touchend', b);
+        },
+        [x0, x1],
+      );
+    const first = await srcOf();
+    await side(250, 120); // para a esquerda = mais novo; o primeiro já é o mais novo
+    await page.waitForTimeout(400);
+    check((await srcOf()) === first, 'player: arrastar para a esquerda no clipe mais novo não troca');
+    await side(120, 300); // para a direita = clipe anterior (mais antigo)
+    await page.waitForFunction(
+      (f) => document.querySelector('#playerVideo').getAttribute('src') !== f,
+      first,
+      {
+        timeout: 3000,
+      },
+    );
+    ok('player: arrastar para a direita abre o clipe anterior');
+    const second = await srcOf();
+    await side(300, 120); // para a esquerda = volta ao mais novo
+    await page.waitForFunction(
+      (f) => document.querySelector('#playerVideo').getAttribute('src') !== f,
+      second,
+      {
+        timeout: 3000,
+      },
+    );
+    check((await srcOf()) !== second, 'player: arrastar para a esquerda avança para o clipe seguinte');
+    check(await page.isVisible('#player'), 'player continua aberto depois de trocar de clipe');
+    await page.click('#btnPlayerClose');
     const swipe = (fromX, toX) =>
       page.evaluate(
         ([a, b]) => {

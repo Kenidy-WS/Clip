@@ -1,6 +1,6 @@
 {
   "name": "ei-clip",
-  "version": "0.20.4",
+  "version": "0.21.0",
   "private": true,
   "type": "module",
   "description": "Ei Clip: câmera com gravação retroativa e comando de voz, em PWA.",

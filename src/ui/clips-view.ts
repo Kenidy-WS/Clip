@@ -135,12 +135,12 @@ let soundOn = false;
  * O clipe abre **mudo** (v0.13.0): tocar com som troca o modo de áudio do iOS e o microfone da câmera passava a nascer mudo
  * (a voz ficava surda). Mudo, nada disso acontece e a câmera estacionada segue ligada: voltar é instantâneo.
  */
-export function openPlayer(c: Clip): void {
+export function openPlayer(c: Clip, keepSound = false): void {
   current = c;
-  soundOn = false;
+  if (!keepSound) soundOn = false; // ao passar para outro clipe com o som já ligado, o som continua
   S.playErr = '';
   els.playerVideo.src = c.url;
-  els.playerVideo.muted = true;
+  els.playerVideo.muted = !soundOn;
   els.playerVideo.volume = 1;
   // Na pílula só a data e a hora (como na Fotos); o resto fica no botão de detalhes.
   els.playerTitle.textContent = dayLabel(c.at);
@@ -154,7 +154,7 @@ export function openPlayer(c: Clip): void {
   els.player.classList.remove('chrome-off');
   seeking = false;
   paintPlayer();
-  showAnimated(els.player);
+  if (els.player.hidden) showAnimated(els.player);
   void els.playerVideo.play().catch(() => {
     /* se o iOS exigir, é só tocar em play */
   });
@@ -565,10 +565,96 @@ function bindPlayerSwipeDown(): void {
   });
 }
 
+/**
+ * Arrastar para os lados troca de clipe, como na Fotos: para a direita volta ao clipe anterior (mais antigo),
+ * para a esquerda avança para o seguinte (mais novo). Nas pontas o vídeo só dá um tranco e volta.
+ * Não vale a partir da borda da tela (é o gesto de voltar) nem sobre barras e botões.
+ */
+function bindPlayerSwipeSides(): void {
+  const box = els.player;
+  const vid = els.playerVideo;
+  const EDGE = 28;
+  let t0: { x: number; y: number; at: number } | null = null;
+  let dx = 0;
+  let active = false;
+  const slide = (x: number, animate: boolean): void => {
+    vid.style.transition = animate ? 'transform 180ms var(--ease-out), opacity 180ms ease' : '';
+    vid.style.transform = x ? `translateX(${x}px)` : '';
+    vid.style.opacity = x ? String(1 - Math.min(0.5, Math.abs(x) / 600)) : '';
+  };
+  const neighbor = (dir: 1 | -1): Clip | null => {
+    const i = current ? S.clips.indexOf(current) : -1;
+    return i < 0 ? null : (S.clips[i + dir] ?? null); // a lista é do mais novo para o mais antigo
+  };
+  box.addEventListener(
+    'touchstart',
+    (e) => {
+      const el = e.target as HTMLElement;
+      const t = e.touches[0];
+      const blocked = el.closest('button, .player-top, .player-bottom, .player-info');
+      const edge = t.clientX <= EDGE || t.clientX >= innerWidth - EDGE;
+      if (e.touches.length !== 1 || blocked || edge) return void (t0 = null);
+      t0 = { x: t.clientX, y: t.clientY, at: performance.now() };
+      dx = 0;
+      active = false;
+      vid.style.transition = '';
+    },
+    { passive: true },
+  );
+  box.addEventListener(
+    'touchmove',
+    (e) => {
+      if (!t0) return;
+      const t = e.touches[0];
+      const mx = t.clientX - t0.x;
+      const my = t.clientY - t0.y;
+      if (!active) {
+        if (Math.abs(mx) < 12 || Math.abs(mx) < Math.abs(my) * 1.2) return; // só horizontal
+        active = true;
+      }
+      e.preventDefault();
+      dx = mx;
+      // Sem clipe do lado para onde vai, o vídeo "resiste" (anda só um terço).
+      const dir = dx > 0 ? 1 : -1; // direita = mais antigo = próximo índice
+      slide(neighbor(dir) ? dx : dx / 3, false);
+    },
+    { passive: false },
+  );
+  const finish = (): void => {
+    if (!t0) return;
+    const fast = Math.abs(dx) / Math.max(1, performance.now() - t0.at) > 0.5; // px/ms
+    const go = active && (Math.abs(dx) > 90 || (fast && Math.abs(dx) > 40));
+    t0 = null;
+    if (!active) return;
+    active = false;
+    const dir = dx > 0 ? 1 : -1;
+    const next = neighbor(dir);
+    if (!go || !next) return slide(0, true);
+    const w = innerWidth;
+    slide(dir * w, true); // sai para o lado do dedo
+    setTimeout(() => {
+      if (!current) return slide(0, false);
+      openPlayer(next, soundOn);
+      slide(-dir * w, false); // o novo entra pelo lado oposto
+      void vid.offsetWidth;
+      slide(0, true);
+    }, 170);
+  };
+  box.addEventListener('touchend', finish);
+  box.addEventListener('touchcancel', () => {
+    t0 = null;
+    if (active) {
+      active = false;
+      slide(0, true);
+    }
+  });
+}
+
 /** Liga os botões do player (chamar uma vez). */
 export function bindPlayer(): void {
   bindSelection();
   bindPlayerSwipeDown();
+  bindPlayerSwipeSides();
   bindPlayerControls();
   els.playerVideo.addEventListener('volumechange', onPlayerVolume);
   els.playerVideo.addEventListener('error', () => {

@@ -1,6 +1,13 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.20.4 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** 0.21.0 · `estavel` = 0.17.0 (palavra de ativação validada no iPhone pelo Kenidy; as versões visuais 0.18 a 0.20 ainda não foram aprovadas por ele)
+
+## v0.21.0 — trocar de clipe arrastando para os lados no player
+
+- No player, arrastar para a **direita** abre o clipe **anterior** (mais antigo) e para a **esquerda** o **seguinte** (mais novo), como na Fotos. Nas pontas da lista o vídeo só dá um tranco e volta. O vídeo desliza para fora e o novo entra pelo outro lado (`bindPlayerSwipeSides`, `clips-view.ts`).
+- Não vale a partir das bordas da tela (gesto de voltar), nem sobre botões, barras e cartão de detalhes. Arrastar para baixo continua fechando.
+- Se o som já estava ligado, ele continua no clipe novo; se estava mudo, o novo também abre mudo. Detalhes, data e velocidade (volta a 1×) são refeitos para o novo clipe.
+- Testar no iPhone: o arrasto (sentido e sensação), as pontas da lista, trocar com o som ligado.
 
 ## v0.20.4 — volume do bipe de 0,9 para 0,7 (teste; versão isolada)
 
