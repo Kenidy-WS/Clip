@@ -1121,10 +1121,10 @@ try {
         [x0, x1],
       );
     const first = await srcOf();
-    await side(250, 120); // para a esquerda = mais novo; o primeiro já é o mais novo
+    await side(120, 300); // para a direita = anterior da lista; o primeiro não tem anterior
     await page.waitForTimeout(400);
-    check((await srcOf()) === first, 'player: arrastar para a esquerda no clipe mais novo não troca');
-    await side(120, 300); // para a direita = clipe anterior (mais antigo)
+    check((await srcOf()) === first, 'player: arrastar para a direita no primeiro clipe não troca');
+    await side(300, 120); // para a esquerda = próximo da lista (mais antigo)
     await page.waitForFunction(
       (f) => document.querySelector('#playerVideo').getAttribute('src') !== f,
       first,
@@ -1132,9 +1132,9 @@ try {
         timeout: 3000,
       },
     );
-    ok('player: arrastar para a direita abre o clipe anterior');
+    ok('player: arrastar para a esquerda abre o próximo clipe da lista');
     const second = await srcOf();
-    await side(300, 120); // para a esquerda = volta ao mais novo
+    await side(120, 300); // para a direita = volta ao anterior
     await page.waitForFunction(
       (f) => document.querySelector('#playerVideo').getAttribute('src') !== f,
       second,
@@ -1142,7 +1142,7 @@ try {
         timeout: 3000,
       },
     );
-    check((await srcOf()) !== second, 'player: arrastar para a esquerda avança para o clipe seguinte');
+    check((await srcOf()) === first, 'player: arrastar para a direita volta ao clipe anterior');
     check(await page.isVisible('#player'), 'player continua aberto depois de trocar de clipe');
     await page.click('#btnPlayerClose');
     const swipe = (fromX, toX) =>

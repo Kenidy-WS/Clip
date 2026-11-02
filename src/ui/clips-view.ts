@@ -566,8 +566,8 @@ function bindPlayerSwipeDown(): void {
 }
 
 /**
- * Arrastar para os lados troca de clipe, como na Fotos: para a direita volta ao clipe anterior (mais antigo),
- * para a esquerda avança para o seguinte (mais novo). Nas pontas o vídeo só dá um tranco e volta.
+ * Arrastar para os lados troca de clipe na ordem da Galeria (do mais novo para o mais antigo): para a esquerda avança
+ * para o seguinte da lista (mais antigo), para a direita volta ao anterior (mais novo). Nas pontas só dá um tranco e volta.
  * Não vale a partir da borda da tela (é o gesto de voltar) nem sobre barras e botões.
  */
 function bindPlayerSwipeSides(): void {
@@ -615,7 +615,7 @@ function bindPlayerSwipeSides(): void {
       e.preventDefault();
       dx = mx;
       // Sem clipe do lado para onde vai, o vídeo "resiste" (anda só um terço).
-      const dir = dx > 0 ? 1 : -1; // direita = mais antigo = próximo índice
+      const dir = dx < 0 ? 1 : -1; // esquerda = próximo da lista (índice + 1); direita = anterior (índice − 1)
       slide(neighbor(dir) ? dx : dx / 3, false);
     },
     { passive: false },
@@ -627,15 +627,15 @@ function bindPlayerSwipeSides(): void {
     t0 = null;
     if (!active) return;
     active = false;
-    const dir = dx > 0 ? 1 : -1;
+    const dir = dx < 0 ? 1 : -1;
     const next = neighbor(dir);
     if (!go || !next) return slide(0, true);
     const w = innerWidth;
-    slide(dir * w, true); // sai para o lado do dedo
+    slide(-dir * w, true); // sai para o lado do dedo
     setTimeout(() => {
       if (!current) return slide(0, false);
       openPlayer(next, soundOn);
-      slide(-dir * w, false); // o novo entra pelo lado oposto
+      slide(dir * w, false); // o novo entra pelo lado oposto
       void vid.offsetWidth;
       slide(0, true);
     }, 170);
