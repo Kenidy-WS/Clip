@@ -7,6 +7,12 @@ Cuidados ao consultar:
 - Seções antigas podem estar **desatualizadas** (ex.: "Próximo passo", "LEIA PRIMEIRO", "Pendências"); valem como registro do que se pensava na época.
 - A ordem é mista: das v0.21.x às v0.8.2 em ordem decrescente, depois a fase 0.5.x–0.7.x, e **as v0.9.9 a v0.12.14 ficam no fim do arquivo**.
 
+## v0.21.2 — troca de clipe sem tela preta
+
+- Relato do Kenidy: ao deslizar para trocar de vídeo aparecia uma tela preta antes do novo (na galeria do iPhone a transição é suave). Causa: o vídeo saía, e só então o novo era carregado (`src`), deixando o fundo preto até o primeiro quadro.
+- Correção: camada de trás `#playerPeek` com a **miniatura** do clipe vizinho (`thumbUrl`, a mesma da Galeria). Ao arrastar ela vem logo atrás do dedo; ao soltar o atual sai e a miniatura ocupa a tela; ela só some (fade de 160 ms) quando o vídeo novo dispara `loadeddata` (limite de 2,5 s). Sem miniatura (falha) o comportamento é o anterior. Só visual: fora da área protegida.
+- Limite conhecido: a miniatura é um recorte 3:4, então no instante da troca o enquadramento pode "pular" um pouco para o do vídeo real. Se incomodar, o próximo passo é um segundo `<video>` pré-carregado do vizinho (risco: decodificadores no iPhone).
+
 ## v0.21.1 — sentido do arrasto no player corrigido
 
 - O Kenidy relatou que a v0.21.0 trocava no sentido errado (no primeiro clipe, arrastar da direita para a esquerda dava só o "tranco"; no do meio, da esquerda para a direita ia para o próximo em vez do anterior). Eu tinha seguido o sentido da Fotos (esquerda = mais novo); ele espera o da **ordem da Galeria** (mais novo primeiro).

@@ -138,6 +138,7 @@ let soundOn = false;
 export function openPlayer(c: Clip, keepSound = false): void {
   current = c;
   if (!keepSound) soundOn = false; // ao passar para outro clipe com o som já ligado, o som continua
+  if (!keepSound) els.playerPeek.hidden = true; // abertura normal: sem miniatura sobrando de uma troca anterior
   S.playErr = '';
   els.playerVideo.src = c.url;
   els.playerVideo.muted = !soundOn;
@@ -577,10 +578,37 @@ function bindPlayerSwipeSides(): void {
   let t0: { x: number; y: number; at: number } | null = null;
   let dx = 0;
   let active = false;
+  const peek = els.playerPeek;
+  let peekFor: Clip | null = null; // de qual clipe é a miniatura que está na camada de trás
+  let peekTimer = 0;
   const slide = (x: number, animate: boolean): void => {
-    vid.style.transition = animate ? 'transform 180ms var(--ease-out), opacity 180ms ease' : '';
+    vid.style.transition = animate ? 'transform 180ms var(--ease-out)' : '';
     vid.style.transform = x ? `translateX(${x}px)` : '';
-    vid.style.opacity = x ? String(1 - Math.min(0.5, Math.abs(x) / 600)) : '';
+  };
+  const peekAt = (x: number, animate: boolean): void => {
+    peek.style.transition = animate ? 'transform 180ms var(--ease-out)' : '';
+    peek.style.transform = `translateX(${x}px)`;
+  };
+  /** Esconde a miniatura (sem esperar animação). */
+  const resetPeek = (): void => {
+    clearTimeout(peekTimer);
+    peekFor = null;
+    peek.hidden = true;
+    peek.removeAttribute('src');
+    peek.style.transition = '';
+    peek.style.opacity = '';
+    peek.style.transform = '';
+  };
+  /** Mostra a miniatura do vizinho na camada de trás (se ela já está carregada, na hora). */
+  const showPeek = (nb: Clip): void => {
+    if (peekFor === nb) return;
+    peekFor = nb;
+    peek.hidden = true;
+    void thumbUrl(nb).then((u) => {
+      if (peekFor !== nb || !u) return;
+      peek.src = u;
+      peek.hidden = false;
+    });
   };
   const neighbor = (dir: 1 | -1): Clip | null => {
     const i = current ? S.clips.indexOf(current) : -1;
@@ -598,6 +626,7 @@ function bindPlayerSwipeSides(): void {
       dx = 0;
       active = false;
       vid.style.transition = '';
+      resetPeek();
     },
     { passive: true },
   );
@@ -614,9 +643,13 @@ function bindPlayerSwipeSides(): void {
       }
       e.preventDefault();
       dx = mx;
-      // Sem clipe do lado para onde vai, o vídeo "resiste" (anda só um terço).
       const dir = dx < 0 ? 1 : -1; // esquerda = próximo da lista (índice + 1); direita = anterior (índice − 1)
-      slide(neighbor(dir) ? dx : dx / 3, false);
+      const nb = neighbor(dir);
+      if (nb) {
+        showPeek(nb);
+        peekAt(dir * innerWidth + dx, false); // o vizinho vem logo atrás do dedo
+      }
+      slide(nb ? dx : dx / 3, false); // sem vizinho, o vídeo "resiste" (anda só um terço)
     },
     { passive: false },
   );
@@ -629,16 +662,30 @@ function bindPlayerSwipeSides(): void {
     active = false;
     const dir = dx < 0 ? 1 : -1;
     const next = neighbor(dir);
-    if (!go || !next) return slide(0, true);
-    const w = innerWidth;
-    slide(-dir * w, true); // sai para o lado do dedo
-    setTimeout(() => {
-      if (!current) return slide(0, false);
-      openPlayer(next, soundOn);
-      slide(dir * w, false); // o novo entra pelo lado oposto
-      void vid.offsetWidth;
+    if (!go || !next) {
       slide(0, true);
-    }, 170);
+      if (next) peekAt(dir * innerWidth, true);
+      peekTimer = window.setTimeout(resetPeek, 200);
+      return;
+    }
+    const w = innerWidth;
+    slide(-dir * w, true); // o atual sai para o lado do dedo
+    peekAt(0, true); // e a miniatura do novo ocupa a tela
+    setTimeout(() => {
+      if (!current) return resetPeek();
+      openPlayer(next, soundOn);
+      slide(0, false);
+      // A miniatura cobre o vídeo novo até o primeiro quadro estar pronto: nada de tela preta.
+      const done = (): void => {
+        vid.removeEventListener('loadeddata', done);
+        clearTimeout(peekTimer);
+        peek.style.transition = 'opacity 160ms ease';
+        peek.style.opacity = '0';
+        peekTimer = window.setTimeout(resetPeek, 180);
+      };
+      vid.addEventListener('loadeddata', done, { once: true });
+      peekTimer = window.setTimeout(done, 2500); // se o iOS não avisar, não deixa a miniatura para sempre
+    }, 185);
   };
   box.addEventListener('touchend', finish);
   box.addEventListener('touchcancel', () => {
@@ -647,6 +694,7 @@ function bindPlayerSwipeSides(): void {
       active = false;
       slide(0, true);
     }
+    resetPeek();
   });
 }
 

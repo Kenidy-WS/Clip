@@ -72,6 +72,7 @@ export const els = {
   galleryEmpty: byId<HTMLElement>('galleryEmpty'),
   player: byId<HTMLElement>('player'),
   playerVideo: byId<HTMLVideoElement>('playerVideo'),
+  playerPeek: byId<HTMLImageElement>('playerPeek'),
   playerTitle: byId<HTMLElement>('playerTitle'),
   playerSub: byId<HTMLElement>('playerSub'),
   btnPlayPause: byId<HTMLButtonElement>('btnPlayPause'),
