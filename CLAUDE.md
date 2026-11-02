@@ -40,7 +40,7 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 
 ## Proteção contra regressão (pedido do Kenidy: a voz demorou para ficar funcional)
 
-- **Ponto de retorno:** o branch `estavel` guarda a última versão validada no iPhone (hoje v0.21.4, validada em 01/11; a main está na v0.21.5, a testar). Tags não sobem por aqui, por isso é branch.
+- **Ponto de retorno:** o branch `estavel` guarda a última versão validada no iPhone (hoje v0.21.4, validada em 01/11; a main está na v0.21.6, igual à 0.21.4 no código). Tags não sobem por aqui, por isso é branch.
   Só avance o `estavel` (`git push origin <hash>:refs/heads/estavel`) depois que o Kenidy confirmar que a versão nova funciona.
 - **Voltar atrás:** cada versão é um commit só. Para desfazer: `git revert <hash>` (ou `git revert --no-edit estavel..main`), subir versão nova e publicar.
   Nunca reescreva o histórico da `main`.
@@ -77,11 +77,10 @@ amigos, para filmar pesca e postar no TikTok/Instagram.
 - **Dois pedidos de permissão:** o iOS pede (1) "Câmera e Microfone" (`getUserMedia`) e, quando a escuta de voz inicia, (2) "Microfone"
   de novo, só para o reconhecimento de voz (Web Speech). Não há como juntar os dois em código. No Safari, "aA → Ajustes do Site →
   Câmera/Microfone: Permitir" pode eliminar ambos (a confirmar se vale para o pedido da voz); o app instalado não tem esses ajustes.
-- **Ordem de início (v0.7.0; invertida em teste na v0.21.5):** até a v0.21.4, no toque em "Abrir câmera", `start(false, true)` ligava a voz **primeiro**
-  (`startVoice('tap')`) e só abria a câmera depois de `voiceSettled` (microfone da voz aberto/recusado/20 s). Ligar voz e câmera ao mesmo tempo dava
-  tela preta + 3 pedidos. **Na v0.21.5 (experimento do microfone mudo, `VOICE_AFTER_CAMERA` em `camera.ts`) a ordem é câmera primeiro e a voz
-  logo depois de o stream chegar (`startVoice('auto')`; o primeiro toque reinicia a escuta).** Se o microfone seguir mudo, ou aparecer o 3º pedido,
-  tela preta ou voz surda, volte a chave para `false`. Reinícios mantêm a captura antiga aberta até a nova chegar (senão o iOS pede permissão de novo).
+- **Ordem de início (v0.7.0):** no toque em "Abrir câmera", `start(false, true)` liga a voz **primeiro** (`startVoice('tap')`, dentro do gesto)
+  e só abre a câmera depois de `voiceSettled` (microfone da voz aberto/recusado/20 s). Ligar voz e câmera ao mesmo tempo dava
+  tela preta + 3 pedidos. Reinícios mantêm a captura antiga aberta até a nova chegar (senão o iOS pede permissão de novo).
+  **Não repita:** inverter a ordem (câmera primeiro, voz logo depois, v0.21.5) foi testado no iPhone em 01/11 e **não resolveu o microfone mudo**: depois de várias aberturas e fechamentos voltaram os 3 pedidos de permissão e o microfone nasceu mudo. Desfeito na v0.21.6.
 - **Janela menor que a tela (v0.8.1):** no app instalado o iOS pode informar `innerHeight` ≈ tela − notch (faixa preta fixa embaixo,
   faixas em volta ao voltar do app). `src/ui/viewport.ts` define `--app-w/--app-h` (tela inteira em modo instalado) e "cutuca" o
   viewport se a diferença persistir; a linha "Tela" do Diagnóstico mostra os valores. Hipótese a confirmar no iPhone.

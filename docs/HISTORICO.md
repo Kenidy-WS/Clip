@@ -7,7 +7,14 @@ Cuidados ao consultar:
 - Seções antigas podem estar **desatualizadas** (ex.: "Próximo passo", "LEIA PRIMEIRO", "Pendências"); valem como registro do que se pensava na época.
 - A ordem é mista: das v0.21.x às v0.8.2 em ordem decrescente, depois a fase 0.5.x–0.7.x, e **as v0.9.9 a v0.12.14 ficam no fim do arquivo**.
 
-## v0.21.5 — experimento (a) do microfone mudo: câmera primeiro, voz logo depois
+## v0.21.6 — desfeito o experimento da v0.21.5 (volta à ordem voz → câmera)
+
+- Revert do commit da v0.21.5 (`589d04d`, no histórico do git). O código é o da v0.21.4; só a versão e a documentação mudam.
+- Motivo: o Kenidy testou a v0.21.5 no iPhone (01/11): as primeiras aberturas foram normais (1 pedido de permissão, voz respondeu), mas depois de abrir e fechar o app várias vezes voltaram os **3 pedidos de permissão** e o **microfone nasceu mudo**. A inversão da ordem não resolveu o microfone mudo e trouxe de volta o sintoma da v0.7.0.
+- Leitura: a falha só aparecer depois de várias aberturas combina com o iOS demorar a liberar a sessão de áudio ao fechar o app, o que a ordem câmera/voz não toca. A hipótese 1 (ordem voz → câmera) fica **descartada como causa única**; não foi medido se a v0.21.5 piorou em relação à v0.21.4, que também nascia muda com frequência.
+- Próximo: antes de qualquer experimento novo, coletar o Diagnóstico ("i" → Copiar) logo depois de uma falha (linhas "Câmera", "Voz" e "áudio após 3 s … pico") e comparar as aberturas boas e ruins.
+
+## v0.21.5 — experimento (a) do microfone mudo: câmera primeiro, voz logo depois (DESFEITO na v0.21.6: não resolveu e voltaram os 3 pedidos)
 
 - Hipótese 1 do microfone que nasce mudo: a ordem voz→câmera (a voz abria o microfone antes do `getUserMedia`, desde a v0.7.0). Agora, no toque em "Abrir câmera", `start()` pede a câmera e o microfone **primeiro** e liga a voz **logo depois de o stream chegar** (`startVoice('auto')`, em `camera.ts`), sem esperar a escuta (`voiceSettled` não é mais usado nesse caminho). Chave para desfazer: `VOICE_AFTER_CAMERA = false` em `camera.ts` (volta à ordem antiga).
 - Modo `'auto'` (e não `'tap'`) de propósito: o iOS pode não tratar o fim do pedido de permissão como toque; assim o aviso de surdez continua valendo e o **primeiro toque reinicia a escuta** dentro de um gesto de verdade. Com `'tap'` uma escuta surda ficaria com o ícone verde e sem aviso (já visto na v0.12.7).

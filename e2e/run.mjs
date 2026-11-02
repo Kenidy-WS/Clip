@@ -294,11 +294,11 @@ try {
       'voz: não escuta antes do toque em Abrir câmera',
     );
     await page.click('#btnOpen');
-    // v0.21.5 (experimento do microfone mudo): a câmera pede permissão primeiro e a escuta liga logo depois que ela chega.
+    // A escuta nasce dentro do toque e abre ANTES da câmera (os dois pedidos de permissão não competem).
     await page.waitForFunction(() => window.__starts >= 1, null, { timeout: 5000 });
     check(
-      await page.evaluate(() => window.__ord.join() === 'gum,voice'),
-      'voz: liga logo depois de a câmera abrir (câmera primeiro)',
+      await page.evaluate(() => window.__ord.join() === 'voice,gum'),
+      'voz: liga dentro do toque, antes de a câmera pedir permissão',
     );
     await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
@@ -313,17 +313,12 @@ try {
       (await page.evaluate(() => window.__starts)) === 1,
       'voz: câmera pronta não reinicia a escuta viva',
     );
-    // Ligada depois da permissão da câmera ('auto'): o iOS pode não tratar isso como toque, então o PRIMEIRO toque reinicia a
-    // escuta dentro de um gesto de verdade; os toques seguintes não mexem mais nela.
+    // Começou dentro do toque em Abrir câmera: toques seguintes não mexem na escuta.
     await page.mouse.click(5, 5);
-    await page.waitForTimeout(300);
     check(
-      (await page.evaluate(() => window.__starts)) === 2,
-      'voz: ligada depois da câmera, o primeiro toque reinicia a escuta',
+      (await page.evaluate(() => window.__starts)) === 1,
+      'voz: iniciada no toque, toques seguintes não reiniciam',
     );
-    await page.mouse.click(5, 5);
-    await page.waitForTimeout(300);
-    check((await page.evaluate(() => window.__starts)) === 2, 'voz: toques seguintes não reiniciam a escuta');
 
     await page.evaluate(() => window.__say('Ei Felipe'));
     check(
@@ -440,14 +435,6 @@ try {
       await page.click(`#segWake button[data-v="${word}"]`);
       await page.click('#btnSheetClose');
     };
-    // O primeiro toque reinicia a escuta (ela nasceu fora de um toque, v0.21.5); espera isso passar antes de contar os inícios.
-    await page.mouse.click(5, 5);
-    await page.waitForTimeout(300);
-    await page.waitForFunction(
-      () => document.querySelector('#btnVoice').classList.contains('listening'),
-      null,
-      { timeout: 3000 },
-    );
     const startsBefore = await page.evaluate(() => window.__starts);
 
     check(await say('Ei clipe'), 'palavra: "Ei clipe" aciona no padrão');
@@ -482,19 +469,21 @@ try {
     await page.close();
   }
 
-  // 1b2) A câmera não espera a voz (v0.21.5: câmera primeiro); se a voz for recusada, a câmera abre mesmo assim.
+  // 1b2) A câmera espera a voz responder ao pedido de microfone; se a voz for recusada, a câmera abre mesmo assim.
   {
     const page = await (await browser.newContext()).newPage();
     await page.addInitScript('window.__audioDelay = 1500;' + STUBS + VOICE);
     await page.goto(URL_);
     await page.click('#btnOpen');
-    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
-      timeout: 1200,
-    });
+    await page.waitForTimeout(700);
     check(
-      await page.evaluate(() => window.__ord.join() === 'gum,voice'),
-      'voz lenta: a câmera abre sem esperar a escuta (câmera primeiro, voz logo depois)',
+      await page.evaluate(() => window.__ord.join() === 'voice'),
+      'voz lenta: a câmera espera o pedido de microfone da voz',
     );
+    await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
+      timeout: 8000,
+    });
+    check(await page.evaluate(() => window.__ord.join() === 'voice,gum'), 'voz lenta: câmera abre depois');
     await page.close();
 
     const page2 = await (await browser.newContext()).newPage();
@@ -630,9 +619,6 @@ try {
     await page.waitForFunction(() => document.querySelector('#btnRec').dataset.state === 'ready', null, {
       timeout: 8000,
     });
-    // O primeiro toque reinicia a escuta (v0.21.5); passa por ele antes de guardar a ordem de referência.
-    await page.mouse.click(5, 5);
-    await page.waitForTimeout(300);
     const before = await page.evaluate(() => window.__ord.join());
     await page.click('#btnBack');
     check(await page.isVisible('#screenHome'), 'voltar: leva ao início');
@@ -674,21 +660,16 @@ try {
     ok('passado o prazo no Início, a captura estacionada (câmera e voz) desliga sozinha');
     await page.close();
 
-    // Câmera lenta para responder (o usuário ainda decide a permissão): sair nesse meio tempo não pode deixar nada ligado.
     const page2 = await (await browser.newContext()).newPage();
-    await page2.addInitScript(
-      `{ const g = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-         navigator.mediaDevices.getUserMedia = (c) => new Promise((r) => setTimeout(() => r(g(c)), 1500)); }`,
-    );
-    await page2.addInitScript(STUBS + VOICE);
+    await page2.addInitScript('window.__audioDelay = 1500;' + STUBS + VOICE);
     await page2.goto(URL_);
     await page2.click('#btnOpen');
     await page2.waitForTimeout(300);
     await page2.click('#btnBack');
     await page2.waitForTimeout(2500);
     check(
-      await page2.evaluate(() => window.__ord.join() === 'gum' && window.__cur === null),
-      'sair durante a abertura: a captura chegou tarde e foi descartada, sem ligar a voz',
+      await page2.evaluate(() => window.__ord.join() === 'voice'),
+      'sair durante a abertura: a câmera não chega a abrir',
     );
     check(
       (await page2.getAttribute('#btnRec', 'data-state')) === 'idle',

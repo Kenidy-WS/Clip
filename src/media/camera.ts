@@ -63,11 +63,6 @@ const SOFT_WAIT_MS = 2000;
 /** Quanto a câmera espera a escuta de voz se definir (inclui o tempo de o usuário responder ao pedido de microfone). */
 const VOICE_WAIT_MS = 20000;
 /**
- * Experimento da v0.21.5 (microfone que nasce mudo, hipótese 1): abrir a CÂMERA primeiro e ligar a voz logo depois que o stream
- * chega, no mesmo toque. Até a v0.21.4 a voz abria o microfone antes do `getUserMedia`. Para desfazer: `false` (volta à ordem antiga).
- */
-const VOICE_AFTER_CAMERA = true;
-/**
  * Tempo mínimo entre sair da câmera e abrir o microfone de novo (v0.12.9). Visto no iPhone: voltar à câmera logo depois de sair
  * faz o microfone nascer mudo (o iOS ainda não liberou a sessão de áudio); esperando alguns segundos ele nasce normal.
  * O valor é um palpite (não medido): ajustar com o Diagnóstico ("reabriu … ms após sair").
@@ -330,9 +325,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   ensureAudioCtx(); // precisa rodar de forma síncrona dentro do toque, senão o Safari deixa o áudio suspenso
   // A escuta de voz só funciona se nascer dentro de um toque do usuário (sem toque o iOS a deixa surda). Por isso ela é a
   // primeira coisa a ligar no toque em "Iniciar"; a câmera abre depois que o pedido de microfone da voz for respondido.
-  // (Com `VOICE_AFTER_CAMERA` a ordem é inversa: ver mais abaixo, logo depois de a captura chegar.)
-  const voiceBefore = voiceFirst && !VOICE_AFTER_CAMERA;
-  if (voiceBefore) {
+  if (voiceFirst) {
     try {
       startVoice('tap');
     } catch (e) {
@@ -344,7 +337,7 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
   // Vale para qualquer reinício (trocar lente/câmera/qualidade, voltar do segundo plano, nova tentativa).
   const previous = S.stream;
   await stopAll(!!previous, true);
-  if (voiceBefore) {
+  if (voiceFirst) {
     await voiceSettled(VOICE_WAIT_MS);
     if (my !== startSeq) return stopTracks(previous);
   }
@@ -440,16 +433,6 @@ export async function start(isRetry = false, voiceFirst = false): Promise<void> 
     return;
   }
   S.stream = stream;
-  if (voiceFirst && VOICE_AFTER_CAMERA) {
-    // 'auto' (e não 'tap'): o iOS pode não tratar o fim do pedido de permissão como toque; se a escuta ficar surda, o aviso de
-    // surdez continua valendo e o primeiro toque a reinicia.
-    logCam('experimento: voz ligada logo depois da câmera');
-    try {
-      startVoice('auto');
-    } catch (e) {
-      logCam(`voz falhou: ${(e as Error).message}`);
-    }
-  }
   await refreshLenses(stream);
   if (my !== startSeq) return;
   if (cfg.facing === 'environment' && cfg.lens === '0.5') {
