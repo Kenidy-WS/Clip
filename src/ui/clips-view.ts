@@ -675,16 +675,29 @@ function bindPlayerSwipeSides(): void {
       if (!current) return resetPeek();
       openPlayer(next, soundOn);
       slide(0, false);
-      // A miniatura cobre o vídeo novo até o primeiro quadro estar pronto: nada de tela preta.
+      // A miniatura cobre o vídeo novo até o primeiro quadro estar **na tela** (não só carregado): senão aparece um piscar.
+      let finished = false;
       const done = (): void => {
-        vid.removeEventListener('loadeddata', done);
+        if (finished) return;
+        finished = true;
+        vid.removeEventListener('loadeddata', onLoaded);
         clearTimeout(peekTimer);
-        peek.style.transition = 'opacity 160ms ease';
+        peek.style.transition = 'opacity 90ms linear';
         peek.style.opacity = '0';
-        peekTimer = window.setTimeout(resetPeek, 180);
+        peekTimer = window.setTimeout(resetPeek, 110);
       };
-      vid.addEventListener('loadeddata', done, { once: true });
-      peekTimer = window.setTimeout(done, 2500); // se o iOS não avisar, não deixa a miniatura para sempre
+      const onLoaded = (): void => {
+        clearTimeout(peekTimer);
+        const withFrame = vid as HTMLVideoElement & {
+          requestVideoFrameCallback?: (cb: () => void) => number;
+        };
+        if (withFrame.requestVideoFrameCallback)
+          withFrame.requestVideoFrameCallback(() => setTimeout(done, 30));
+        else requestAnimationFrame(() => requestAnimationFrame(done));
+        peekTimer = window.setTimeout(done, 1200); // o vídeo pode estar pausado e não apresentar quadro
+      };
+      vid.addEventListener('loadeddata', onLoaded, { once: true });
+      peekTimer = window.setTimeout(done, 3000); // se o iOS não avisar, não deixa a miniatura para sempre
     }, 185);
   };
   box.addEventListener('touchend', finish);

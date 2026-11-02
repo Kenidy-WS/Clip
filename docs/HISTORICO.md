@@ -7,6 +7,12 @@ Cuidados ao consultar:
 - Seções antigas podem estar **desatualizadas** (ex.: "Próximo passo", "LEIA PRIMEIRO", "Pendências"); valem como registro do que se pensava na época.
 - A ordem é mista: das v0.21.x às v0.8.2 em ordem decrescente, depois a fase 0.5.x–0.7.x, e **as v0.9.9 a v0.12.14 ficam no fim do arquivo**.
 
+## v0.21.3 — troca de clipe sem piscar
+
+- Relato do Kenidy (v0.21.2): sem tela preta, mas a tela **piscava** ao trocar. Causa provável: a miniatura saía (fade de 160 ms) ao `loadeddata`, antes de o iOS apresentar o primeiro quadro, e aparecia o fundo preto do `<video>` por um instante.
+- Correção: após `loadeddata` espera `requestVideoFrameCallback` (quadro realmente na tela; sem ele, dois `requestAnimationFrame`), com limites de 1,2 s (vídeo pausado) e 3 s; fade de 90 ms. Só visual, fora da área protegida.
+- Se ainda piscar: o salto é o enquadramento da miniatura (recorte 3:4) para o do vídeo real; aí o caminho é pré-carregar o vizinho num segundo `<video>`.
+
 ## v0.21.2 — troca de clipe sem tela preta
 
 - Relato do Kenidy: ao deslizar para trocar de vídeo aparecia uma tela preta antes do novo (na galeria do iPhone a transição é suave). Causa: o vídeo saía, e só então o novo era carregado (`src`), deixando o fundo preto até o primeiro quadro.
