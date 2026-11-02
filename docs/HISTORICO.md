@@ -7,17 +7,10 @@ Cuidados ao consultar:
 - Seções antigas podem estar **desatualizadas** (ex.: "Próximo passo", "LEIA PRIMEIRO", "Pendências"); valem como registro do que se pensava na época.
 - A ordem é mista: das v0.21.x às v0.8.2 em ordem decrescente, depois a fase 0.5.x–0.7.x, e **as v0.9.9 a v0.12.14 ficam no fim do arquivo**.
 
-## v0.21.3 — troca de clipe sem piscar
+## v0.21.4 — desfeitas as v0.21.2 e v0.21.3 (miniatura na troca de clipe)
 
-- Relato do Kenidy (v0.21.2): sem tela preta, mas a tela **piscava** ao trocar. Causa provável: a miniatura saía (fade de 160 ms) ao `loadeddata`, antes de o iOS apresentar o primeiro quadro, e aparecia o fundo preto do `<video>` por um instante.
-- Correção: após `loadeddata` espera `requestVideoFrameCallback` (quadro realmente na tela; sem ele, dois `requestAnimationFrame`), com limites de 1,2 s (vídeo pausado) e 3 s; fade de 90 ms. Só visual, fora da área protegida.
-- Se ainda piscar: o salto é o enquadramento da miniatura (recorte 3:4) para o do vídeo real; aí o caminho é pré-carregar o vizinho num segundo `<video>`.
-
-## v0.21.2 — troca de clipe sem tela preta
-
-- Relato do Kenidy: ao deslizar para trocar de vídeo aparecia uma tela preta antes do novo (na galeria do iPhone a transição é suave). Causa: o vídeo saía, e só então o novo era carregado (`src`), deixando o fundo preto até o primeiro quadro.
-- Correção: camada de trás `#playerPeek` com a **miniatura** do clipe vizinho (`thumbUrl`, a mesma da Galeria). Ao arrastar ela vem logo atrás do dedo; ao soltar o atual sai e a miniatura ocupa a tela; ela só some (fade de 160 ms) quando o vídeo novo dispara `loadeddata` (limite de 2,5 s). Sem miniatura (falha) o comportamento é o anterior. Só visual: fora da área protegida.
-- Limite conhecido: a miniatura é um recorte 3:4, então no instante da troca o enquadramento pode "pular" um pouco para o do vídeo real. Se incomodar, o próximo passo é um segundo `<video>` pré-carregado do vizinho (risco: decodificadores no iPhone).
+- A v0.21.2 (miniatura do vizinho atrás do vídeo) tirou a tela preta, mas **a tela piscava** ao trocar; a v0.21.3 (miniatura só sai com o primeiro quadro na tela) **continuou piscando** no iPhone. Decisão do Kenidy: voltar à troca da v0.21.1, com uma tela preta curta e natural, sem piscar. Feito com `git revert` dos commits das duas versões (`8b64165` e `a4ed6be`, ainda no histórico do git).
+- Não repetir a ideia da miniatura. Alternativa que sobrou, só se o Kenidy pedir de novo: pré-carregar o vizinho num segundo `<video>` (mais fluido, mas arrisca sobrecarregar o decodificador do iPhone com clipes grandes).
 
 ## v0.21.1 — sentido do arrasto no player corrigido
 

@@ -1,6 +1,6 @@
 # Status
 
-**Atualizado em:** 2026-11-01 · **No ar (`main`):** v0.21.3 · **`estavel`:** v0.17.0 (`f9fc8fa`, validada no iPhone pelo Kenidy, com a palavra de ativação)
+**Atualizado em:** 2026-11-01 · **No ar (`main`):** v0.21.4 · **`estavel`:** v0.17.0 (`f9fc8fa`, validada no iPhone pelo Kenidy, com a palavra de ativação)
 
 Histórico completo (o que foi feito, testado e descoberto, versão a versão): [`docs/HISTORICO.md`](HISTORICO.md). Arquitetura: [`ARCHITECTURE.md`](ARCHITECTURE.md). Ondas e ideias: [`ROADMAP.md`](ROADMAP.md). Regras e armadilhas do iOS: `CLAUDE.md`.
 
@@ -39,18 +39,18 @@ As versões **0.18 a 0.21.1** são visuais/gestos e **ainda não foram aprovadas
 
 1. **Player (0.18 a 0.20):** tamanho, borda e vidro claro contra a Fotos; ícones brancos; barra de controles com respiro nas laterais e afastada dos botões de baixo; botão "i" (detalhes) e velocidade; botão de download (folha "Salvar vídeo" e, em clipe grande, o download); botão de som (clipe abre mudo; ligar o som desliga a câmera e a volta pede o toque em "Ligar câmera").
 2. **Pílula de data (0.20.2):** "Hoje", "Ontem", dia da semana até 6 dias atrás, depois a data; abrir clipes de dias diferentes.
-3. **Trocar de clipe arrastando (0.21.1 a 0.21.3):** sem tela preta (a miniatura do vizinho aparece ao arrastar e sai quando o vídeo novo carrega); esquerda = próximo da lista (mais antigo), direita = anterior (mais novo); pontas dão só o tranco; com o som ligado ele continua; arrastar para baixo ainda fecha. (A 0.21.0 trocava no sentido invertido.)
+3. **Trocar de clipe arrastando (0.21.4):** há uma tela preta curta entre os clipes (decisão do Kenidy: melhor que o piscar das miniaturas); esquerda = próximo da lista (mais antigo), direita = anterior (mais novo); pontas dão só o tranco; com o som ligado ele continua; arrastar para baixo ainda fecha. (A 0.21.0 trocava no sentido invertido.)
 4. **Ajustes (0.19, 0.20.2):** primeira página com o espaçamento original, submenus com respiro em cima e embaixo, texto "Escolha o gatilho de voz.", arrastar para baixo fecha (inclusive em submenu e com a página rolada).
 5. **Fluidez (0.20.3):** gravar um clipe novo e abrir os detalhes: "Fluidez: 30 fps/60 fps".
 6. **Bipe (0.20.4):** o chiado no começo/fim diminuiu? O volume mais baixo incomoda?
 
 ## Últimas versões
 
-- **v0.21.3** — o piscar na troca de clipe: a miniatura só sai depois que o primeiro quadro do vídeo novo está na tela (antes saía ao carregar).
-- **v0.21.2** — trocar de clipe sem tela preta: a miniatura do vizinho vem junto com o dedo e cobre o vídeo novo até ele carregar.
+- **v0.21.4** — voltou à troca de clipe das v0.21.1 (tela preta curta, sem piscar): as tentativas com miniatura (v0.21.2 e v0.21.3) foram desfeitas.
 - **v0.21.1** — arrasto no player segue a ordem da Galeria (esquerda = próximo, direita = anterior). Correção da 0.21.0.
 - **v0.21.0** — trocar de clipe arrastando para os lados no player (animação de saída/entrada, som continua, pontas com tranco).
-- **v0.20.4** — volume do bipe de 0,9 para 0,7 (teste do chiado; versão isolada).
+- **v0.20.3** — "Fluidez" (fps) nos detalhes do clipe; gravada em `ClipRecord.fps`.
+- **v0.20.2** — barra de controles do player mais estreita e mais alta; Ajustes: respiro só nos submenus e arrastar para baixo fecha; pílula com "Hoje"/"Ontem"/dia da semana.
 
 Antes disso (v0.18 a v0.20.1: player estilo Fotos, vidro, Ajustes em tópicos, palavra de ativação v0.17.0, lente do iPhone 17 v0.16.5) está no [`HISTORICO.md`](HISTORICO.md).
 
